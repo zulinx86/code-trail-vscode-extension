@@ -40,7 +40,8 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test --coverage --coverage-reporter html"
+    "test": "vscode-test --coverage --coverage-reporter html",
+    "install-local": "npx vsce package && code --install-extension code-atlas-0.0.1.vsix"
   },
   "devDependencies": {
     "@types/vscode": "^1.105.0",
