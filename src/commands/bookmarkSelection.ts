@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getSelectionInfo, getFunctionAtCursor } from '../utils/editor';
+import { getSelectionInfo, getSymbolAtCursor } from '../utils/editor';
 import { formatRecord, generateFileName } from '../utils/format';
 import { saveRecord } from '../utils/file';
 import { getGitHubUrl } from '../utils/git';
@@ -20,7 +20,7 @@ export async function bookmarkSelection(): Promise<void> {
 	if (!editor.selection.isEmpty) {
 		range = editor.selection;
 	} else {
-		const funcRange = await getFunctionAtCursor(editor);
+		const funcRange = await getSymbolAtCursor(editor);
 		if (!funcRange) {
 			vscode.window.showWarningMessage('No selection or function found at cursor.');
 			return;

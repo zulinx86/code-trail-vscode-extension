@@ -34,25 +34,34 @@ export function getSelectionInfo(editor: vscode.TextEditor, range: vscode.Range)
 	};
 }
 
-function findFunctionAtPosition(symbols: vscode.DocumentSymbol[], position: vscode.Position): vscode.DocumentSymbol | undefined {
+const BOOKMARKABLE_KINDS = [
+	vscode.SymbolKind.Function,
+	vscode.SymbolKind.Method,
+	vscode.SymbolKind.Constructor,
+	vscode.SymbolKind.Class,
+	vscode.SymbolKind.Struct,
+	vscode.SymbolKind.Enum,
+	vscode.SymbolKind.Interface,
+];
+
+function findSymbolAtPosition(symbols: vscode.DocumentSymbol[], position: vscode.Position): vscode.DocumentSymbol | undefined {
 	for (const symbol of symbols) {
 		if (!symbol.range.contains(position)) {
 			continue;
 		}
-		const functionKinds = [vscode.SymbolKind.Function, vscode.SymbolKind.Method, vscode.SymbolKind.Constructor];
 		// check children first for the most specific (innermost) match
-		const child = findFunctionAtPosition(symbol.children, position);
+		const child = findSymbolAtPosition(symbol.children, position);
 		if (child) {
 			return child;
 		}
-		if (functionKinds.includes(symbol.kind)) {
+		if (BOOKMARKABLE_KINDS.includes(symbol.kind)) {
 			return symbol;
 		}
 	}
 	return undefined;
 }
 
-export async function getFunctionAtCursor(editor: vscode.TextEditor): Promise<vscode.Range | undefined> {
+export async function getSymbolAtCursor(editor: vscode.TextEditor): Promise<vscode.Range | undefined> {
 	const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
 		'vscode.executeDocumentSymbolProvider',
 		editor.document.uri,
@@ -60,6 +69,6 @@ export async function getFunctionAtCursor(editor: vscode.TextEditor): Promise<vs
 	if (!symbols) {
 		return undefined;
 	}
-	const func = findFunctionAtPosition(symbols, editor.selection.active);
+	const func = findSymbolAtPosition(symbols, editor.selection.active);
 	return func?.range;
 }
