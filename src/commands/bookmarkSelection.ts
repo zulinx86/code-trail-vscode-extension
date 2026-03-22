@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getSelectionInfo, getFunctionAtCursor } from '../utils/editor';
 import { formatRecord, generateFileName } from '../utils/format';
 import { saveRecord } from '../utils/file';
+import { getGitHubUrl } from '../utils/git';
 
 export async function bookmarkSelection(): Promise<void> {
 	const editor = vscode.window.activeTextEditor;
@@ -29,7 +30,8 @@ export async function bookmarkSelection(): Promise<void> {
 
 	const now = new Date();
 	const info = getSelectionInfo(editor, range);
-	const content = formatRecord(info, now);
+	const githubUrl = getGitHubUrl(info.filePath, info.startLine, info.endLine);
+	const content = formatRecord(info, now, githubUrl);
 	const fileName = generateFileName(info, now);
 
 	try {

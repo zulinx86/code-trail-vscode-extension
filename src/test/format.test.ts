@@ -50,6 +50,17 @@ suite('format', () => {
 			const result = formatRecord(info, fixedDate);
 			assert.ok(result.includes('```unknown\n'));
 		});
+
+		test('should include github url in frontmatter when provided', () => {
+			const url = 'https://github.com/user/repo/blob/abc123/src/example.ts#L10-L24';
+			const result = formatRecord(baseInfo, fixedDate, url);
+			assert.ok(result.includes(`github: ${url}`));
+		});
+
+		test('should omit github field when url is not provided', () => {
+			const result = formatRecord(baseInfo, fixedDate);
+			assert.ok(!result.includes('github:'));
+		});
 	});
 
 	suite('generateFileName', () => {

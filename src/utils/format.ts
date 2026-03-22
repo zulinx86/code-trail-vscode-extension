@@ -32,17 +32,24 @@ function getLanguageTag(languageId: string): string {
 	return LANGUAGE_ID_TO_TAG[languageId] ?? languageId;
 }
 
-export function formatRecord(info: SelectionInfo, exportedAt: Date): string {
+export function formatRecord(info: SelectionInfo, exportedAt: Date, githubUrl?: string): string {
 	const lang = getLanguageTag(info.languageId);
 	const timestamp = exportedAt.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
 	const link = `code-atlas:${info.filePath}#L${info.startLine}-L${info.endLine}`;
 
-	return `---
-file: ${info.filePath}
-range: ${info.startLine}-${info.endLine}
-exportedAt: ${timestamp}
----
+	const frontmatter = [
+		'---',
+		`file: ${info.filePath}`,
+		`range: ${info.startLine}-${info.endLine}`,
+		`exportedAt: ${timestamp}`,
+	];
+	if (githubUrl) {
+		frontmatter.push(`github: ${githubUrl}`);
+	}
+	frontmatter.push('---');
+
+	return `${frontmatter.join('\n')}
 
 # Notes
 
