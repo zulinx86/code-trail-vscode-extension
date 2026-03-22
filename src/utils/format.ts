@@ -42,6 +42,7 @@ export function formatRecord(info: SelectionInfo, exportedAt: Date, githubUrl?: 
 		'---',
 		`file: ${info.filePath}`,
 		`range: ${info.startLine}-${info.endLine}`,
+		`link: ${link}`,
 		`exportedAt: ${timestamp}`,
 	];
 	if (githubUrl) {
@@ -56,8 +57,6 @@ export function formatRecord(info: SelectionInfo, exportedAt: Date, githubUrl?: 
 <!-- write notes here -->
 
 # Code
-
-[${info.filePath}#L${info.startLine}-L${info.endLine}](${link})
 
 \`\`\`${lang}
 ${info.selectedText}

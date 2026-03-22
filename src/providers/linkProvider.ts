@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-const LINK_PATTERN = /\(code-atlas:([^#]+)#L(\d+)-L(\d+)\)/g;
+const LINK_PATTERN = /code-atlas:([^#\s)]+)#L(\d+)-L(\d+)/g;
 
 export class CodeAtlasLinkProvider implements vscode.DocumentLinkProvider {
 	provideDocumentLinks(document: vscode.TextDocument): vscode.DocumentLink[] {
@@ -14,8 +14,8 @@ export class CodeAtlasLinkProvider implements vscode.DocumentLinkProvider {
 			const endLine = parseInt(match[3], 10);
 
 			// link covers the entire (code-atlas:...) portion
-			const startPos = document.positionAt(match.index + 1); // skip '('
-			const endPos = document.positionAt(match.index + match[0].length - 1); // skip ')'
+			const startPos = document.positionAt(match.index);
+			const endPos = document.positionAt(match.index + match[0].length);
 			const range = new vscode.Range(startPos, endPos);
 
 			const args = encodeURIComponent(JSON.stringify({ filePath, startLine, endLine }));

@@ -5,8 +5,8 @@ import { CodeAtlasLinkProvider } from '../providers/linkProvider';
 suite('CodeAtlasLinkProvider', () => {
 	const provider = new CodeAtlasLinkProvider();
 
-	test('should detect code-atlas: link in markdown', async () => {
-		const content = '[src/editor.ts#L10-L24](code-atlas:src/editor.ts#L10-L24)';
+	test('should detect code-atlas: link in frontmatter', async () => {
+		const content = 'link: code-atlas:src/editor.ts#L10-L24';
 		const doc = await vscode.workspace.openTextDocument({ content, language: 'markdown' });
 
 		const links = provider.provideDocumentLinks(doc);
@@ -16,9 +16,9 @@ suite('CodeAtlasLinkProvider', () => {
 
 	test('should detect multiple links', async () => {
 		const content = [
-			'[a.ts#L1-L2](code-atlas:a.ts#L1-L2)',
+			'link: code-atlas:a.ts#L1-L2',
 			'some text',
-			'[b.ts#L3-L4](code-atlas:b.ts#L3-L4)',
+			'link: code-atlas:b.ts#L3-L4',
 		].join('\n');
 		const doc = await vscode.workspace.openTextDocument({ content, language: 'markdown' });
 
