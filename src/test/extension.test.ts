@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 
-suite('exportSelection command', () => {
+suite('bookmarkSelection command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-atlas');
 
@@ -21,7 +21,7 @@ suite('exportSelection command', () => {
 		await vscode.window.showTextDocument(doc);
 
 		// selection is empty by default
-		await vscode.commands.executeCommand('codeAtlas.exportSelection');
+		await vscode.commands.executeCommand('codeAtlas.bookmarkSelection');
 
 		// output directory should not be created
 		try {
@@ -45,7 +45,7 @@ suite('exportSelection command', () => {
 			// select line 2-3
 			editor.selection = new vscode.Selection(1, 0, 2, 5);
 
-			await vscode.commands.executeCommand('codeAtlas.exportSelection');
+			await vscode.commands.executeCommand('codeAtlas.bookmarkSelection');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);

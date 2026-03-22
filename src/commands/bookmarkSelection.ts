@@ -3,7 +3,7 @@ import { getSelectionInfo } from '../utils/editor';
 import { formatRecord, generateFileName } from '../utils/format';
 import { saveRecord } from '../utils/file';
 
-export async function exportSelection(): Promise<void> {
+export async function bookmarkSelection(): Promise<void> {
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
 		vscode.window.showWarningMessage('No active editor found.');

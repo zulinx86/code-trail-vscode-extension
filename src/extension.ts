@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
-import { exportSelection } from './commands/exportSelection';
+import { bookmarkSelection } from './commands/bookmarkSelection';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
-		vscode.commands.registerCommand('codeAtlas.exportSelection', exportSelection)
+		vscode.commands.registerCommand('codeAtlas.bookmarkSelection', bookmarkSelection)
 	);
 }
 
