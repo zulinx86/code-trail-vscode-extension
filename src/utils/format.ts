@@ -36,6 +36,8 @@ export function formatRecord(info: SelectionInfo, exportedAt: Date): string {
 	const lang = getLanguageTag(info.languageId);
 	const timestamp = exportedAt.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
+	const link = `code-atlas:${info.filePath}#L${info.startLine}-L${info.endLine}`;
+
 	return `---
 file: ${info.filePath}
 range: ${info.startLine}-${info.endLine}
@@ -47,6 +49,8 @@ exportedAt: ${timestamp}
 <!-- write notes here -->
 
 # Code
+
+[${info.filePath}#L${info.startLine}-L${info.endLine}](${link})
 
 \`\`\`${lang}
 ${info.selectedText}

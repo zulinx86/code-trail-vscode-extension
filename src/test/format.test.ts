@@ -29,6 +29,8 @@ suite('format', () => {
 				'',
 				'# Code',
 				'',
+				'[src/example.ts#L10-L24](code-atlas:src/example.ts#L10-L24)',
+				'',
 				'```ts',
 				'const x = 1;',
 				'```',
