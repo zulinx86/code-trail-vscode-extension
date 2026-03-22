@@ -16,8 +16,9 @@ suite('bookmarkSelection command', () => {
 	setup(cleanup);
 	teardown(cleanup);
 
-	test('should show warning when no text is selected', async () => {
-		const doc = await vscode.workspace.openTextDocument({ content: 'hello', language: 'typescript' });
+	test('should show warning when no selection and no function at cursor', async () => {
+		// plain text has no symbol provider, so no function will be found
+		const doc = await vscode.workspace.openTextDocument({ content: 'hello', language: 'plaintext' });
 		await vscode.window.showTextDocument(doc);
 
 		// selection is empty by default
@@ -86,6 +87,69 @@ suite('bookmarkSelection command', () => {
 			// should contain full lines, not partial
 			assert.ok(text.includes('bbbb\ncccc'));
 			assert.ok(text.includes('range: 2-3'));
+		} finally {
+			await vscode.workspace.fs.delete(tmpFileUri);
+		}
+	});
+
+	test('should bookmark entire function when cursor is inside it with no selection', async () => {
+		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-test-func.ts');
+		const content = 'const x = 1;\nfunction hello() {\n  return "world";\n}\nconst y = 2;\n';
+		await vscode.workspace.fs.writeFile(tmpFileUri, Buffer.from(content, 'utf-8'));
+
+		try {
+			const doc = await vscode.workspace.openTextDocument(tmpFileUri);
+			const editor = await vscode.window.showTextDocument(doc);
+
+			// place cursor inside the function body, no selection
+			editor.selection = new vscode.Selection(2, 0, 2, 0);
+
+			await vscode.commands.executeCommand('codeAtlas.bookmarkSelection');
+
+			const entries = await vscode.workspace.fs.readDirectory(outputDir);
+			const files = entries.filter(([, type]) => type === vscode.FileType.File);
+			assert.ok(files.length >= 1);
+
+			const [fileName] = files[0];
+			const fileUri = vscode.Uri.joinPath(outputDir, fileName);
+			const bytes = await vscode.workspace.fs.readFile(fileUri);
+			const text = Buffer.from(bytes).toString('utf-8');
+
+			assert.ok(text.includes('function hello()'));
+			assert.ok(text.includes('return "world"'));
+			assert.ok(text.includes('range: 2-4'));
+		} finally {
+			await vscode.workspace.fs.delete(tmpFileUri);
+		}
+	});
+
+	test('should bookmark innermost function when cursor is in nested function', async () => {
+		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-test-nested.ts');
+		const content = 'function outer() {\n  function inner() {\n    return 42;\n  }\n}\n';
+		await vscode.workspace.fs.writeFile(tmpFileUri, Buffer.from(content, 'utf-8'));
+
+		try {
+			const doc = await vscode.workspace.openTextDocument(tmpFileUri);
+			const editor = await vscode.window.showTextDocument(doc);
+
+			// place cursor inside inner function
+			editor.selection = new vscode.Selection(2, 0, 2, 0);
+
+			await vscode.commands.executeCommand('codeAtlas.bookmarkSelection');
+
+			const entries = await vscode.workspace.fs.readDirectory(outputDir);
+			const files = entries.filter(([, type]) => type === vscode.FileType.File);
+			assert.ok(files.length >= 1);
+
+			const [fileName] = files[0];
+			const fileUri = vscode.Uri.joinPath(outputDir, fileName);
+			const bytes = await vscode.workspace.fs.readFile(fileUri);
+			const text = Buffer.from(bytes).toString('utf-8');
+
+			// should contain inner, not outer
+			assert.ok(text.includes('function inner()'));
+			assert.ok(text.includes('return 42'));
+			assert.ok(!text.includes('function outer()'));
 		} finally {
 			await vscode.workspace.fs.delete(tmpFileUri);
 		}

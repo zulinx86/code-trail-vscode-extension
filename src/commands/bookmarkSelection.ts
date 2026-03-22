@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getSelectionInfo } from '../utils/editor';
+import { getSelectionInfo, getFunctionAtCursor } from '../utils/editor';
 import { formatRecord, generateFileName } from '../utils/format';
 import { saveRecord } from '../utils/file';
 
@@ -10,18 +10,25 @@ export async function bookmarkSelection(): Promise<void> {
 		return;
 	}
 
-	if (editor.selection.isEmpty) {
-		vscode.window.showWarningMessage('No text selected.');
-		return;
-	}
-
 	if (!vscode.workspace.workspaceFolders) {
 		vscode.window.showWarningMessage('No workspace folder found.');
 		return;
 	}
 
+	let range: vscode.Range;
+	if (!editor.selection.isEmpty) {
+		range = editor.selection;
+	} else {
+		const funcRange = await getFunctionAtCursor(editor);
+		if (!funcRange) {
+			vscode.window.showWarningMessage('No selection or function found at cursor.');
+			return;
+		}
+		range = funcRange;
+	}
+
 	const now = new Date();
-	const info = getSelectionInfo(editor);
+	const info = getSelectionInfo(editor, range);
 	const content = formatRecord(info, now);
 	const fileName = generateFileName(info, now);
 

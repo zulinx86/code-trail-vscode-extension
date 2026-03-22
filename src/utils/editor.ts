@@ -10,9 +10,8 @@ export interface SelectionInfo {
 	languageId: string;
 }
 
-export function getSelectionInfo(editor: vscode.TextEditor): SelectionInfo {
+export function getSelectionInfo(editor: vscode.TextEditor, range: vscode.Range): SelectionInfo {
 	const document = editor.document;
-	const selection = editor.selection;
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
 		throw new Error('No workspace folder found.');
@@ -21,16 +20,46 @@ export function getSelectionInfo(editor: vscode.TextEditor): SelectionInfo {
 	const filePath = path.relative(workspaceFolder.uri.fsPath, absolutePath);
 
 	const fullRange = new vscode.Range(
-		selection.start.line, 0,
-		selection.end.line, document.lineAt(selection.end.line).text.length,
+		range.start.line, 0,
+		range.end.line, document.lineAt(range.end.line).text.length,
 	);
 
 	return {
 		filePath,
 		fileName: path.basename(absolutePath),
-		startLine: selection.start.line + 1,
-		endLine: selection.end.line + 1,
+		startLine: range.start.line + 1,
+		endLine: range.end.line + 1,
 		selectedText: document.getText(fullRange),
 		languageId: document.languageId,
 	};
+}
+
+function findFunctionAtPosition(symbols: vscode.DocumentSymbol[], position: vscode.Position): vscode.DocumentSymbol | undefined {
+	for (const symbol of symbols) {
+		if (!symbol.range.contains(position)) {
+			continue;
+		}
+		const functionKinds = [vscode.SymbolKind.Function, vscode.SymbolKind.Method, vscode.SymbolKind.Constructor];
+		// check children first for the most specific (innermost) match
+		const child = findFunctionAtPosition(symbol.children, position);
+		if (child) {
+			return child;
+		}
+		if (functionKinds.includes(symbol.kind)) {
+			return symbol;
+		}
+	}
+	return undefined;
+}
+
+export async function getFunctionAtCursor(editor: vscode.TextEditor): Promise<vscode.Range | undefined> {
+	const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+		'vscode.executeDocumentSymbolProvider',
+		editor.document.uri,
+	);
+	if (!symbols) {
+		return undefined;
+	}
+	const func = findFunctionAtPosition(symbols, editor.selection.active);
+	return func?.range;
 }
