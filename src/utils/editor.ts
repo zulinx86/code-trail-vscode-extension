@@ -20,12 +20,17 @@ export function getSelectionInfo(editor: vscode.TextEditor): SelectionInfo {
 	const absolutePath = document.uri.fsPath;
 	const filePath = path.relative(workspaceFolder.uri.fsPath, absolutePath);
 
+	const fullRange = new vscode.Range(
+		selection.start.line, 0,
+		selection.end.line, document.lineAt(selection.end.line).text.length,
+	);
+
 	return {
 		filePath,
 		fileName: path.basename(absolutePath),
 		startLine: selection.start.line + 1,
 		endLine: selection.end.line + 1,
-		selectedText: document.getText(selection),
+		selectedText: document.getText(fullRange),
 		languageId: document.languageId,
 	};
 }

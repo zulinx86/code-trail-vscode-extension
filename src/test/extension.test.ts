@@ -59,4 +59,35 @@ suite('bookmarkSelection command', () => {
 			await vscode.workspace.fs.delete(tmpFileUri);
 		}
 	});
+
+	test('should expand partial selection to full lines', async () => {
+		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-test-partial.ts');
+		const content = 'aaa\nbbbb\ncccc\nddd\n';
+		await vscode.workspace.fs.writeFile(tmpFileUri, Buffer.from(content, 'utf-8'));
+
+		try {
+			const doc = await vscode.workspace.openTextDocument(tmpFileUri);
+			const editor = await vscode.window.showTextDocument(doc);
+
+			// select from middle of line 2 to middle of line 3
+			editor.selection = new vscode.Selection(1, 2, 2, 1);
+
+			await vscode.commands.executeCommand('codeAtlas.bookmarkSelection');
+
+			const entries = await vscode.workspace.fs.readDirectory(outputDir);
+			const files = entries.filter(([, type]) => type === vscode.FileType.File);
+			assert.ok(files.length >= 1);
+
+			const [fileName] = files[0];
+			const fileUri = vscode.Uri.joinPath(outputDir, fileName);
+			const bytes = await vscode.workspace.fs.readFile(fileUri);
+			const text = Buffer.from(bytes).toString('utf-8');
+
+			// should contain full lines, not partial
+			assert.ok(text.includes('bbbb\ncccc'));
+			assert.ok(text.includes('range: 2-3'));
+		} finally {
+			await vscode.workspace.fs.delete(tmpFileUri);
+		}
+	});
 });
