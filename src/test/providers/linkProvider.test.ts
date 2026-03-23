@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { CodeAtlasLinkProvider } from '../providers/linkProvider';
+import { CodeAtlasLinkProvider } from '../../providers/linkProvider';
 
 suite('CodeAtlasLinkProvider', () => {
 	const provider = new CodeAtlasLinkProvider();

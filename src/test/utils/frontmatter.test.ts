@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { parseFrontmatter } from '../utils/frontmatter';
+import { parseFrontmatter } from '../../utils/frontmatter';
 
 suite('frontmatter', () => {
 	suite('parseFrontmatter', () => {

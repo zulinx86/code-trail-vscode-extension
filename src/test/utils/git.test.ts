@@ -1,5 +1,5 @@
 import * as assert from 'assert';
-import { remoteUrlToHttps } from '../utils/git';
+import { remoteUrlToHttps } from '../../utils/git';
 
 suite('git', () => {
 	suite('remoteUrlToHttps', () => {

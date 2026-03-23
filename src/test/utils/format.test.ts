@@ -1,6 +1,6 @@
 import * as assert from 'assert';
-import { formatRecord, generateFileName } from '../utils/format';
-import type { SelectionInfo } from '../utils/editor';
+import { formatRecord, generateFileName } from '../../utils/format';
+import type { SelectionInfo } from '../../utils/editor';
 
 suite('format', () => {
 	const baseInfo: SelectionInfo = {
