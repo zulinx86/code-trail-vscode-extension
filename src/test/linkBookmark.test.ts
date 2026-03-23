@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { getSymbolRange } from '../utils/editor';
+import { getSymbolRange } from '../utils/symbol';
 
 suite('linkBookmark command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;

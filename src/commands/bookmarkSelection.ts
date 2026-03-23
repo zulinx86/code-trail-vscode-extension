@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { getSelectionInfo, getSymbolForRange } from '../utils/editor';
+import { getSelectionInfo } from '../utils/editor';
+import { getSymbolAtPosition } from '../utils/symbol';
 import { formatRecord, generateFileName } from '../utils/format';
 import { saveRecord } from '../utils/file';
 import { getGitHubUrl } from '../utils/git';
@@ -16,9 +17,9 @@ export async function bookmarkSelection(): Promise<void> {
 		return;
 	}
 
-	const symbolInfo = await getSymbolForRange(
+	const symbolInfo = await getSymbolAtPosition(
 		editor.document.uri,
-		editor.selection,
+		editor.selection.start,
 	);
 
 	let range: vscode.Range;

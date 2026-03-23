@@ -5,7 +5,7 @@ import {
 	addLink,
 	type Frontmatter,
 } from '../utils/frontmatter';
-import { getSymbolRange } from '../utils/editor';
+import { getSymbolRange } from '../utils/symbol';
 
 const OUTPUT_DIR = 'code-atlas';
 
