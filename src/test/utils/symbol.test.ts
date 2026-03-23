@@ -33,10 +33,7 @@ suite('symbol', () => {
 				'function outer() {\n  function inner() {\n    return 1;\n  }\n}\n',
 			);
 			try {
-				const info = await getSymbolAtPosition(
-					uri,
-					new vscode.Position(2, 0),
-				);
+				const info = await getSymbolAtPosition(uri, new vscode.Position(2, 0));
 				assert.ok(info, 'should find symbol');
 				assert.strictEqual(info.name, 'outer.inner');
 			} finally {
@@ -50,10 +47,7 @@ suite('symbol', () => {
 				'function outer() {\n  const x = 1;\n  function inner() {}\n}\n',
 			);
 			try {
-				const info = await getSymbolAtPosition(
-					uri,
-					new vscode.Position(1, 0),
-				);
+				const info = await getSymbolAtPosition(uri, new vscode.Position(1, 0));
 				assert.ok(info, 'should find symbol');
 				assert.strictEqual(info.name, 'outer');
 			} finally {
@@ -67,10 +61,7 @@ suite('symbol', () => {
 				'class Foo {\n  bar() {\n    return 42;\n  }\n}\n',
 			);
 			try {
-				const info = await getSymbolAtPosition(
-					uri,
-					new vscode.Position(2, 0),
-				);
+				const info = await getSymbolAtPosition(uri, new vscode.Position(2, 0));
 				assert.ok(info, 'should find symbol');
 				assert.strictEqual(info.name, 'Foo.bar');
 			} finally {
@@ -79,15 +70,9 @@ suite('symbol', () => {
 		});
 
 		test('should return undefined when no symbol at position', async () => {
-			const uri = await createTsFile(
-				'tmp-symat-none.ts',
-				'const x = 1;\n',
-			);
+			const uri = await createTsFile('tmp-symat-none.ts', 'const x = 1;\n');
 			try {
-				const info = await getSymbolAtPosition(
-					uri,
-					new vscode.Position(0, 0),
-				);
+				const info = await getSymbolAtPosition(uri, new vscode.Position(0, 0));
 				assert.strictEqual(info, undefined);
 			} finally {
 				await deleteSilently(uri);
@@ -98,10 +83,7 @@ suite('symbol', () => {
 			const uri = vscode.Uri.joinPath(workspaceUri, 'tmp-symat-plain.txt');
 			await vscode.workspace.fs.writeFile(uri, Buffer.from('hello', 'utf-8'));
 			try {
-				const info = await getSymbolAtPosition(
-					uri,
-					new vscode.Position(0, 0),
-				);
+				const info = await getSymbolAtPosition(uri, new vscode.Position(0, 0));
 				assert.strictEqual(info, undefined);
 			} finally {
 				await deleteSilently(uri);

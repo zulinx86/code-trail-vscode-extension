@@ -64,10 +64,7 @@ suite('linkPin command', () => {
 		await vscode.workspace.fs.createDirectory(outputDir);
 		const pinUri = vscode.Uri.joinPath(outputDir, 'only-one.md');
 		const content = makePinContent('src/a.ts', 1, 5);
-		await vscode.workspace.fs.writeFile(
-			pinUri,
-			Buffer.from(content, 'utf-8'),
-		);
+		await vscode.workspace.fs.writeFile(pinUri, Buffer.from(content, 'utf-8'));
 
 		const doc = await vscode.workspace.openTextDocument(pinUri);
 		await vscode.window.showTextDocument(doc);
@@ -107,9 +104,7 @@ suite('linkPin command', () => {
 			callCount++;
 			if (callCount === 1) {
 				// First call: select the pin candidate
-				return items.find(
-					(i: any) => i.description === 'pin-b.md',
-				);
+				return items.find((i: any) => i.description === 'pin-b.md');
 			}
 			// Second call: direction pick (for non-suggested items)
 			return items.find((i: any) => i.value === 'uses');
@@ -122,10 +117,7 @@ suite('linkPin command', () => {
 			const textA = Buffer.from(
 				await vscode.workspace.fs.readFile(pinAUri),
 			).toString('utf-8');
-			assert.ok(
-				textA.includes('uses:'),
-				'pin A should have uses field',
-			);
+			assert.ok(textA.includes('uses:'), 'pin A should have uses field');
 			assert.ok(
 				textA.includes('  - pin-b.md'),
 				'pin A should link to pin-b.md',
@@ -135,10 +127,7 @@ suite('linkPin command', () => {
 			const textB = Buffer.from(
 				await vscode.workspace.fs.readFile(pinBUri),
 			).toString('utf-8');
-			assert.ok(
-				textB.includes('usedBy:'),
-				'pin B should have usedBy field',
-			);
+			assert.ok(textB.includes('usedBy:'), 'pin B should have usedBy field');
 			assert.ok(
 				textB.includes('  - pin-a.md'),
 				'pin B should link to pin-a.md',
@@ -181,9 +170,7 @@ suite('linkPin command', () => {
 		) => {
 			callCount++;
 			if (callCount === 1) {
-				return items.find(
-					(i: any) => i.description === 'pin-b.md',
-				);
+				return items.find((i: any) => i.description === 'pin-b.md');
 			}
 			return items.find((i: any) => i.value === 'uses');
 		};

@@ -137,9 +137,7 @@ export async function linkPin(): Promise<void> {
 
 	// Get all the pins
 	const currentPinId = path.basename(editor.document.uri.fsPath);
-	const pins = (await getPins()).filter(
-		(p) => p.pinId !== currentPinId,
-	);
+	const pins = (await getPins()).filter((p) => p.pinId !== currentPinId);
 	if (pins.length === 0) {
 		vscode.window.showWarningMessage('No other pins found.');
 		return;
