@@ -16,7 +16,10 @@ export async function bookmarkSelection(): Promise<void> {
 		return;
 	}
 
-	const symbolInfo = await getSymbolForRange(editor.document.uri, editor.selection);
+	const symbolInfo = await getSymbolForRange(
+		editor.document.uri,
+		editor.selection,
+	);
 
 	let range: vscode.Range;
 	if (!editor.selection.isEmpty) {

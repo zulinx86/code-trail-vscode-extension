@@ -2,7 +2,10 @@ import * as vscode from 'vscode';
 
 const OUTPUT_DIR = 'code-atlas';
 
-export async function saveRecord(fileName: string, content: string): Promise<vscode.Uri> {
+export async function saveRecord(
+	fileName: string,
+	content: string,
+): Promise<vscode.Uri> {
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
 		throw new Error('No workspace folder found.');

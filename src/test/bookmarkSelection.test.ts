@@ -18,7 +18,10 @@ suite('bookmarkSelection command', () => {
 
 	test('should show warning when no selection and no function at cursor', async () => {
 		// plain text has no symbol provider, so no function will be found
-		const doc = await vscode.workspace.openTextDocument({ content: 'hello', language: 'plaintext' });
+		const doc = await vscode.workspace.openTextDocument({
+			content: 'hello',
+			language: 'plaintext',
+		});
 		await vscode.window.showTextDocument(doc);
 
 		// selection is empty by default
@@ -37,7 +40,10 @@ suite('bookmarkSelection command', () => {
 		// create a real file in the workspace so path.relative works
 		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-test-file.ts');
 		const content = 'line1\nline2\nline3\nline4\n';
-		await vscode.workspace.fs.writeFile(tmpFileUri, Buffer.from(content, 'utf-8'));
+		await vscode.workspace.fs.writeFile(
+			tmpFileUri,
+			Buffer.from(content, 'utf-8'),
+		);
 
 		try {
 			const doc = await vscode.workspace.openTextDocument(tmpFileUri);
@@ -64,7 +70,10 @@ suite('bookmarkSelection command', () => {
 	test('should expand partial selection to full lines', async () => {
 		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-test-partial.ts');
 		const content = 'aaa\nbbbb\ncccc\nddd\n';
-		await vscode.workspace.fs.writeFile(tmpFileUri, Buffer.from(content, 'utf-8'));
+		await vscode.workspace.fs.writeFile(
+			tmpFileUri,
+			Buffer.from(content, 'utf-8'),
+		);
 
 		try {
 			const doc = await vscode.workspace.openTextDocument(tmpFileUri);
@@ -94,8 +103,12 @@ suite('bookmarkSelection command', () => {
 
 	test('should bookmark entire function when cursor is inside it with no selection', async () => {
 		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-test-func.ts');
-		const content = 'const x = 1;\nfunction hello() {\n  return "world";\n}\nconst y = 2;\n';
-		await vscode.workspace.fs.writeFile(tmpFileUri, Buffer.from(content, 'utf-8'));
+		const content =
+			'const x = 1;\nfunction hello() {\n  return "world";\n}\nconst y = 2;\n';
+		await vscode.workspace.fs.writeFile(
+			tmpFileUri,
+			Buffer.from(content, 'utf-8'),
+		);
 
 		try {
 			const doc = await vscode.workspace.openTextDocument(tmpFileUri);
@@ -126,8 +139,12 @@ suite('bookmarkSelection command', () => {
 
 	test('should bookmark innermost function when cursor is in nested function', async () => {
 		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-test-nested.ts');
-		const content = 'function outer() {\n  function inner() {\n    return 42;\n  }\n}\n';
-		await vscode.workspace.fs.writeFile(tmpFileUri, Buffer.from(content, 'utf-8'));
+		const content =
+			'function outer() {\n  function inner() {\n    return 42;\n  }\n}\n';
+		await vscode.workspace.fs.writeFile(
+			tmpFileUri,
+			Buffer.from(content, 'utf-8'),
+		);
 
 		try {
 			const doc = await vscode.workspace.openTextDocument(tmpFileUri);

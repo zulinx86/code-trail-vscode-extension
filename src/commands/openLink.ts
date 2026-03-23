@@ -19,5 +19,8 @@ export async function openLink(args: LinkArgs): Promise<void> {
 
 	const pos = new vscode.Position(args.startLine - 1, 0);
 	editor.selection = new vscode.Selection(pos, pos);
-	editor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
+	editor.revealRange(
+		new vscode.Range(pos, pos),
+		vscode.TextEditorRevealType.InCenter,
+	);
 }

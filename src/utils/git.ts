@@ -23,7 +23,11 @@ export function remoteUrlToHttps(url: string): string {
 	return url.replace(/\.git$/, '');
 }
 
-export function getGitHubUrl(filePath: string, startLine: number, endLine: number): string | undefined {
+export function getGitHubUrl(
+	filePath: string,
+	startLine: number,
+	endLine: number,
+): string | undefined {
 	const api = getGitApi();
 	if (!api) {
 		return undefined;

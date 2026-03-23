@@ -18,7 +18,9 @@ export class CodeAtlasLinkProvider implements vscode.DocumentLinkProvider {
 			const endPos = document.positionAt(match.index + match[0].length);
 			const range = new vscode.Range(startPos, endPos);
 
-			const args = encodeURIComponent(JSON.stringify({ filePath, startLine, endLine }));
+			const args = encodeURIComponent(
+				JSON.stringify({ filePath, startLine, endLine }),
+			);
 			const commandUri = vscode.Uri.parse(`command:codeAtlas.openLink?${args}`);
 			links.push(new vscode.DocumentLink(range, commandUri));
 		}
