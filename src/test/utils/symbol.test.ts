@@ -1,31 +1,114 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { getSymbolRange } from '../../utils/symbol';
+import { getSymbolAtPosition, getSymbolRange } from '../../utils/symbol';
+
+const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+
+async function createTsFile(
+	name: string,
+	content: string,
+): Promise<vscode.Uri> {
+	const uri = vscode.Uri.joinPath(workspaceUri, name);
+	await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf-8'));
+	const doc = await vscode.workspace.openTextDocument(uri);
+	await vscode.window.showTextDocument(doc);
+	// Wait for the language server to be ready
+	await new Promise((r) => setTimeout(r, 500));
+	return uri;
+}
+
+async function deleteSilently(uri: vscode.Uri) {
+	try {
+		await vscode.workspace.fs.delete(uri);
+	} catch {
+		// ignore
+	}
+}
+
+suite('getSymbolAtPosition', () => {
+	test('should return innermost function at position', async () => {
+		const uri = await createTsFile(
+			'tmp-symat-nested.ts',
+			'function outer() {\n  function inner() {\n    return 1;\n  }\n}\n',
+		);
+		try {
+			const info = await getSymbolAtPosition(
+				uri,
+				new vscode.Position(2, 0),
+			);
+			assert.ok(info, 'should find symbol');
+			assert.strictEqual(info.name, 'outer.inner');
+		} finally {
+			await deleteSilently(uri);
+		}
+	});
+
+	test('should return outer function when position is outside inner', async () => {
+		const uri = await createTsFile(
+			'tmp-symat-outer.ts',
+			'function outer() {\n  const x = 1;\n  function inner() {}\n}\n',
+		);
+		try {
+			const info = await getSymbolAtPosition(
+				uri,
+				new vscode.Position(1, 0),
+			);
+			assert.ok(info, 'should find symbol');
+			assert.strictEqual(info.name, 'outer');
+		} finally {
+			await deleteSilently(uri);
+		}
+	});
+
+	test('should return class method at position', async () => {
+		const uri = await createTsFile(
+			'tmp-symat-method.ts',
+			'class Foo {\n  bar() {\n    return 42;\n  }\n}\n',
+		);
+		try {
+			const info = await getSymbolAtPosition(
+				uri,
+				new vscode.Position(2, 0),
+			);
+			assert.ok(info, 'should find symbol');
+			assert.strictEqual(info.name, 'Foo.bar');
+		} finally {
+			await deleteSilently(uri);
+		}
+	});
+
+	test('should return undefined when no symbol at position', async () => {
+		const uri = await createTsFile(
+			'tmp-symat-none.ts',
+			'const x = 1;\n',
+		);
+		try {
+			const info = await getSymbolAtPosition(
+				uri,
+				new vscode.Position(0, 0),
+			);
+			assert.strictEqual(info, undefined);
+		} finally {
+			await deleteSilently(uri);
+		}
+	});
+
+	test('should return undefined for a file with no symbol provider', async () => {
+		const uri = vscode.Uri.joinPath(workspaceUri, 'tmp-symat-plain.txt');
+		await vscode.workspace.fs.writeFile(uri, Buffer.from('hello', 'utf-8'));
+		try {
+			const info = await getSymbolAtPosition(
+				uri,
+				new vscode.Position(0, 0),
+			);
+			assert.strictEqual(info, undefined);
+		} finally {
+			await deleteSilently(uri);
+		}
+	});
+});
 
 suite('getSymbolRange', () => {
-	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
-
-	async function createTsFile(
-		name: string,
-		content: string,
-	): Promise<vscode.Uri> {
-		const uri = vscode.Uri.joinPath(workspaceUri, name);
-		await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf-8'));
-		const doc = await vscode.workspace.openTextDocument(uri);
-		await vscode.window.showTextDocument(doc);
-		// Wait for the language server to be ready
-		await new Promise((r) => setTimeout(r, 500));
-		return uri;
-	}
-
-	async function deleteSilently(uri: vscode.Uri) {
-		try {
-			await vscode.workspace.fs.delete(uri);
-		} catch {
-			// ignore
-		}
-	}
-
 	test('should return selectionRange for a top-level function', async () => {
 		const uri = await createTsFile(
 			'tmp-sym-toplevel.ts',
