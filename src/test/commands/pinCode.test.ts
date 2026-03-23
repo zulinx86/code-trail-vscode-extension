@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 
-suite('pinSelection command', () => {
+suite('pinCode command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-atlas');
 
@@ -25,7 +25,7 @@ suite('pinSelection command', () => {
 		await vscode.window.showTextDocument(doc);
 
 		// selection is empty by default
-		await vscode.commands.executeCommand('codeAtlas.pinSelection');
+		await vscode.commands.executeCommand('codeAtlas.pinCode');
 
 		// output directory should not be created
 		try {
@@ -52,7 +52,7 @@ suite('pinSelection command', () => {
 			// select line 2-3
 			editor.selection = new vscode.Selection(1, 0, 2, 5);
 
-			await vscode.commands.executeCommand('codeAtlas.pinSelection');
+			await vscode.commands.executeCommand('codeAtlas.pinCode');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);
@@ -82,7 +82,7 @@ suite('pinSelection command', () => {
 			// select from middle of line 2 to middle of line 3
 			editor.selection = new vscode.Selection(1, 2, 2, 1);
 
-			await vscode.commands.executeCommand('codeAtlas.pinSelection');
+			await vscode.commands.executeCommand('codeAtlas.pinCode');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);
@@ -117,7 +117,7 @@ suite('pinSelection command', () => {
 			// place cursor inside the function body, no selection
 			editor.selection = new vscode.Selection(2, 0, 2, 0);
 
-			await vscode.commands.executeCommand('codeAtlas.pinSelection');
+			await vscode.commands.executeCommand('codeAtlas.pinCode');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);
@@ -153,7 +153,7 @@ suite('pinSelection command', () => {
 			// place cursor inside inner function
 			editor.selection = new vscode.Selection(2, 0, 2, 0);
 
-			await vscode.commands.executeCommand('codeAtlas.pinSelection');
+			await vscode.commands.executeCommand('codeAtlas.pinCode');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);

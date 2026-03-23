@@ -11,4 +11,4 @@ A VS Code extension for recording code reading notes.
 ## Usage
 
 1. Select code in the editor
-2. Press `Ctrl+Shift+P` or open Command Palette (`Cmd+Shift+P`) and run `Code Atlas: Pin Selection`
+2. Press `Ctrl+Shift+P` or open Command Palette (`Cmd+Shift+P`) and run `Code Atlas: Pin Code`

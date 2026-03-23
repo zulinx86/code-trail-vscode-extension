@@ -5,7 +5,7 @@ import { formatPin, generatePinFileName } from '../utils/pin';
 import { saveFile } from '../utils/file';
 import { getGitHubUrl } from '../utils/git';
 
-export async function pinSelection(): Promise<void> {
+export async function pinCode(): Promise<void> {
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
 		vscode.window.showWarningMessage('No active editor found.');

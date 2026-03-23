@@ -16,8 +16,8 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "codeAtlas.pinSelection",
-				"title": "Code Atlas: Pin Selection"
+				"command": "codeAtlas.pinCode",
+				"title": "Code Atlas: Pin Code"
 			},
 			{
 				"command": "codeAtlas.linkPin",
@@ -26,7 +26,7 @@
 		],
 		"keybindings": [
 			{
-				"command": "codeAtlas.pinSelection",
+				"command": "codeAtlas.pinCode",
 				"key": "ctrl+shift+p",
 				"when": "editorTextFocus"
 			},
@@ -38,21 +38,21 @@
 		]
 	},
 	"scripts": {
+		"check-types": "tsc --noEmit",
+		"lint": "eslint src",
+		"fmt": "prettier --write .",
+		"fmt:check": "prettier --check .",
+		"compile": "npm run check-types && npm run lint && npm run fmt && node esbuild.js",
+		"package": "npm run check-types && npm run lint && npm run fmt && node esbuild.js --production",
 		"vscode:prepublish": "npm run package",
-		"compile": "npm run check-types && npm run lint && node esbuild.js",
+		"compile-tests": "tsc -p . --outDir out",
+		"pretest": "npm run compile-tests && npm run compile",
+		"test": "vscode-test --coverage --coverage-reporter html",
+		"install-local": "npx vsce package && code --install-extension code-atlas-0.0.1.vsix",
 		"watch": "npm-run-all -p watch:*",
 		"watch:esbuild": "node esbuild.js --watch",
 		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
-		"package": "npm run check-types && npm run lint && node esbuild.js --production",
-		"compile-tests": "tsc -p . --outDir out",
-		"watch-tests": "tsc -p . -w --outDir out",
-		"pretest": "npm run compile-tests && npm run compile && npm run lint",
-		"check-types": "tsc --noEmit",
-		"fmt": "prettier --write .",
-		"fmt:check": "prettier --check .",
-		"lint": "eslint src",
-		"test": "vscode-test --coverage --coverage-reporter html",
-		"install-local": "npx vsce package && code --install-extension code-atlas-0.0.1.vsix"
+		"watch-tests": "tsc -p . -w --outDir out"
 	},
 	"devDependencies": {
 		"@types/mocha": "^10.0.10",
