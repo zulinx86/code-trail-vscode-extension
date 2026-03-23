@@ -22,10 +22,10 @@ export async function bookmarkSelection(): Promise<void> {
 	);
 
 	let range: vscode.Range;
-	if (!editor.selection.isEmpty) {
-		range = editor.selection;
-	} else if (symbolInfo) {
+	if (symbolInfo) {
 		range = symbolInfo.range;
+	} else if (!editor.selection.isEmpty) {
+		range = editor.selection;
 	} else {
 		vscode.window.showWarningMessage('No selection or symbol found at cursor.');
 		return;
