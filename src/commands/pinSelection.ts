@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
-import { getSelectionInfo } from '../utils/editor';
+import { getSelectionInfo } from '../utils/selection';
 import { getSymbolAtPosition } from '../utils/symbol';
-import { formatRecord, generateFileName } from '../utils/format';
+import { formatPin, generatePinFileName } from '../utils/pin';
 import { saveFile } from '../utils/file';
 import { getGitHubUrl } from '../utils/git';
 
-export async function bookmarkSelection(): Promise<void> {
+export async function pinSelection(): Promise<void> {
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
 		vscode.window.showWarningMessage('No active editor found.');
@@ -35,8 +35,8 @@ export async function bookmarkSelection(): Promise<void> {
 	const now = new Date();
 	const info = getSelectionInfo(editor, range, symbolInfo?.name);
 	const githubUrl = getGitHubUrl(info.filePath, info.startLine, info.endLine);
-	const content = formatRecord(info, now, githubUrl);
-	const fileName = generateFileName(info, now);
+	const content = formatPin(info, now, githubUrl);
+	const fileName = generatePinFileName(info, now);
 
 	try {
 		const fileUri = await saveFile(fileName, content);
@@ -44,6 +44,6 @@ export async function bookmarkSelection(): Promise<void> {
 		await vscode.window.showTextDocument(doc);
 		vscode.window.showInformationMessage(`Saved: ${fileName}`);
 	} catch (e) {
-		vscode.window.showErrorMessage(`Failed to save record: ${e}`);
+		vscode.window.showErrorMessage(`Failed to save pin: ${e}`);
 	}
 }

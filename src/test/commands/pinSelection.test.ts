@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 
-suite('bookmarkSelection command', () => {
+suite('pinSelection command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-atlas');
 
@@ -25,7 +25,7 @@ suite('bookmarkSelection command', () => {
 		await vscode.window.showTextDocument(doc);
 
 		// selection is empty by default
-		await vscode.commands.executeCommand('codeAtlas.bookmarkSelection');
+		await vscode.commands.executeCommand('codeAtlas.pinSelection');
 
 		// output directory should not be created
 		try {
@@ -52,13 +52,13 @@ suite('bookmarkSelection command', () => {
 			// select line 2-3
 			editor.selection = new vscode.Selection(1, 0, 2, 5);
 
-			await vscode.commands.executeCommand('codeAtlas.bookmarkSelection');
+			await vscode.commands.executeCommand('codeAtlas.pinSelection');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);
 			assert.ok(files.length >= 1);
 
-			// file content correctness is tested in format.test.ts
+			// file content correctness is tested in pin.test.ts
 			const [fileName] = files[0];
 			assert.ok(fileName.endsWith('-tmp-test-file.ts.md'));
 			assert.ok(/^\d{8}-\d{6}-/.test(fileName));
@@ -82,7 +82,7 @@ suite('bookmarkSelection command', () => {
 			// select from middle of line 2 to middle of line 3
 			editor.selection = new vscode.Selection(1, 2, 2, 1);
 
-			await vscode.commands.executeCommand('codeAtlas.bookmarkSelection');
+			await vscode.commands.executeCommand('codeAtlas.pinSelection');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);
@@ -101,7 +101,7 @@ suite('bookmarkSelection command', () => {
 		}
 	});
 
-	test('should bookmark entire function when cursor is inside it with no selection', async () => {
+	test('should pin entire function when cursor is inside it with no selection', async () => {
 		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-test-func.ts');
 		const content =
 			'const x = 1;\nfunction hello() {\n  return "world";\n}\nconst y = 2;\n';
@@ -117,7 +117,7 @@ suite('bookmarkSelection command', () => {
 			// place cursor inside the function body, no selection
 			editor.selection = new vscode.Selection(2, 0, 2, 0);
 
-			await vscode.commands.executeCommand('codeAtlas.bookmarkSelection');
+			await vscode.commands.executeCommand('codeAtlas.pinSelection');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);
@@ -137,7 +137,7 @@ suite('bookmarkSelection command', () => {
 		}
 	});
 
-	test('should bookmark innermost function when cursor is in nested function', async () => {
+	test('should pin innermost function when cursor is in nested function', async () => {
 		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-test-nested.ts');
 		const content =
 			'function outer() {\n  function inner() {\n    return 42;\n  }\n}\n';
@@ -153,7 +153,7 @@ suite('bookmarkSelection command', () => {
 			// place cursor inside inner function
 			editor.selection = new vscode.Selection(2, 0, 2, 0);
 
-			await vscode.commands.executeCommand('codeAtlas.bookmarkSelection');
+			await vscode.commands.executeCommand('codeAtlas.pinSelection');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);

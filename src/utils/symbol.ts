@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-const BOOKMARKABLE_KINDS = [
+const ALLOWED_KINDS = [
 	vscode.SymbolKind.Function,
 	vscode.SymbolKind.Method,
 	vscode.SymbolKind.Constructor,
@@ -53,7 +53,7 @@ function findSymbolAtPosition(
 		}
 
 		// The innermost one reaches here.
-		if (BOOKMARKABLE_KINDS.includes(symbol.kind)) {
+		if (ALLOWED_KINDS.includes(symbol.kind)) {
 			return { range: symbol.range, name: qualifiedName };
 		}
 	}

@@ -16,22 +16,22 @@
   "contributes": {
     "commands": [
       {
-        "command": "codeAtlas.bookmarkSelection",
-        "title": "Code Atlas: Bookmark Selection"
+        "command": "codeAtlas.pinSelection",
+        "title": "Code Atlas: Pin Selection"
       },
       {
-        "command": "codeAtlas.linkBookmark",
-        "title": "Code Atlas: Link Bookmark"
+        "command": "codeAtlas.linkPin",
+        "title": "Code Atlas: Link Pin"
       }
     ],
     "keybindings": [
       {
-        "command": "codeAtlas.bookmarkSelection",
-        "key": "ctrl+shift+b",
+        "command": "codeAtlas.pinSelection",
+        "key": "ctrl+shift+p",
         "when": "editorTextFocus"
       },
       {
-        "command": "codeAtlas.linkBookmark",
+        "command": "codeAtlas.linkPin",
         "key": "ctrl+shift+l",
         "when": "editorTextFocus"
       }

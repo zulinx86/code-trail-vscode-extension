@@ -1,5 +1,5 @@
 import * as path from 'path';
-import type { SelectionInfo } from './editor';
+import type { SelectionInfo } from './selection';
 
 const LANGUAGE_ID_TO_TAG: Record<string, string> = {
 	typescript: 'ts',
@@ -32,7 +32,7 @@ function getLanguageTag(languageId: string): string {
 	return LANGUAGE_ID_TO_TAG[languageId] ?? languageId;
 }
 
-export function formatRecord(
+export function formatPin(
 	info: SelectionInfo,
 	exportedAt: Date,
 	githubUrl?: string,
@@ -71,7 +71,7 @@ ${info.selectedText}
 `;
 }
 
-export function generateFileName(
+export function generatePinFileName(
 	info: SelectionInfo,
 	exportedAt: Date,
 ): string {

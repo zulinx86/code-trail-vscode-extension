@@ -9,35 +9,35 @@ import { getSymbolRange } from '../utils/symbol';
 
 const OUTPUT_DIR = 'code-atlas';
 
-interface BookmarkInfo {
-	bookmarkId: string;
+interface PinInfo {
+	pinId: string;
 	uri: vscode.Uri;
 	fm: Frontmatter;
 }
 
-async function getBookmarks(): Promise<BookmarkInfo[]> {
+async function getPins(): Promise<PinInfo[]> {
 	const files = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
-	const bookmarks: BookmarkInfo[] = [];
+	const pins: PinInfo[] = [];
 	for (const uri of files) {
 		const content = Buffer.from(
 			await vscode.workspace.fs.readFile(uri),
 		).toString('utf-8');
 		const fm = parseFrontmatter(content);
 		if (fm) {
-			bookmarks.push({
-				bookmarkId: path.basename(uri.fsPath),
+			pins.push({
+				pinId: path.basename(uri.fsPath),
 				uri,
 				fm,
 			});
 		}
 	}
-	return bookmarks;
+	return pins;
 }
 
-function bookmarkToKey(b: BookmarkInfo): string {
-	return b.fm.symbol
-		? `${b.fm.file}#${b.fm.symbol}`
-		: `${b.fm.file}#L${b.fm.startLine}-L${b.fm.endLine}`;
+function pinToKey(p: PinInfo): string {
+	return p.fm.symbol
+		? `${p.fm.file}#${p.fm.symbol}`
+		: `${p.fm.file}#L${p.fm.startLine}-L${p.fm.endLine}`;
 }
 
 function callItemToKey(wsRoot: string, item: vscode.CallHierarchyItem): string {
@@ -93,7 +93,7 @@ async function getCallHierarchyCandidates(
 
 		const wsRoot = workspaceFolder.fsPath;
 
-		// Get ongoing calls
+		// Get outgoing calls
 		const outCalls = await vscode.commands.executeCommand<
 			vscode.CallHierarchyOutgoingCall[]
 		>('vscode.provideOutgoingCalls', item);
@@ -118,11 +118,11 @@ async function getCallHierarchyCandidates(
 }
 
 interface QuickPickCandidate extends vscode.QuickPickItem {
-	bookmark: BookmarkInfo;
+	pin: PinInfo;
 	direction: 'uses' | 'usedBy';
 }
 
-export async function linkBookmark(): Promise<void> {
+export async function linkPin(): Promise<void> {
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
 		vscode.window.showWarningMessage('No active editor found.');
@@ -131,21 +131,21 @@ export async function linkBookmark(): Promise<void> {
 
 	const currentFm = parseFrontmatter(editor.document.getText());
 	if (!currentFm) {
-		vscode.window.showWarningMessage('Current file is not a valid bookmark.');
+		vscode.window.showWarningMessage('Current file is not a valid pin.');
 		return;
 	}
 
-	// Get all the bookmarks
-	const currentBookmarkId = path.basename(editor.document.uri.fsPath);
-	const bookmarks = (await getBookmarks()).filter(
-		(b) => b.bookmarkId !== currentBookmarkId,
+	// Get all the pins
+	const currentPinId = path.basename(editor.document.uri.fsPath);
+	const pins = (await getPins()).filter(
+		(p) => p.pinId !== currentPinId,
 	);
-	if (bookmarks.length === 0) {
-		vscode.window.showWarningMessage('No other bookmarks found.');
+	if (pins.length === 0) {
+		vscode.window.showWarningMessage('No other pins found.');
 		return;
 	}
 
-	// Get ongoing and incoming calls
+	// Get outgoing and incoming calls
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri;
 	if (!workspaceFolder) {
 		return;
@@ -159,36 +159,36 @@ export async function linkBookmark(): Promise<void> {
 	const items: QuickPickCandidate[] = [];
 	const others: QuickPickCandidate[] = [];
 
-	for (const b of bookmarks) {
-		const key = bookmarkToKey(b);
+	for (const p of pins) {
+		const key = pinToKey(p);
 		const isOutgoing = outgoing.has(key);
 		const isIncoming = incoming.has(key);
 
-		const desc = `${b.fm.file}${b.fm.symbol ? ' · ' + b.fm.symbol : ''}`;
+		const desc = `${p.fm.file}${p.fm.symbol ? ' · ' + p.fm.symbol : ''}`;
 
 		if (isOutgoing) {
 			items.push({
 				label: `$(arrow-right) ${desc}`,
-				description: b.bookmarkId,
+				description: p.pinId,
 				detail: 'Suggested',
-				bookmark: b,
+				pin: p,
 				direction: 'uses',
 			});
 		}
 		if (isIncoming) {
 			items.push({
 				label: `$(arrow-left) ${desc}`,
-				description: b.bookmarkId,
+				description: p.pinId,
 				detail: 'Suggested',
-				bookmark: b,
+				pin: p,
 				direction: 'usedBy',
 			});
 		}
 		if (!isOutgoing && !isIncoming) {
 			others.push({
 				label: desc,
-				description: b.bookmarkId,
-				bookmark: b,
+				description: p.pinId,
+				pin: p,
 				direction: 'uses',
 			});
 		}
@@ -204,7 +204,7 @@ export async function linkBookmark(): Promise<void> {
 
 	// Wait for quick pick
 	const selected = await vscode.window.showQuickPick(items, {
-		placeHolder: 'Select a bookmark to link',
+		placeHolder: 'Select a pin to link',
 	});
 	if (!selected) {
 		return;
@@ -237,15 +237,15 @@ export async function linkBookmark(): Promise<void> {
 	}
 
 	const currentUri = editor.document.uri;
-	const targetUri = selected.bookmark.uri;
-	const targetBookmarkId = selected.bookmark.bookmarkId;
+	const targetUri = selected.pin.uri;
+	const targetPinId = selected.pin.pinId;
 	const reverseDirection = direction === 'uses' ? 'usedBy' : 'uses';
 
 	// Add links
-	await addLink(currentUri, direction, targetBookmarkId);
-	await addLink(targetUri, reverseDirection, currentBookmarkId);
+	await addLink(currentUri, direction, targetPinId);
+	await addLink(targetUri, reverseDirection, currentPinId);
 
 	vscode.window.showInformationMessage(
-		`Linked: ${currentBookmarkId} ${direction === 'uses' ? '→' : '←'} ${targetBookmarkId}`,
+		`Linked: ${currentPinId} ${direction === 'uses' ? '→' : '←'} ${targetPinId}`,
 	);
 }
