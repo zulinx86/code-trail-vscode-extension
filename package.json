@@ -18,12 +18,21 @@
       {
         "command": "codeAtlas.bookmarkSelection",
         "title": "Code Atlas: Bookmark Selection"
+      },
+      {
+        "command": "codeAtlas.linkBookmark",
+        "title": "Code Atlas: Link Bookmark"
       }
     ],
     "keybindings": [
       {
         "command": "codeAtlas.bookmarkSelection",
         "key": "ctrl+shift+b",
+        "when": "editorTextFocus"
+      },
+      {
+        "command": "codeAtlas.linkBookmark",
+        "key": "ctrl+shift+l",
         "when": "editorTextFocus"
       }
     ]

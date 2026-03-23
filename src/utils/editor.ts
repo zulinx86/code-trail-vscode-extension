@@ -102,3 +102,39 @@ export async function getSymbolForRange(
 	}
 	return findSymbolAtPosition(symbols, range.start);
 }
+
+function findSymbolByName(
+	symbols: vscode.DocumentSymbol[],
+	name: string,
+	prefix = '',
+): vscode.DocumentSymbol | undefined {
+	for (const s of symbols) {
+		const qualifiedName = prefix ? `${prefix}.${s.name}` : s.name;
+		if (qualifiedName === name) {
+			return s;
+		}
+
+		// Go down to children only if this symbol could be a prefix of the target
+		if (name.startsWith(qualifiedName + '.')) {
+			const child = findSymbolByName(s.children, name, qualifiedName);
+			if (child) {
+				return child;
+			}
+		}
+	}
+	return undefined;
+}
+
+export async function getSymbolRange(
+	uri: vscode.Uri,
+	symbolName: string,
+): Promise<vscode.Range | undefined> {
+	const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+		'vscode.executeDocumentSymbolProvider',
+		uri,
+	);
+	if (!symbols) {
+		return undefined;
+	}
+	return findSymbolByName(symbols, symbolName)?.selectionRange;
+}
