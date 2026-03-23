@@ -45,6 +45,9 @@ export function formatRecord(info: SelectionInfo, exportedAt: Date, githubUrl?: 
 		`link: ${link}`,
 		`exportedAt: ${timestamp}`,
 	];
+	if (info.symbol) {
+		frontmatter.push(`symbol: ${info.symbol}`);
+	}
 	if (githubUrl) {
 		frontmatter.push(`github: ${githubUrl}`);
 	}

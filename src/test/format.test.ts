@@ -60,6 +60,17 @@ suite('format', () => {
 			const result = formatRecord(baseInfo, fixedDate);
 			assert.ok(!result.includes('github:'));
 		});
+
+		test('should include symbol in frontmatter when provided', () => {
+			const info: SelectionInfo = { ...baseInfo, symbol: 'Server.handleRequest' };
+			const result = formatRecord(info, fixedDate);
+			assert.ok(result.includes('symbol: Server.handleRequest'));
+		});
+
+		test('should omit symbol field when not provided', () => {
+			const result = formatRecord(baseInfo, fixedDate);
+			assert.ok(!result.includes('symbol:'));
+		});
 	});
 
 	suite('generateFileName', () => {

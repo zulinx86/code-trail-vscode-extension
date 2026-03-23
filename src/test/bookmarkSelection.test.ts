@@ -118,6 +118,7 @@ suite('bookmarkSelection command', () => {
 			assert.ok(text.includes('function hello()'));
 			assert.ok(text.includes('return "world"'));
 			assert.ok(text.includes('range: L2-L4'));
+			assert.ok(text.includes('symbol: hello'));
 		} finally {
 			await vscode.workspace.fs.delete(tmpFileUri);
 		}
@@ -150,6 +151,7 @@ suite('bookmarkSelection command', () => {
 			assert.ok(text.includes('function inner()'));
 			assert.ok(text.includes('return 42'));
 			assert.ok(!text.includes('function outer()'));
+			assert.ok(text.includes('symbol: outer.inner'));
 		} finally {
 			await vscode.workspace.fs.delete(tmpFileUri);
 		}

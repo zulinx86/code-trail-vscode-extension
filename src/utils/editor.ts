@@ -8,9 +8,10 @@ export interface SelectionInfo {
 	endLine: number;
 	selectedText: string;
 	languageId: string;
+	symbol?: string;
 }
 
-export function getSelectionInfo(editor: vscode.TextEditor, range: vscode.Range): SelectionInfo {
+export function getSelectionInfo(editor: vscode.TextEditor, range: vscode.Range, symbolName?: string): SelectionInfo {
 	const document = editor.document;
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
@@ -31,6 +32,7 @@ export function getSelectionInfo(editor: vscode.TextEditor, range: vscode.Range)
 		endLine: range.end.line + 1,
 		selectedText: document.getText(fullRange),
 		languageId: document.languageId,
+		symbol: symbolName,
 	};
 }
 
@@ -44,31 +46,42 @@ const BOOKMARKABLE_KINDS = [
 	vscode.SymbolKind.Interface,
 ];
 
-function findSymbolAtPosition(symbols: vscode.DocumentSymbol[], position: vscode.Position): vscode.DocumentSymbol | undefined {
+export interface SymbolInfo {
+	range: vscode.Range;
+	name: string;
+}
+
+function findSymbolAtPosition(symbols: vscode.DocumentSymbol[], position: vscode.Position, prefix = ''): SymbolInfo | undefined {
 	for (const symbol of symbols) {
 		if (!symbol.range.contains(position)) {
 			continue;
 		}
-		// check children first for the most specific (innermost) match
-		const child = findSymbolAtPosition(symbol.children, position);
+
+		// Symbol found at position
+		const qualifiedName = prefix ? `${prefix}.${symbol.name}` : symbol.name;
+
+		// Search children first to get the innermost.
+		const child = findSymbolAtPosition(symbol.children, position, qualifiedName);
 		if (child) {
 			return child;
 		}
+
+		// The innermost one reaches here.
 		if (BOOKMARKABLE_KINDS.includes(symbol.kind)) {
-			return symbol;
+			return { range: symbol.range, name: qualifiedName };
 		}
 	}
+	// No children or no symbol found at position
 	return undefined;
 }
 
-export async function getSymbolAtCursor(editor: vscode.TextEditor): Promise<vscode.Range | undefined> {
+export async function getSymbolForRange(uri: vscode.Uri, range: vscode.Range): Promise<SymbolInfo | undefined> {
 	const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
 		'vscode.executeDocumentSymbolProvider',
-		editor.document.uri,
+		uri,
 	);
 	if (!symbols) {
 		return undefined;
 	}
-	const func = findSymbolAtPosition(symbols, editor.selection.active);
-	return func?.range;
+	return findSymbolAtPosition(symbols, range.start);
 }

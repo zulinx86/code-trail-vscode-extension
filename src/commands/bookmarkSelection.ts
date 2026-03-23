@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getSelectionInfo, getSymbolAtCursor } from '../utils/editor';
+import { getSelectionInfo, getSymbolForRange } from '../utils/editor';
 import { formatRecord, generateFileName } from '../utils/format';
 import { saveRecord } from '../utils/file';
 import { getGitHubUrl } from '../utils/git';
@@ -16,20 +16,20 @@ export async function bookmarkSelection(): Promise<void> {
 		return;
 	}
 
+	const symbolInfo = await getSymbolForRange(editor.document.uri, editor.selection);
+
 	let range: vscode.Range;
 	if (!editor.selection.isEmpty) {
 		range = editor.selection;
+	} else if (symbolInfo) {
+		range = symbolInfo.range;
 	} else {
-		const funcRange = await getSymbolAtCursor(editor);
-		if (!funcRange) {
-			vscode.window.showWarningMessage('No selection or function found at cursor.');
-			return;
-		}
-		range = funcRange;
+		vscode.window.showWarningMessage('No selection or symbol found at cursor.');
+		return;
 	}
 
 	const now = new Date();
-	const info = getSelectionInfo(editor, range);
+	const info = getSelectionInfo(editor, range, symbolInfo?.name);
 	const githubUrl = getGitHubUrl(info.filePath, info.startLine, info.endLine);
 	const content = formatRecord(info, now, githubUrl);
 	const fileName = generateFileName(info, now);
