@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getSelectionInfo } from '../utils/editor';
 import { getSymbolAtPosition } from '../utils/symbol';
 import { formatRecord, generateFileName } from '../utils/format';
-import { saveRecord } from '../utils/file';
+import { saveFile } from '../utils/file';
 import { getGitHubUrl } from '../utils/git';
 
 export async function bookmarkSelection(): Promise<void> {
@@ -39,7 +39,7 @@ export async function bookmarkSelection(): Promise<void> {
 	const fileName = generateFileName(info, now);
 
 	try {
-		const fileUri = await saveRecord(fileName, content);
+		const fileUri = await saveFile(fileName, content);
 		const doc = await vscode.workspace.openTextDocument(fileUri);
 		await vscode.window.showTextDocument(doc);
 		vscode.window.showInformationMessage(`Saved: ${fileName}`);

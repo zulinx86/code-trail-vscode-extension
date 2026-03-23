@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 const OUTPUT_DIR = 'code-atlas';
 
-export async function saveRecord(
+export async function saveFile(
 	fileName: string,
 	content: string,
 ): Promise<vscode.Uri> {
