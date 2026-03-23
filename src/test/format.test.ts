@@ -19,7 +19,7 @@ suite('format', () => {
 			const expected = [
 				'---',
 				'file: src/example.ts',
-				'range: 10-24',
+				'range: L10-L24',
 				'link: code-atlas:src/example.ts#L10-L24',
 				'exportedAt: 2026-03-22T12:34:56Z',
 				'---',

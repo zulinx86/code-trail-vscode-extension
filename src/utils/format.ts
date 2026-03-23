@@ -41,7 +41,7 @@ export function formatRecord(info: SelectionInfo, exportedAt: Date, githubUrl?: 
 	const frontmatter = [
 		'---',
 		`file: ${info.filePath}`,
-		`range: ${info.startLine}-${info.endLine}`,
+		`range: L${info.startLine}-L${info.endLine}`,
 		`link: ${link}`,
 		`exportedAt: ${timestamp}`,
 	];

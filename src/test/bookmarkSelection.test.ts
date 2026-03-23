@@ -86,7 +86,7 @@ suite('bookmarkSelection command', () => {
 
 			// should contain full lines, not partial
 			assert.ok(text.includes('bbbb\ncccc'));
-			assert.ok(text.includes('range: 2-3'));
+			assert.ok(text.includes('range: L2-L3'));
 		} finally {
 			await vscode.workspace.fs.delete(tmpFileUri);
 		}
@@ -117,7 +117,7 @@ suite('bookmarkSelection command', () => {
 
 			assert.ok(text.includes('function hello()'));
 			assert.ok(text.includes('return "world"'));
-			assert.ok(text.includes('range: 2-4'));
+			assert.ok(text.includes('range: L2-L4'));
 		} finally {
 			await vscode.workspace.fs.delete(tmpFileUri);
 		}
