@@ -119,7 +119,7 @@ suite('linkPin command', () => {
 			).toString('utf-8');
 			assert.ok(textA.includes('uses:'), 'pin A should have uses field');
 			assert.ok(
-				textA.includes('  - pin-b.md'),
+				textA.includes('  - code-atlas:code-atlas/pin-b.md'),
 				'pin A should link to pin-b.md',
 			);
 
@@ -129,7 +129,7 @@ suite('linkPin command', () => {
 			).toString('utf-8');
 			assert.ok(textB.includes('usedBy:'), 'pin B should have usedBy field');
 			assert.ok(
-				textB.includes('  - pin-a.md'),
+				textB.includes('  - code-atlas:code-atlas/pin-a.md'),
 				'pin B should link to pin-a.md',
 			);
 		} finally {
@@ -144,11 +144,11 @@ suite('linkPin command', () => {
 		const pinBUri = vscode.Uri.joinPath(outputDir, 'pin-b.md');
 		// A already has a uses link to B
 		const contentA = makePinContent('src/a.ts', 1, 5, {
-			uses: ['pin-b.md'],
+			uses: ['code-atlas:code-atlas/pin-b.md'],
 		});
 		// B already has a usedBy link to A
 		const contentB = makePinContent('src/b.ts', 10, 20, {
-			usedBy: ['pin-a.md'],
+			usedBy: ['code-atlas:code-atlas/pin-a.md'],
 		});
 		await vscode.workspace.fs.writeFile(
 			pinAUri,
@@ -181,7 +181,7 @@ suite('linkPin command', () => {
 			const textA = Buffer.from(
 				await vscode.workspace.fs.readFile(pinAUri),
 			).toString('utf-8');
-			const matchesA = textA.match(/pin-b\.md/g) ?? [];
+			const matchesA = textA.match(/code-atlas:code-atlas\/pin-b\.md/g) ?? [];
 			assert.strictEqual(
 				matchesA.length,
 				1,
@@ -191,7 +191,7 @@ suite('linkPin command', () => {
 			const textB = Buffer.from(
 				await vscode.workspace.fs.readFile(pinBUri),
 			).toString('utf-8');
-			const matchesB = textB.match(/pin-a\.md/g) ?? [];
+			const matchesB = textB.match(/code-atlas:code-atlas\/pin-a\.md/g) ?? [];
 			assert.strictEqual(
 				matchesB.length,
 				1,

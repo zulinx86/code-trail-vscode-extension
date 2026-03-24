@@ -239,8 +239,8 @@ export async function linkPin(): Promise<void> {
 	const reverseDirection = direction === 'uses' ? 'usedBy' : 'uses';
 
 	// Add links
-	await addLink(currentUri, direction, targetPinId);
-	await addLink(targetUri, reverseDirection, currentPinId);
+	await addLink(currentUri, direction, `${OUTPUT_DIR}/${targetPinId}`);
+	await addLink(targetUri, reverseDirection, `${OUTPUT_DIR}/${currentPinId}`);
 
 	vscode.window.showInformationMessage(
 		`Linked: ${currentPinId} ${direction === 'uses' ? '→' : '←'} ${targetPinId}`,

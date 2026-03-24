@@ -68,7 +68,7 @@ export function parseFrontmatter(text: string): Frontmatter | undefined {
 export async function addLink(
 	fileUri: vscode.Uri,
 	field: 'uses' | 'usedBy',
-	targetBookmarkId: string,
+	targetPinPath: string,
 ): Promise<void> {
 	const content = Buffer.from(
 		await vscode.workspace.fs.readFile(fileUri),
@@ -79,18 +79,19 @@ export async function addLink(
 		return;
 	}
 
+	const entry = `code-atlas:${targetPinPath}`;
 	const fieldIdx = lines.indexOf(`${field}:`);
 	if (fieldIdx !== -1 && fieldIdx < closeIdx) {
 		let i = fieldIdx + 1;
 		while (i < closeIdx && lines[i].startsWith('  - ')) {
-			if (lines[i] === `  - ${targetBookmarkId}`) {
+			if (lines[i] === `  - ${entry}`) {
 				return;
 			}
 			i++;
 		}
-		lines.splice(i, 0, `  - ${targetBookmarkId}`);
+		lines.splice(i, 0, `  - ${entry}`);
 	} else {
-		lines.splice(closeIdx, 0, `${field}:`, `  - ${targetBookmarkId}`);
+		lines.splice(closeIdx, 0, `${field}:`, `  - ${entry}`);
 	}
 
 	await vscode.workspace.fs.writeFile(

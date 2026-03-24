@@ -51,19 +51,21 @@ suite('frontmatter', () => {
 				'link: code-atlas:src/example.ts#L10-L24',
 				'exportedAt: 2026-03-22T12:34:56Z',
 				'uses:',
-				'  - 20260322-123500-validator.ts.md',
-				'  - 20260322-123600-handler.ts.md',
+				'  - code-atlas:code-atlas/20260322-123500-validator.ts.md',
+				'  - code-atlas:code-atlas/20260322-123600-handler.ts.md',
 				'usedBy:',
-				'  - 20260322-123400-main.ts.md',
+				'  - code-atlas:code-atlas/20260322-123400-main.ts.md',
 				'---',
 			].join('\n');
 			const fm = parseFrontmatter(text);
 			assert.ok(fm);
 			assert.deepStrictEqual(fm.uses, [
-				'20260322-123500-validator.ts.md',
-				'20260322-123600-handler.ts.md',
+				'code-atlas:code-atlas/20260322-123500-validator.ts.md',
+				'code-atlas:code-atlas/20260322-123600-handler.ts.md',
 			]);
-			assert.deepStrictEqual(fm.usedBy, ['20260322-123400-main.ts.md']);
+			assert.deepStrictEqual(fm.usedBy, [
+				'code-atlas:code-atlas/20260322-123400-main.ts.md',
+			]);
 		});
 
 		test('should return undefined for invalid frontmatter', () => {
@@ -112,21 +114,30 @@ suite('frontmatter', () => {
 		test('should create field and add link when field does not exist', async () => {
 			const uri = await writePin('tmp-addlink-new.md', base);
 			try {
-				await addLink(uri, 'uses', 'target.md');
+				await addLink(uri, 'uses', 'code-atlas/target.md');
 				const content = await readPin(uri);
-				assert.ok(content.includes('uses:\n  - target.md'));
+				assert.ok(
+					content.includes('uses:\n  - code-atlas:code-atlas/target.md'),
+				);
 			} finally {
 				await deleteSilently(uri);
 			}
 		});
 
 		test('should append to existing field', async () => {
-			const withUses = base.replace('---\n', 'uses:\n  - existing.md\n---\n');
+			const withUses = base.replace(
+				'---\n',
+				'uses:\n  - code-atlas:code-atlas/existing.md\n---\n',
+			);
 			const uri = await writePin('tmp-addlink-append.md', withUses);
 			try {
-				await addLink(uri, 'uses', 'target.md');
+				await addLink(uri, 'uses', 'code-atlas/target.md');
 				const content = await readPin(uri);
-				assert.ok(content.includes('  - existing.md\n  - target.md'));
+				assert.ok(
+					content.includes(
+						'  - code-atlas:code-atlas/existing.md\n  - code-atlas:code-atlas/target.md',
+					),
+				);
 			} finally {
 				await deleteSilently(uri);
 			}
@@ -135,10 +146,11 @@ suite('frontmatter', () => {
 		test('should not add duplicate link', async () => {
 			const uri = await writePin('tmp-addlink-dup.md', base);
 			try {
-				await addLink(uri, 'uses', 'target.md');
-				await addLink(uri, 'uses', 'target.md');
+				await addLink(uri, 'uses', 'code-atlas/target.md');
+				await addLink(uri, 'uses', 'code-atlas/target.md');
 				const content = await readPin(uri);
-				const count = content.split('target.md').length - 1;
+				const count =
+					content.split('code-atlas:code-atlas/target.md').length - 1;
 				assert.strictEqual(count, 1);
 			} finally {
 				await deleteSilently(uri);
@@ -148,9 +160,11 @@ suite('frontmatter', () => {
 		test('should work with usedBy field', async () => {
 			const uri = await writePin('tmp-addlink-usedby.md', base);
 			try {
-				await addLink(uri, 'usedBy', 'caller.md');
+				await addLink(uri, 'usedBy', 'code-atlas/caller.md');
 				const content = await readPin(uri);
-				assert.ok(content.includes('usedBy:\n  - caller.md'));
+				assert.ok(
+					content.includes('usedBy:\n  - code-atlas:code-atlas/caller.md'),
+				);
 			} finally {
 				await deleteSilently(uri);
 			}

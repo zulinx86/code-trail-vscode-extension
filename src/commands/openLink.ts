@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 
 interface LinkArgs {
 	filePath: string;
-	startLine: number;
-	endLine: number;
+	startLine?: number;
+	endLine?: number;
 }
 
 export async function openLink(args: LinkArgs): Promise<void> {
@@ -17,7 +17,8 @@ export async function openLink(args: LinkArgs): Promise<void> {
 	const doc = await vscode.workspace.openTextDocument(fileUri);
 	const editor = await vscode.window.showTextDocument(doc);
 
-	const pos = new vscode.Position(args.startLine - 1, 0);
+	const line = args.startLine ? args.startLine - 1 : 0;
+	const pos = new vscode.Position(line, 0);
 	editor.selection = new vscode.Selection(pos, pos);
 	editor.revealRange(
 		new vscode.Range(pos, pos),
