@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
-
-const OUTPUT_DIR = 'code-atlas';
+import { OUTPUT_DIR } from '../config';
 
 export async function saveFile(
 	fileName: string,

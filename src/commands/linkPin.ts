@@ -6,8 +6,7 @@ import {
 	type Frontmatter,
 } from '../utils/frontmatter';
 import { getSymbolPos } from '../utils/symbol';
-
-const OUTPUT_DIR = 'code-atlas';
+import { OUTPUT_DIR } from '../config';
 
 interface PinInfo {
 	pinId: string;
