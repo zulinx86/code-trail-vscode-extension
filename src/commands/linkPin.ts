@@ -5,7 +5,7 @@ import {
 	addLink,
 	type Frontmatter,
 } from '../utils/frontmatter';
-import { getSymbolRange } from '../utils/symbol';
+import { getSymbolPos } from '../utils/symbol';
 
 const OUTPUT_DIR = 'code-atlas';
 
@@ -73,11 +73,11 @@ async function getCallHierarchyCandidates(
 		// Find symbol position for prepareCallHierarchy
 		let pos: vscode.Position;
 		if (fm.symbol) {
-			const range = await getSymbolRange(fileUri, fm.symbol);
-			if (!range) {
+			const symbolPos = await getSymbolPos(fileUri, fm.symbol);
+			if (!symbolPos) {
 				return { outgoing, incoming };
 			}
-			pos = range.start;
+			pos = symbolPos;
 		} else {
 			pos = new vscode.Position(fm.startLine - 1, 0);
 		}

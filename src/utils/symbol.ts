@@ -61,10 +61,10 @@ function findSymbolAtPosition(
 	return undefined;
 }
 
-export async function getSymbolRange(
+export async function getSymbolPos(
 	uri: vscode.Uri,
 	symbolName: string,
-): Promise<vscode.Range | undefined> {
+): Promise<vscode.Position | undefined> {
 	const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
 		'vscode.executeDocumentSymbolProvider',
 		uri,
@@ -72,7 +72,7 @@ export async function getSymbolRange(
 	if (!symbols) {
 		return undefined;
 	}
-	return findSymbolByName(symbols, symbolName)?.selectionRange;
+	return findSymbolByName(symbols, symbolName)?.selectionRange.start;
 }
 
 function findSymbolByName(
