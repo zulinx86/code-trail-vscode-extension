@@ -7,9 +7,9 @@ import {
 } from '../utils/frontmatter';
 import { getSymbolPos } from '../utils/symbol';
 import { OUTPUT_DIR } from '../config';
-import { type PinInfo, getPins } from '../utils/pin';
+import { type MarkInfo, getMarks } from '../utils/mark';
 
-function pinToKey(p: PinInfo): string {
+function markToKey(p: MarkInfo): string {
 	return p.fm.symbol
 		? `${p.fm.file}#${p.fm.symbol}`
 		: `${p.fm.file}#L${p.fm.startLine}-L${p.fm.endLine}`;
@@ -93,11 +93,11 @@ async function getCallHierarchyCandidates(
 }
 
 interface QuickPickCandidate extends vscode.QuickPickItem {
-	pin: PinInfo;
+	mark: MarkInfo;
 	direction: 'uses' | 'usedBy';
 }
 
-export async function linkPin(): Promise<void> {
+export async function linkMark(): Promise<void> {
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
 		vscode.window.showWarningMessage('No active editor found.');
@@ -106,15 +106,15 @@ export async function linkPin(): Promise<void> {
 
 	const currentFm = parseFrontmatter(editor.document.getText());
 	if (!currentFm) {
-		vscode.window.showWarningMessage('Current file is not a valid pin.');
+		vscode.window.showWarningMessage('Current file is not a valid mark.');
 		return;
 	}
 
-	// Get all the pins
-	const currentPinId = path.basename(editor.document.uri.fsPath);
-	const pins = (await getPins()).filter((p) => p.pinId !== currentPinId);
-	if (pins.length === 0) {
-		vscode.window.showWarningMessage('No other pins found.');
+	// Get all the marks
+	const currentMarkId = path.basename(editor.document.uri.fsPath);
+	const marks = (await getMarks()).filter((p) => p.markId !== currentMarkId);
+	if (marks.length === 0) {
+		vscode.window.showWarningMessage('No other marks found.');
 		return;
 	}
 
@@ -132,8 +132,8 @@ export async function linkPin(): Promise<void> {
 	const items: QuickPickCandidate[] = [];
 	const others: QuickPickCandidate[] = [];
 
-	for (const p of pins) {
-		const key = pinToKey(p);
+	for (const p of marks) {
+		const key = markToKey(p);
 		const isOutgoing = outgoing.has(key);
 		const isIncoming = incoming.has(key);
 
@@ -142,26 +142,26 @@ export async function linkPin(): Promise<void> {
 		if (isOutgoing) {
 			items.push({
 				label: `$(arrow-right) ${desc}`,
-				description: p.pinId,
+				description: p.markId,
 				detail: 'Suggested',
-				pin: p,
+				mark: p,
 				direction: 'uses',
 			});
 		}
 		if (isIncoming) {
 			items.push({
 				label: `$(arrow-left) ${desc}`,
-				description: p.pinId,
+				description: p.markId,
 				detail: 'Suggested',
-				pin: p,
+				mark: p,
 				direction: 'usedBy',
 			});
 		}
 		if (!isOutgoing && !isIncoming) {
 			others.push({
 				label: desc,
-				description: p.pinId,
-				pin: p,
+				description: p.markId,
+				mark: p,
 				direction: 'uses',
 			});
 		}
@@ -177,7 +177,7 @@ export async function linkPin(): Promise<void> {
 
 	// Wait for quick pick
 	const selected = await vscode.window.showQuickPick(items, {
-		placeHolder: 'Select a pin to link',
+		placeHolder: 'Select a mark to link',
 	});
 	if (!selected) {
 		return;
@@ -210,15 +210,15 @@ export async function linkPin(): Promise<void> {
 	}
 
 	const currentUri = editor.document.uri;
-	const targetUri = selected.pin.uri;
-	const targetPinId = selected.pin.pinId;
+	const targetUri = selected.mark.uri;
+	const targetMarkId = selected.mark.markId;
 	const reverseDirection = direction === 'uses' ? 'usedBy' : 'uses';
 
 	// Add links
-	await addLink(currentUri, direction, `${OUTPUT_DIR}/${targetPinId}`);
-	await addLink(targetUri, reverseDirection, `${OUTPUT_DIR}/${currentPinId}`);
+	await addLink(currentUri, direction, `${OUTPUT_DIR}/${targetMarkId}`);
+	await addLink(targetUri, reverseDirection, `${OUTPUT_DIR}/${currentMarkId}`);
 
 	vscode.window.showInformationMessage(
-		`Linked: ${currentPinId} ${direction === 'uses' ? '→' : '←'} ${targetPinId}`,
+		`Linked: ${currentMarkId} ${direction === 'uses' ? '→' : '←'} ${targetMarkId}`,
 	);
 }

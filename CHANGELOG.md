@@ -4,6 +4,6 @@
 
 ### Added
 
-- `Code Atlas: Pin Code` command to pin selected code or symbol at cursor as a Markdown file
-- `Code Atlas: Link Pin` command to create `uses`/`usedBy` relationships between pins
-- Clickable `code-atlas:` links to jump between pins and source code
+- `Code Trail: Mark Code` command to mark selected code or symbol at cursor as a Markdown file
+- `Code Trail: Link Mark` command to create `uses`/`usedBy` relationships between marks
+- Clickable `code-trail:` links to jump between marks and source code

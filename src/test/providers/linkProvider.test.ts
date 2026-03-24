@@ -1,12 +1,12 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { CodeAtlasLinkProvider } from '../../providers/linkProvider';
+import { CodeTrailLinkProvider } from '../../providers/linkProvider';
 
-suite('CodeAtlasLinkProvider', () => {
-	const provider = new CodeAtlasLinkProvider();
+suite('CodeTrailLinkProvider', () => {
+	const provider = new CodeTrailLinkProvider();
 
-	test('should detect code-atlas: link in frontmatter', async () => {
-		const content = 'link: code-atlas:src/editor.ts#L10-L24';
+	test('should detect code-trail: link in frontmatter', async () => {
+		const content = 'link: code-trail:src/editor.ts#L10-L24';
 		const doc = await vscode.workspace.openTextDocument({
 			content,
 			language: 'markdown',
@@ -14,14 +14,14 @@ suite('CodeAtlasLinkProvider', () => {
 
 		const links = provider.provideDocumentLinks(doc);
 		assert.strictEqual(links.length, 1);
-		assert.ok(links[0].target?.toString().includes('codeAtlas.openLink'));
+		assert.ok(links[0].target?.toString().includes('codeTrail.openLink'));
 	});
 
 	test('should detect multiple links', async () => {
 		const content = [
-			'link: code-atlas:a.ts#L1-L2',
+			'link: code-trail:a.ts#L1-L2',
 			'some text',
-			'link: code-atlas:b.ts#L3-L4',
+			'link: code-trail:b.ts#L3-L4',
 		].join('\n');
 		const doc = await vscode.workspace.openTextDocument({
 			content,

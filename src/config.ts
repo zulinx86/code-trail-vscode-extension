@@ -1,1 +1,1 @@
-export const OUTPUT_DIR = 'code-atlas';
+export const OUTPUT_DIR = 'code-trail';

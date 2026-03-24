@@ -1,9 +1,9 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 
-suite('pinCode command', () => {
+suite('markCode command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
-	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-atlas');
+	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
 	async function cleanup() {
 		try {
@@ -23,7 +23,7 @@ suite('pinCode command', () => {
 		});
 		await vscode.window.showTextDocument(doc);
 
-		await vscode.commands.executeCommand('codeAtlas.pinCode');
+		await vscode.commands.executeCommand('codeTrail.markCode');
 
 		try {
 			await vscode.workspace.fs.stat(outputDir);
@@ -33,8 +33,8 @@ suite('pinCode command', () => {
 		}
 	});
 
-	test('should create a pin file from selection', async () => {
-		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-pin-sel.ts');
+	test('should create a mark file from selection', async () => {
+		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-mark-sel.ts');
 		await vscode.workspace.fs.writeFile(
 			tmpFileUri,
 			Buffer.from('line1\nline2\nline3\n', 'utf-8'),
@@ -45,7 +45,7 @@ suite('pinCode command', () => {
 			const editor = await vscode.window.showTextDocument(doc);
 			editor.selection = new vscode.Selection(1, 0, 2, 5);
 
-			await vscode.commands.executeCommand('codeAtlas.pinCode');
+			await vscode.commands.executeCommand('codeTrail.markCode');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);
@@ -55,8 +55,8 @@ suite('pinCode command', () => {
 		}
 	});
 
-	test('should pin symbol when cursor is inside a function', async () => {
-		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-pin-sym.ts');
+	test('should mark symbol when cursor is inside a function', async () => {
+		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-mark-sym.ts');
 		await vscode.workspace.fs.writeFile(
 			tmpFileUri,
 			Buffer.from(
@@ -70,7 +70,7 @@ suite('pinCode command', () => {
 			const editor = await vscode.window.showTextDocument(doc);
 			editor.selection = new vscode.Selection(2, 0, 2, 0);
 
-			await vscode.commands.executeCommand('codeAtlas.pinCode');
+			await vscode.commands.executeCommand('codeTrail.markCode');
 
 			const entries = await vscode.workspace.fs.readDirectory(outputDir);
 			const files = entries.filter(([, type]) => type === vscode.FileType.File);

@@ -23,7 +23,7 @@ suite('openLink command', () => {
 			});
 			await vscode.window.showTextDocument(mdDoc);
 
-			await vscode.commands.executeCommand('codeAtlas.openLink', {
+			await vscode.commands.executeCommand('codeTrail.openLink', {
 				filePath: 'tmp-test-openlink.ts',
 				startLine: 3,
 				endLine: 4,

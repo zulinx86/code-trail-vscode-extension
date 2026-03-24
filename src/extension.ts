@@ -1,17 +1,17 @@
 import * as vscode from 'vscode';
-import { pinCode } from './commands/pinCode';
+import { markCode } from './commands/markCode';
 import { openLink } from './commands/openLink';
-import { linkPin } from './commands/linkPin';
-import { CodeAtlasLinkProvider } from './providers/linkProvider';
+import { linkMark } from './commands/linkMark';
+import { CodeTrailLinkProvider } from './providers/linkProvider';
 
 export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
-		vscode.commands.registerCommand('codeAtlas.pinCode', pinCode),
-		vscode.commands.registerCommand('codeAtlas.openLink', openLink),
-		vscode.commands.registerCommand('codeAtlas.linkPin', linkPin),
+		vscode.commands.registerCommand('codeTrail.markCode', markCode),
+		vscode.commands.registerCommand('codeTrail.openLink', openLink),
+		vscode.commands.registerCommand('codeTrail.linkMark', linkMark),
 		vscode.languages.registerDocumentLinkProvider(
 			{ language: 'markdown' },
-			new CodeAtlasLinkProvider(),
+			new CodeTrailLinkProvider(),
 		),
 	);
 }

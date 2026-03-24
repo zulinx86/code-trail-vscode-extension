@@ -1,11 +1,11 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 
-suite('linkPin command', () => {
+suite('linkMark command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
-	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-atlas');
+	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
-	function makePinContent(
+	function makeMarkContent(
 		file: string,
 		startLine: number,
 		endLine: number,
@@ -15,7 +15,7 @@ suite('linkPin command', () => {
 			'---',
 			`file: ${file}`,
 			`range: L${startLine}-L${endLine}`,
-			`link: code-atlas:${file}#L${startLine}-L${endLine}`,
+			`link: code-trail:${file}#L${startLine}-L${endLine}`,
 			`exportedAt: 2025-01-01T00:00:00Z`,
 		];
 		if (opts?.symbol) {
@@ -48,53 +48,53 @@ suite('linkPin command', () => {
 	setup(cleanup);
 	teardown(cleanup);
 
-	test('should show warning when current file is not a valid pin', async () => {
+	test('should show warning when current file is not a valid mark', async () => {
 		const doc = await vscode.workspace.openTextDocument({
-			content: 'not a pin',
+			content: 'not a mark',
 			language: 'markdown',
 		});
 		await vscode.window.showTextDocument(doc);
 
-		await vscode.commands.executeCommand('codeAtlas.linkPin');
+		await vscode.commands.executeCommand('codeTrail.linkMark');
 
 		// No crash; command exits gracefully (warning shown)
 	});
 
-	test('should show warning when no other pins exist', async () => {
+	test('should show warning when no other marks exist', async () => {
 		await vscode.workspace.fs.createDirectory(outputDir);
-		const pinUri = vscode.Uri.joinPath(outputDir, 'only-one.md');
-		const content = makePinContent('src/a.ts', 1, 5);
-		await vscode.workspace.fs.writeFile(pinUri, Buffer.from(content, 'utf-8'));
+		const markUri = vscode.Uri.joinPath(outputDir, 'only-one.md');
+		const content = makeMarkContent('src/a.ts', 1, 5);
+		await vscode.workspace.fs.writeFile(markUri, Buffer.from(content, 'utf-8'));
 
-		const doc = await vscode.workspace.openTextDocument(pinUri);
+		const doc = await vscode.workspace.openTextDocument(markUri);
 		await vscode.window.showTextDocument(doc);
 
-		await vscode.commands.executeCommand('codeAtlas.linkPin');
+		await vscode.commands.executeCommand('codeTrail.linkMark');
 
 		// No crash; command exits gracefully (warning shown)
 	});
 
-	test('should add bidirectional links when a pin is selected', async () => {
+	test('should add bidirectional links when a mark is selected', async () => {
 		await vscode.workspace.fs.createDirectory(outputDir);
 
-		const pinAUri = vscode.Uri.joinPath(outputDir, 'pin-a.md');
-		const pinBUri = vscode.Uri.joinPath(outputDir, 'pin-b.md');
-		const contentA = makePinContent('src/a.ts', 1, 5);
-		const contentB = makePinContent('src/b.ts', 10, 20);
+		const markAUri = vscode.Uri.joinPath(outputDir, 'mark-a.md');
+		const markBUri = vscode.Uri.joinPath(outputDir, 'mark-b.md');
+		const contentA = makeMarkContent('src/a.ts', 1, 5);
+		const contentB = makeMarkContent('src/b.ts', 10, 20);
 		await vscode.workspace.fs.writeFile(
-			pinAUri,
+			markAUri,
 			Buffer.from(contentA, 'utf-8'),
 		);
 		await vscode.workspace.fs.writeFile(
-			pinBUri,
+			markBUri,
 			Buffer.from(contentB, 'utf-8'),
 		);
 
-		// Open pin A as the active editor
-		const doc = await vscode.workspace.openTextDocument(pinAUri);
+		// Open mark A as the active editor
+		const doc = await vscode.workspace.openTextDocument(markAUri);
 		await vscode.window.showTextDocument(doc);
 
-		// Stub showQuickPick to auto-select pin B with 'uses' direction
+		// Stub showQuickPick to auto-select mark B with 'uses' direction
 		const origShowQuickPick = vscode.window.showQuickPick;
 		let callCount = 0;
 		(vscode.window as any).showQuickPick = async (
@@ -103,63 +103,63 @@ suite('linkPin command', () => {
 		) => {
 			callCount++;
 			if (callCount === 1) {
-				// First call: select the pin candidate
-				return items.find((i: any) => i.description === 'pin-b.md');
+				// First call: select the mark candidate
+				return items.find((i: any) => i.description === 'mark-b.md');
 			}
 			// Second call: direction pick (for non-suggested items)
 			return items.find((i: any) => i.value === 'uses');
 		};
 
 		try {
-			await vscode.commands.executeCommand('codeAtlas.linkPin');
+			await vscode.commands.executeCommand('codeTrail.linkMark');
 
-			// Verify pin A now has uses: pin-b.md
+			// Verify mark A now has uses: mark-b.md
 			const textA = Buffer.from(
-				await vscode.workspace.fs.readFile(pinAUri),
+				await vscode.workspace.fs.readFile(markAUri),
 			).toString('utf-8');
-			assert.ok(textA.includes('uses:'), 'pin A should have uses field');
+			assert.ok(textA.includes('uses:'), 'mark A should have uses field');
 			assert.ok(
-				textA.includes('  - code-atlas:code-atlas/pin-b.md'),
-				'pin A should link to pin-b.md',
+				textA.includes('  - code-trail:code-trail/mark-b.md'),
+				'mark A should link to mark-b.md',
 			);
 
-			// Verify pin B now has usedBy: pin-a.md
+			// Verify mark B now has usedBy: mark-a.md
 			const textB = Buffer.from(
-				await vscode.workspace.fs.readFile(pinBUri),
+				await vscode.workspace.fs.readFile(markBUri),
 			).toString('utf-8');
-			assert.ok(textB.includes('usedBy:'), 'pin B should have usedBy field');
+			assert.ok(textB.includes('usedBy:'), 'mark B should have usedBy field');
 			assert.ok(
-				textB.includes('  - code-atlas:code-atlas/pin-a.md'),
-				'pin B should link to pin-a.md',
+				textB.includes('  - code-trail:code-trail/mark-a.md'),
+				'mark B should link to mark-a.md',
 			);
 		} finally {
 			(vscode.window as any).showQuickPick = origShowQuickPick;
 		}
 	});
 
-	test('should not duplicate links when linking the same pins again', async () => {
+	test('should not duplicate links when linking the same marks again', async () => {
 		await vscode.workspace.fs.createDirectory(outputDir);
 
-		const pinAUri = vscode.Uri.joinPath(outputDir, 'pin-a.md');
-		const pinBUri = vscode.Uri.joinPath(outputDir, 'pin-b.md');
+		const markAUri = vscode.Uri.joinPath(outputDir, 'mark-a.md');
+		const markBUri = vscode.Uri.joinPath(outputDir, 'mark-b.md');
 		// A already has a uses link to B
-		const contentA = makePinContent('src/a.ts', 1, 5, {
-			uses: ['code-atlas:code-atlas/pin-b.md'],
+		const contentA = makeMarkContent('src/a.ts', 1, 5, {
+			uses: ['code-trail:code-trail/mark-b.md'],
 		});
 		// B already has a usedBy link to A
-		const contentB = makePinContent('src/b.ts', 10, 20, {
-			usedBy: ['code-atlas:code-atlas/pin-a.md'],
+		const contentB = makeMarkContent('src/b.ts', 10, 20, {
+			usedBy: ['code-trail:code-trail/mark-a.md'],
 		});
 		await vscode.workspace.fs.writeFile(
-			pinAUri,
+			markAUri,
 			Buffer.from(contentA, 'utf-8'),
 		);
 		await vscode.workspace.fs.writeFile(
-			pinBUri,
+			markBUri,
 			Buffer.from(contentB, 'utf-8'),
 		);
 
-		const doc = await vscode.workspace.openTextDocument(pinAUri);
+		const doc = await vscode.workspace.openTextDocument(markAUri);
 		await vscode.window.showTextDocument(doc);
 
 		const origShowQuickPick = vscode.window.showQuickPick;
@@ -170,32 +170,32 @@ suite('linkPin command', () => {
 		) => {
 			callCount++;
 			if (callCount === 1) {
-				return items.find((i: any) => i.description === 'pin-b.md');
+				return items.find((i: any) => i.description === 'mark-b.md');
 			}
 			return items.find((i: any) => i.value === 'uses');
 		};
 
 		try {
-			await vscode.commands.executeCommand('codeAtlas.linkPin');
+			await vscode.commands.executeCommand('codeTrail.linkMark');
 
 			const textA = Buffer.from(
-				await vscode.workspace.fs.readFile(pinAUri),
+				await vscode.workspace.fs.readFile(markAUri),
 			).toString('utf-8');
-			const matchesA = textA.match(/code-atlas:code-atlas\/pin-b\.md/g) ?? [];
+			const matchesA = textA.match(/code-trail:code-trail\/mark-b\.md/g) ?? [];
 			assert.strictEqual(
 				matchesA.length,
 				1,
-				'pin A should not have duplicate link',
+				'mark A should not have duplicate link',
 			);
 
 			const textB = Buffer.from(
-				await vscode.workspace.fs.readFile(pinBUri),
+				await vscode.workspace.fs.readFile(markBUri),
 			).toString('utf-8');
-			const matchesB = textB.match(/code-atlas:code-atlas\/pin-a\.md/g) ?? [];
+			const matchesB = textB.match(/code-trail:code-trail\/mark-a\.md/g) ?? [];
 			assert.strictEqual(
 				matchesB.length,
 				1,
-				'pin B should not have duplicate link',
+				'mark B should not have duplicate link',
 			);
 		} finally {
 			(vscode.window as any).showQuickPick = origShowQuickPick;
@@ -205,38 +205,38 @@ suite('linkPin command', () => {
 	test('should do nothing when quick pick is cancelled', async () => {
 		await vscode.workspace.fs.createDirectory(outputDir);
 
-		const pinAUri = vscode.Uri.joinPath(outputDir, 'pin-a.md');
-		const pinBUri = vscode.Uri.joinPath(outputDir, 'pin-b.md');
-		const contentA = makePinContent('src/a.ts', 1, 5);
-		const contentB = makePinContent('src/b.ts', 10, 20);
+		const markAUri = vscode.Uri.joinPath(outputDir, 'mark-a.md');
+		const markBUri = vscode.Uri.joinPath(outputDir, 'mark-b.md');
+		const contentA = makeMarkContent('src/a.ts', 1, 5);
+		const contentB = makeMarkContent('src/b.ts', 10, 20);
 		await vscode.workspace.fs.writeFile(
-			pinAUri,
+			markAUri,
 			Buffer.from(contentA, 'utf-8'),
 		);
 		await vscode.workspace.fs.writeFile(
-			pinBUri,
+			markBUri,
 			Buffer.from(contentB, 'utf-8'),
 		);
 
-		const doc = await vscode.workspace.openTextDocument(pinAUri);
+		const doc = await vscode.workspace.openTextDocument(markAUri);
 		await vscode.window.showTextDocument(doc);
 
 		const origShowQuickPick = vscode.window.showQuickPick;
 		(vscode.window as any).showQuickPick = async () => undefined;
 
 		try {
-			await vscode.commands.executeCommand('codeAtlas.linkPin');
+			await vscode.commands.executeCommand('codeTrail.linkMark');
 
 			// Neither file should be modified
 			const textA = Buffer.from(
-				await vscode.workspace.fs.readFile(pinAUri),
+				await vscode.workspace.fs.readFile(markAUri),
 			).toString('utf-8');
-			assert.strictEqual(textA, contentA, 'pin A should be unchanged');
+			assert.strictEqual(textA, contentA, 'mark A should be unchanged');
 
 			const textB = Buffer.from(
-				await vscode.workspace.fs.readFile(pinBUri),
+				await vscode.workspace.fs.readFile(markBUri),
 			).toString('utf-8');
-			assert.strictEqual(textB, contentB, 'pin B should be unchanged');
+			assert.strictEqual(textB, contentB, 'mark B should be unchanged');
 		} finally {
 			(vscode.window as any).showQuickPick = origShowQuickPick;
 		}

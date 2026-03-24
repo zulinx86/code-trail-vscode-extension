@@ -35,7 +35,7 @@ function getLanguageTag(languageId: string): string {
 	return LANGUAGE_ID_TO_TAG[languageId] ?? languageId;
 }
 
-export function formatPin(
+export function formatMark(
 	info: SelectionInfo,
 	exportedAt: Date,
 	githubUrl?: string,
@@ -43,7 +43,7 @@ export function formatPin(
 	const lang = getLanguageTag(info.languageId);
 	const timestamp = exportedAt.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
-	const link = `code-atlas:${info.filePath}#L${info.startLine}-L${info.endLine}`;
+	const link = `code-trail:${info.filePath}#L${info.startLine}-L${info.endLine}`;
 
 	const frontmatter = [
 		'---',
@@ -74,7 +74,7 @@ ${info.selectedText}
 `;
 }
 
-export function generatePinFileName(
+export function generateMarkFileName(
 	info: SelectionInfo,
 	exportedAt: Date,
 ): string {
@@ -89,7 +89,7 @@ export function generatePinFileName(
 	return `${parts.join('_')}.md`;
 }
 
-export async function savePin(
+export async function saveMark(
 	info: SelectionInfo,
 	exportedAt: Date,
 	githubUrl?: string,
@@ -99,8 +99,8 @@ export async function savePin(
 		throw new Error('No workspace folder found.');
 	}
 
-	const content = formatPin(info, exportedAt, githubUrl);
-	const fileName = generatePinFileName(info, exportedAt);
+	const content = formatMark(info, exportedAt, githubUrl);
+	const fileName = generateMarkFileName(info, exportedAt);
 
 	const dirUri = vscode.Uri.joinPath(workspaceFolder.uri, OUTPUT_DIR);
 	await vscode.workspace.fs.createDirectory(dirUri);
@@ -110,27 +110,27 @@ export async function savePin(
 	return fileUri;
 }
 
-export interface PinInfo {
-	pinId: string;
+export interface MarkInfo {
+	markId: string;
 	uri: vscode.Uri;
 	fm: Frontmatter;
 }
 
-export async function getPins(): Promise<PinInfo[]> {
+export async function getMarks(): Promise<MarkInfo[]> {
 	const files = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
-	const pins: PinInfo[] = [];
+	const marks: MarkInfo[] = [];
 	for (const uri of files) {
 		const content = Buffer.from(
 			await vscode.workspace.fs.readFile(uri),
 		).toString('utf-8');
 		const fm = parseFrontmatter(content);
 		if (fm) {
-			pins.push({
-				pinId: path.basename(uri.fsPath),
+			marks.push({
+				markId: path.basename(uri.fsPath),
 				uri,
 				fm,
 			});
 		}
 	}
-	return pins;
+	return marks;
 }

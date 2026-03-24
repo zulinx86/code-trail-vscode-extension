@@ -1,13 +1,13 @@
 {
-	"name": "code-atlas",
-	"displayName": "Code Atlas",
-	"description": "Pin and link code reading notes as Markdown files with YAML frontmatter.",
+	"name": "zulinx86-code-trail",
+	"displayName": "Code Trail",
+	"description": "Mark and link code reading notes as Markdown files with YAML frontmatter.",
 	"version": "0.0.1",
 	"publisher": "zulinx86",
 	"license": "Apache-2.0",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/zulinx86/code-atlas-vscode-extension.git"
+		"url": "https://github.com/zulinx86/code-trail-vscode-extension.git"
 	},
 	"engines": {
 		"vscode": "^1.105.0"
@@ -22,22 +22,22 @@
 	"contributes": {
 		"commands": [
 			{
-				"command": "codeAtlas.pinCode",
-				"title": "Code Atlas: Pin Code"
+				"command": "codeTrail.markCode",
+				"title": "Code Trail: Mark Code"
 			},
 			{
-				"command": "codeAtlas.linkPin",
-				"title": "Code Atlas: Link Pin"
+				"command": "codeTrail.linkMark",
+				"title": "Code Trail: Link Mark"
 			}
 		],
 		"keybindings": [
 			{
-				"command": "codeAtlas.pinCode",
-				"key": "ctrl+shift+p",
+				"command": "codeTrail.markCode",
+				"key": "ctrl+shift+m",
 				"when": "editorTextFocus"
 			},
 			{
-				"command": "codeAtlas.linkPin",
+				"command": "codeTrail.linkMark",
 				"key": "ctrl+shift+l",
 				"when": "editorTextFocus"
 			}
@@ -54,7 +54,7 @@
 		"compile-tests": "tsc -p . --outDir out",
 		"pretest": "npm run compile-tests && npm run compile",
 		"test": "vscode-test --coverage --coverage-reporter html",
-		"install-local": "npx vsce package && code --install-extension code-atlas-0.0.1.vsix",
+		"install-local": "npx vsce package && code --install-extension zulinx86-code-trail-0.0.1.vsix",
 		"watch": "npm-run-all -p watch:*",
 		"watch:esbuild": "node esbuild.js --watch",
 		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",

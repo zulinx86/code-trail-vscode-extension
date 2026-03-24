@@ -1,9 +1,9 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { formatPin, generatePinFileName, savePin } from '../../utils/pin';
+import { formatMark, generateMarkFileName, saveMark } from '../../utils/mark';
 import type { SelectionInfo } from '../../utils/selection';
 
-suite('pin', () => {
+suite('mark', () => {
 	const baseInfo: SelectionInfo = {
 		filePath: 'src/example.ts',
 		fileName: 'example.ts',
@@ -14,14 +14,14 @@ suite('pin', () => {
 	};
 	const fixedDate = new Date('2026-03-22T12:34:56Z');
 
-	suite('formatPin', () => {
+	suite('formatMark', () => {
 		test('should produce exact output for typescript file', () => {
-			const result = formatPin(baseInfo, fixedDate);
+			const result = formatMark(baseInfo, fixedDate);
 			const expected = [
 				'---',
 				'file: src/example.ts',
 				'range: L10-L24',
-				'link: code-atlas:src/example.ts#L10-L24',
+				'link: code-trail:src/example.ts#L10-L24',
 				'exportedAt: 2026-03-22T12:34:56Z',
 				'---',
 				'',
@@ -41,25 +41,25 @@ suite('pin', () => {
 
 		test('should use cpp language tag for cpp languageId', () => {
 			const info: SelectionInfo = { ...baseInfo, languageId: 'cpp' };
-			const result = formatPin(info, fixedDate);
+			const result = formatMark(info, fixedDate);
 			assert.ok(result.includes('```cpp\n'));
 		});
 
 		test('should fall back to languageId for unknown language', () => {
 			const info: SelectionInfo = { ...baseInfo, languageId: 'unknown' };
-			const result = formatPin(info, fixedDate);
+			const result = formatMark(info, fixedDate);
 			assert.ok(result.includes('```unknown\n'));
 		});
 
 		test('should include github url in frontmatter when provided', () => {
 			const url =
 				'https://github.com/user/repo/blob/abc123/src/example.ts#L10-L24';
-			const result = formatPin(baseInfo, fixedDate, url);
+			const result = formatMark(baseInfo, fixedDate, url);
 			assert.ok(result.includes(`github: ${url}`));
 		});
 
 		test('should omit github field when url is not provided', () => {
-			const result = formatPin(baseInfo, fixedDate);
+			const result = formatMark(baseInfo, fixedDate);
 			assert.ok(!result.includes('github:'));
 		});
 
@@ -68,25 +68,25 @@ suite('pin', () => {
 				...baseInfo,
 				symbol: 'Server.handleRequest',
 			};
-			const result = formatPin(info, fixedDate);
+			const result = formatMark(info, fixedDate);
 			assert.ok(result.includes('symbol: Server.handleRequest'));
 		});
 
 		test('should omit symbol field when not provided', () => {
-			const result = formatPin(baseInfo, fixedDate);
+			const result = formatMark(baseInfo, fixedDate);
 			assert.ok(!result.includes('symbol:'));
 		});
 	});
 
-	suite('generatePinFileName', () => {
+	suite('generateMarkFileName', () => {
 		test('should format as YYYYMMDD-HHmmss_filename.md', () => {
-			const result = generatePinFileName(baseInfo, fixedDate);
+			const result = generateMarkFileName(baseInfo, fixedDate);
 			assert.strictEqual(result, '20260322-123456_example-ts.md');
 		});
 
 		test('should zero-pad single digit month and day', () => {
 			const date = new Date('2026-01-05T03:07:09Z');
-			const result = generatePinFileName(baseInfo, date);
+			const result = generateMarkFileName(baseInfo, date);
 			assert.strictEqual(result, '20260105-030709_example-ts.md');
 		});
 
@@ -95,14 +95,14 @@ suite('pin', () => {
 				...baseInfo,
 				symbol: 'Foo.bar',
 			};
-			const result = generatePinFileName(info, fixedDate);
+			const result = generateMarkFileName(info, fixedDate);
 			assert.strictEqual(result, '20260322-123456_example-ts_Foo-bar.md');
 		});
 	});
 
-	suite('savePin', () => {
+	suite('saveMark', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
-		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-atlas');
+		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
 		async function cleanup() {
 			try {
@@ -113,24 +113,24 @@ suite('pin', () => {
 		setup(cleanup);
 		teardown(cleanup);
 
-		test('should create file in code-atlas directory', async () => {
-			const uri = await savePin(baseInfo, fixedDate);
+		test('should create file in code-trail directory', async () => {
+			const uri = await saveMark(baseInfo, fixedDate);
 			const content = Buffer.from(
 				await vscode.workspace.fs.readFile(uri),
 			).toString('utf-8');
 			assert.ok(content.includes('file: src/example.ts'));
 			assert.ok(
-				uri.fsPath.endsWith('code-atlas/20260322-123456_example-ts.md'),
+				uri.fsPath.endsWith('code-trail/20260322-123456_example-ts.md'),
 			);
 		});
 
-		test('should create code-atlas directory if it does not exist', async () => {
+		test('should create code-trail directory if it does not exist', async () => {
 			try {
 				await vscode.workspace.fs.stat(outputDir);
 				assert.fail('directory should not exist before test');
 			} catch {}
 
-			await savePin(baseInfo, fixedDate);
+			await saveMark(baseInfo, fixedDate);
 
 			const stat = await vscode.workspace.fs.stat(outputDir);
 			assert.strictEqual(stat.type, vscode.FileType.Directory);

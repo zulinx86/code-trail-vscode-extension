@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { buildSelectionInfo } from '../utils/selection';
 import { getSymbolAtPosition } from '../utils/symbol';
-import { savePin } from '../utils/pin';
+import { saveMark } from '../utils/mark';
 import { getGitHubUrl } from '../utils/git';
 
-export async function pinCode(): Promise<void> {
+export async function markCode(): Promise<void> {
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
 		vscode.window.showWarningMessage('No active editor found.');
@@ -35,13 +35,13 @@ export async function pinCode(): Promise<void> {
 	const githubUrl = getGitHubUrl(info.filePath, info.startLine, info.endLine);
 
 	try {
-		const fileUri = await savePin(info, new Date(), githubUrl);
+		const fileUri = await saveMark(info, new Date(), githubUrl);
 		const doc = await vscode.workspace.openTextDocument(fileUri);
 		await vscode.window.showTextDocument(doc);
 		vscode.window.showInformationMessage(
 			`Saved: ${fileUri.fsPath.split('/').pop()}`,
 		);
 	} catch (e) {
-		vscode.window.showErrorMessage(`Failed to save pin: ${e}`);
+		vscode.window.showErrorMessage(`Failed to save mark: ${e}`);
 	}
 }

@@ -68,7 +68,7 @@ export function parseFrontmatter(text: string): Frontmatter | undefined {
 export async function addLink(
 	fileUri: vscode.Uri,
 	field: 'uses' | 'usedBy',
-	targetPinPath: string,
+	targetMarkPath: string,
 ): Promise<void> {
 	const content = Buffer.from(
 		await vscode.workspace.fs.readFile(fileUri),
@@ -79,7 +79,7 @@ export async function addLink(
 		return;
 	}
 
-	const entry = `code-atlas:${targetPinPath}`;
+	const entry = `code-trail:${targetMarkPath}`;
 	const fieldIdx = lines.indexOf(`${field}:`);
 	if (fieldIdx !== -1 && fieldIdx < closeIdx) {
 		let i = fieldIdx + 1;
