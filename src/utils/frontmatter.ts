@@ -17,10 +17,11 @@ export function parseFrontmatter(text: string): Frontmatter | undefined {
 	if (!match) {
 		return undefined;
 	}
+	const lines = match[1].split('\n');
 
 	const fm: Record<string, string | string[]> = {};
 	let currentKey = '';
-	for (const line of match[1].split('\n')) {
+	for (const line of lines) {
 		const listItem = line.match(/^  - (.+)$/);
 		if (listItem && currentKey) {
 			const arr = fm[currentKey];
@@ -42,12 +43,11 @@ export function parseFrontmatter(text: string): Frontmatter | undefined {
 		}
 	}
 
-	const rangeStr = fm.range as string | undefined;
-	if (!fm.file || !rangeStr || !fm.link || !fm.exportedAt) {
+	if (!fm.file || !fm.range || !fm.link || !fm.exportedAt) {
 		return undefined;
 	}
 
-	const rangeMatch = rangeStr.match(/^L(\d+)-L(\d+)$/);
+	const rangeMatch = (fm.range as string).match(/^L(\d+)-L(\d+)$/);
 	if (!rangeMatch) {
 		return undefined;
 	}
