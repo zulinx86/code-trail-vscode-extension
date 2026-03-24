@@ -1,8 +1,14 @@
 {
 	"name": "code-atlas",
-	"displayName": "code-atlas",
-	"description": "",
+	"displayName": "Code Atlas",
+	"description": "Pin and link code reading notes as Markdown files with YAML frontmatter.",
 	"version": "0.0.1",
+	"publisher": "zulinx86",
+	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/zulinx86/code-atlas-vscode-extension.git"
+	},
 	"engines": {
 		"vscode": "^1.105.0"
 	},
@@ -10,7 +16,7 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:markdown"
+		"onStartupFinished"
 	],
 	"main": "./dist/extension.js",
 	"contributes": {
