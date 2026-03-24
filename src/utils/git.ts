@@ -1,10 +1,5 @@
 import * as vscode from 'vscode';
 
-interface GitInfo {
-	remoteUrl: string;
-	commitHash: string;
-}
-
 function getGitApi(): any | undefined {
 	const gitExtension = vscode.extensions.getExtension('vscode.git');
 	if (!gitExtension?.isActive) {
