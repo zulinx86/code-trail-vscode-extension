@@ -1,4 +1,7 @@
 import * as path from 'path';
+import * as vscode from 'vscode';
+import { OUTPUT_DIR } from '../config';
+import { parseFrontmatter, type Frontmatter } from './frontmatter';
 import type { SelectionInfo } from './selection';
 
 const LANGUAGE_ID_TO_TAG: Record<string, string> = {
@@ -84,4 +87,50 @@ export function generatePinFileName(
 		parts.push(info.symbol.replaceAll('.', '-'));
 	}
 	return `${parts.join('_')}.md`;
+}
+
+export async function savePin(
+	info: SelectionInfo,
+	exportedAt: Date,
+	githubUrl?: string,
+): Promise<vscode.Uri> {
+	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+	if (!workspaceFolder) {
+		throw new Error('No workspace folder found.');
+	}
+
+	const content = formatPin(info, exportedAt, githubUrl);
+	const fileName = generatePinFileName(info, exportedAt);
+
+	const dirUri = vscode.Uri.joinPath(workspaceFolder.uri, OUTPUT_DIR);
+	await vscode.workspace.fs.createDirectory(dirUri);
+
+	const fileUri = vscode.Uri.joinPath(dirUri, fileName);
+	await vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, 'utf-8'));
+	return fileUri;
+}
+
+export interface PinInfo {
+	pinId: string;
+	uri: vscode.Uri;
+	fm: Frontmatter;
+}
+
+export async function getPins(): Promise<PinInfo[]> {
+	const files = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
+	const pins: PinInfo[] = [];
+	for (const uri of files) {
+		const content = Buffer.from(
+			await vscode.workspace.fs.readFile(uri),
+		).toString('utf-8');
+		const fm = parseFrontmatter(content);
+		if (fm) {
+			pins.push({
+				pinId: path.basename(uri.fsPath),
+				uri,
+				fm,
+			});
+		}
+	}
+	return pins;
 }

@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import { buildSelectionInfo } from '../utils/selection';
 import { getSymbolAtPosition } from '../utils/symbol';
-import { formatPin, generatePinFileName } from '../utils/pin';
-import { saveFile } from '../utils/file';
+import { savePin } from '../utils/pin';
 import { getGitHubUrl } from '../utils/git';
 
 export async function pinCode(): Promise<void> {
@@ -32,17 +31,16 @@ export async function pinCode(): Promise<void> {
 		return;
 	}
 
-	const now = new Date();
 	const info = buildSelectionInfo(editor.document, range, symbolInfo?.name);
 	const githubUrl = getGitHubUrl(info.filePath, info.startLine, info.endLine);
-	const content = formatPin(info, now, githubUrl);
-	const fileName = generatePinFileName(info, now);
 
 	try {
-		const fileUri = await saveFile(fileName, content);
+		const fileUri = await savePin(info, new Date(), githubUrl);
 		const doc = await vscode.workspace.openTextDocument(fileUri);
 		await vscode.window.showTextDocument(doc);
-		vscode.window.showInformationMessage(`Saved: ${fileName}`);
+		vscode.window.showInformationMessage(
+			`Saved: ${fileUri.fsPath.split('/').pop()}`,
+		);
 	} catch (e) {
 		vscode.window.showErrorMessage(`Failed to save pin: ${e}`);
 	}

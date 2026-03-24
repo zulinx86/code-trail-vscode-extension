@@ -1,5 +1,6 @@
 import * as assert from 'assert';
-import { formatPin, generatePinFileName } from '../../utils/pin';
+import * as vscode from 'vscode';
+import { formatPin, generatePinFileName, savePin } from '../../utils/pin';
 import type { SelectionInfo } from '../../utils/selection';
 
 suite('pin', () => {
@@ -96,6 +97,43 @@ suite('pin', () => {
 			};
 			const result = generatePinFileName(info, fixedDate);
 			assert.strictEqual(result, '20260322-123456_example-ts_Foo-bar.md');
+		});
+	});
+
+	suite('savePin', () => {
+		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-atlas');
+
+		async function cleanup() {
+			try {
+				await vscode.workspace.fs.delete(outputDir, { recursive: true });
+			} catch {}
+		}
+
+		setup(cleanup);
+		teardown(cleanup);
+
+		test('should create file in code-atlas directory', async () => {
+			const uri = await savePin(baseInfo, fixedDate);
+			const content = Buffer.from(
+				await vscode.workspace.fs.readFile(uri),
+			).toString('utf-8');
+			assert.ok(content.includes('file: src/example.ts'));
+			assert.ok(
+				uri.fsPath.endsWith('code-atlas/20260322-123456_example-ts.md'),
+			);
+		});
+
+		test('should create code-atlas directory if it does not exist', async () => {
+			try {
+				await vscode.workspace.fs.stat(outputDir);
+				assert.fail('directory should not exist before test');
+			} catch {}
+
+			await savePin(baseInfo, fixedDate);
+
+			const stat = await vscode.workspace.fs.stat(outputDir);
+			assert.strictEqual(stat.type, vscode.FileType.Directory);
 		});
 	});
 });

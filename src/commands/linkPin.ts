@@ -7,31 +7,7 @@ import {
 } from '../utils/frontmatter';
 import { getSymbolPos } from '../utils/symbol';
 import { OUTPUT_DIR } from '../config';
-
-interface PinInfo {
-	pinId: string;
-	uri: vscode.Uri;
-	fm: Frontmatter;
-}
-
-async function getPins(): Promise<PinInfo[]> {
-	const files = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
-	const pins: PinInfo[] = [];
-	for (const uri of files) {
-		const content = Buffer.from(
-			await vscode.workspace.fs.readFile(uri),
-		).toString('utf-8');
-		const fm = parseFrontmatter(content);
-		if (fm) {
-			pins.push({
-				pinId: path.basename(uri.fsPath),
-				uri,
-				fm,
-			});
-		}
-	}
-	return pins;
-}
+import { type PinInfo, getPins } from '../utils/pin';
 
 function pinToKey(p: PinInfo): string {
 	return p.fm.symbol
