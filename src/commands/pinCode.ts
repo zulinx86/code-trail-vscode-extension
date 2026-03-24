@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getSelectionInfo } from '../utils/selection';
+import { buildSelectionInfo } from '../utils/selection';
 import { getSymbolAtPosition } from '../utils/symbol';
 import { formatPin, generatePinFileName } from '../utils/pin';
 import { saveFile } from '../utils/file';
@@ -33,7 +33,7 @@ export async function pinCode(): Promise<void> {
 	}
 
 	const now = new Date();
-	const info = getSelectionInfo(editor, range, symbolInfo?.name);
+	const info = buildSelectionInfo(editor.document, range, symbolInfo?.name);
 	const githubUrl = getGitHubUrl(info.filePath, info.startLine, info.endLine);
 	const content = formatPin(info, now, githubUrl);
 	const fileName = generatePinFileName(info, now);

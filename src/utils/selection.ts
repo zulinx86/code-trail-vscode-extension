@@ -11,12 +11,11 @@ export interface SelectionInfo {
 	symbol?: string;
 }
 
-export function getSelectionInfo(
-	editor: vscode.TextEditor,
+export function buildSelectionInfo(
+	document: vscode.TextDocument,
 	range: vscode.Range,
 	symbolName?: string,
 ): SelectionInfo {
-	const document = editor.document;
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
 		throw new Error('No workspace folder found.');
