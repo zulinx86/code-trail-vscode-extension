@@ -60,8 +60,8 @@ suite('pinCode command', () => {
 
 			// file content correctness is tested in pin.test.ts
 			const [fileName] = files[0];
-			assert.ok(fileName.endsWith('-tmp-test-file.ts.md'));
-			assert.ok(/^\d{8}-\d{6}-/.test(fileName));
+			assert.ok(fileName.endsWith('_tmp-test-file-ts.md'));
+			assert.ok(/^\d{8}-\d{6}_/.test(fileName));
 		} finally {
 			await vscode.workspace.fs.delete(tmpFileUri);
 		}

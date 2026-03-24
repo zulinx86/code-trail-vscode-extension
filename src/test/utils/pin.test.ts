@@ -78,15 +78,24 @@ suite('pin', () => {
 	});
 
 	suite('generatePinFileName', () => {
-		test('should format as YYYYMMDD-HHmmss-<filename>.md', () => {
+		test('should format as YYYYMMDD-HHmmss_filename.md', () => {
 			const result = generatePinFileName(baseInfo, fixedDate);
-			assert.strictEqual(result, '20260322-123456-example.ts.md');
+			assert.strictEqual(result, '20260322-123456_example-ts.md');
 		});
 
 		test('should zero-pad single digit month and day', () => {
 			const date = new Date('2026-01-05T03:07:09Z');
 			const result = generatePinFileName(baseInfo, date);
-			assert.strictEqual(result, '20260105-030709-example.ts.md');
+			assert.strictEqual(result, '20260105-030709_example-ts.md');
+		});
+
+		test('should include symbol name when provided', () => {
+			const info: SelectionInfo = {
+				...baseInfo,
+				symbol: 'Foo.bar',
+			};
+			const result = generatePinFileName(info, fixedDate);
+			assert.strictEqual(result, '20260322-123456_example-ts_Foo-bar.md');
 		});
 	});
 });

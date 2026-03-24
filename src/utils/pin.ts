@@ -78,5 +78,10 @@ export function generatePinFileName(
 	const zeroPad = (n: number) => String(n).padStart(2, '0');
 	const dt = exportedAt;
 	const dtStr = `${dt.getFullYear()}${zeroPad(dt.getMonth() + 1)}${zeroPad(dt.getDate())}-${zeroPad(dt.getHours())}${zeroPad(dt.getMinutes())}${zeroPad(dt.getSeconds())}`;
-	return `${dtStr}-${info.fileName}.md`;
+	const fileName = info.fileName.replaceAll('.', '-');
+	const parts = [dtStr, fileName];
+	if (info.symbol) {
+		parts.push(info.symbol.replaceAll('.', '-'));
+	}
+	return `${parts.join('_')}.md`;
 }
