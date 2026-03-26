@@ -31,7 +31,10 @@ export async function showGraph(context: vscode.ExtensionContext) {
 			);
 			if (files.length > 0) {
 				const doc = await vscode.workspace.openTextDocument(files[0]);
-				await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
+				await vscode.window.showTextDocument(doc, {
+					viewColumn: vscode.ViewColumn.Two,
+					preserveFocus: true,
+				});
 			}
 		}
 	});
