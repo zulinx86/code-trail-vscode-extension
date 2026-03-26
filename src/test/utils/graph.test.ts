@@ -69,7 +69,7 @@ suite('graph', () => {
 		test('should return symbol name for interface', () => {
 			assert.strictEqual(
 				nodeLabel({ ...baseFm, symbol: 'Readable', symbolKind: 'interface' }),
-				'Readable',
+				'interface Readable',
 			);
 		});
 

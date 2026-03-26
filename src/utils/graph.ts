@@ -43,7 +43,8 @@ export function nodeLabel(fm: Frontmatter): string {
 	if (
 		fm.symbolKind === 'enum' ||
 		fm.symbolKind === 'struct' ||
-		fm.symbolKind === 'class'
+		fm.symbolKind === 'class' ||
+		fm.symbolKind === 'interface'
 	) {
 		return `${fm.symbolKind} ${fm.symbol}`;
 	}

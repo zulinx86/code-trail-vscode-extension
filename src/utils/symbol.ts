@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 
 const SYMBOL_KIND_TO_STR: Partial<Record<vscode.SymbolKind, string>> = {
-	[vscode.SymbolKind.Enum]: 'enum',
-	[vscode.SymbolKind.Struct]: 'struct',
-	[vscode.SymbolKind.Class]: 'class',
-	[vscode.SymbolKind.Constructor]: 'constructor',
-	[vscode.SymbolKind.Method]: 'method',
 	[vscode.SymbolKind.Function]: 'function',
+	[vscode.SymbolKind.Method]: 'method',
+	[vscode.SymbolKind.Constructor]: 'constructor',
+	[vscode.SymbolKind.Class]: 'class',
+	[vscode.SymbolKind.Struct]: 'struct',
+	[vscode.SymbolKind.Enum]: 'enum',
+	[vscode.SymbolKind.Interface]: 'interface',
 };
 
 export interface SymbolInfo {

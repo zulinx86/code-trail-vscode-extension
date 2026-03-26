@@ -87,6 +87,51 @@ suite('symbol', () => {
 			}
 		});
 
+		test('should return class at position', async () => {
+			const uri = await createTsFile(
+				'tmp-sym-at-class.ts',
+				'class Foo {\n  x = 1;\n}\n',
+			);
+			try {
+				const info = await getSymbolAtPosition(uri, new vscode.Position(0, 0));
+				assert.ok(info, 'should find symbol');
+				assert.strictEqual(info.name, 'Foo');
+				assert.strictEqual(info.kind, 'class');
+			} finally {
+				await deleteSilently(uri);
+			}
+		});
+
+		test('should return interface at position', async () => {
+			const uri = await createTsFile(
+				'tmp-sym-at-iface.ts',
+				'interface Bar {\n  x: number;\n}\n',
+			);
+			try {
+				const info = await getSymbolAtPosition(uri, new vscode.Position(0, 0));
+				assert.ok(info, 'should find symbol');
+				assert.strictEqual(info.name, 'Bar');
+				assert.strictEqual(info.kind, 'interface');
+			} finally {
+				await deleteSilently(uri);
+			}
+		});
+
+		test('should return enum at position', async () => {
+			const uri = await createTsFile(
+				'tmp-sym-at-enum.ts',
+				'enum Color {\n  Red,\n  Blue,\n}\n',
+			);
+			try {
+				const info = await getSymbolAtPosition(uri, new vscode.Position(0, 0));
+				assert.ok(info, 'should find symbol');
+				assert.strictEqual(info.name, 'Color');
+				assert.strictEqual(info.kind, 'enum');
+			} finally {
+				await deleteSilently(uri);
+			}
+		});
+
 		test('should return kind as other for unmapped symbol kinds', async () => {
 			const uri = await createTsFile(
 				'tmp-sym-at-var.ts',
