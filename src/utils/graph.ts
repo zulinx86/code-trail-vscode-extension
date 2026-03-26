@@ -26,6 +26,7 @@ const SYMBOL_KIND_TO_COLOR: Record<string, string> = {
 	struct: '#A8E6CF',
 	enum: '#FFE0B2',
 	interface: '#D7BDE2',
+	const: '#F5B7B1',
 };
 const DEFAULT_COLOR = '#DBDBDB';
 
@@ -44,7 +45,8 @@ export function nodeLabel(fm: Frontmatter): string {
 		fm.symbolKind === 'enum' ||
 		fm.symbolKind === 'struct' ||
 		fm.symbolKind === 'class' ||
-		fm.symbolKind === 'interface'
+		fm.symbolKind === 'interface' ||
+		fm.symbolKind === 'const'
 	) {
 		return `${fm.symbolKind} ${fm.symbol}`;
 	}

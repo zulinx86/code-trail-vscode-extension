@@ -8,6 +8,7 @@ const SYMBOL_KIND_TO_STR: Partial<Record<vscode.SymbolKind, string>> = {
 	[vscode.SymbolKind.Struct]: 'struct',
 	[vscode.SymbolKind.Enum]: 'enum',
 	[vscode.SymbolKind.Interface]: 'interface',
+	[vscode.SymbolKind.Constant]: 'const',
 };
 
 export interface SymbolInfo {

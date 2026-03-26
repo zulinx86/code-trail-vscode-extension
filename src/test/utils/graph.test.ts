@@ -73,6 +73,13 @@ suite('graph', () => {
 			);
 		});
 
+		test('should prepend kind for const', () => {
+			assert.strictEqual(
+				nodeLabel({ ...baseFm, symbol: 'MAX_SIZE', symbolKind: 'const' }),
+				'const MAX_SIZE',
+			);
+		});
+
 		test('should return symbol name for other kind', () => {
 			assert.strictEqual(
 				nodeLabel({ ...baseFm, symbol: 'MAX_SIZE', symbolKind: 'other' }),
@@ -99,9 +106,10 @@ suite('graph', () => {
 				nodeColor('class'),
 				nodeColor('enum'),
 				nodeColor('interface'),
+				nodeColor('const'),
 				nodeColor(undefined),
 			]);
-			assert.strictEqual(colors.size, 5);
+			assert.strictEqual(colors.size, 6);
 		});
 
 		test('should return default color for undefined', () => {
