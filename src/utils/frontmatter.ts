@@ -5,6 +5,7 @@ export interface Frontmatter {
 	startLine: number;
 	endLine: number;
 	symbol?: string;
+	symbolKind?: string;
 	link: string;
 	github?: string;
 	exportedAt: string;
@@ -57,6 +58,7 @@ export function parseFrontmatter(text: string): Frontmatter | undefined {
 		startLine: parseInt(rangeMatch[1], 10),
 		endLine: parseInt(rangeMatch[2], 10),
 		symbol: fm.symbol as string | undefined,
+		symbolKind: fm.symbolKind as string | undefined,
 		link: fm.link as string,
 		github: fm.github as string | undefined,
 		exportedAt: fm.exportedAt as string,

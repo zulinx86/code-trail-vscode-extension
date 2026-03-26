@@ -28,11 +28,12 @@ suite('frontmatter', () => {
 			assert.strictEqual(fm.usedBy, undefined);
 		});
 
-		test('should parse frontmatter with symbol', () => {
+		test('should parse frontmatter with symbol and symbolKind', () => {
 			const text = [
 				'---',
 				'file: src/example.ts',
 				'symbol: Server.handleRequest',
+				'symbolKind: method',
 				'range: L10-L24',
 				'link: code-trail:src/example.ts#L10-L24',
 				'exportedAt: 2026-03-22T12:34:56Z',
@@ -41,6 +42,7 @@ suite('frontmatter', () => {
 			const fm = parseFrontmatter(text);
 			assert.ok(fm);
 			assert.strictEqual(fm.symbol, 'Server.handleRequest');
+			assert.strictEqual(fm.symbolKind, 'method');
 		});
 
 		test('should parse frontmatter with uses and usedBy', () => {

@@ -51,6 +51,7 @@ suite('symbol', () => {
 				const info = await getSymbolAtPosition(uri, new vscode.Position(2, 0));
 				assert.ok(info, 'should find symbol');
 				assert.strictEqual(info.name, 'outer.inner');
+				assert.strictEqual(info.kind, 'function');
 			} finally {
 				await deleteSilently(uri);
 			}
@@ -65,6 +66,7 @@ suite('symbol', () => {
 				const info = await getSymbolAtPosition(uri, new vscode.Position(1, 0));
 				assert.ok(info, 'should find symbol');
 				assert.strictEqual(info.name, 'outer');
+				assert.strictEqual(info.kind, 'function');
 			} finally {
 				await deleteSilently(uri);
 			}
@@ -79,6 +81,22 @@ suite('symbol', () => {
 				const info = await getSymbolAtPosition(uri, new vscode.Position(2, 0));
 				assert.ok(info, 'should find symbol');
 				assert.strictEqual(info.name, 'Foo.bar');
+				assert.strictEqual(info.kind, 'method');
+			} finally {
+				await deleteSilently(uri);
+			}
+		});
+
+		test('should return kind as other for unmapped symbol kinds', async () => {
+			const uri = await createTsFile(
+				'tmp-sym-at-var.ts',
+				'const x = 1;\nexport { x };\n',
+			);
+			try {
+				const info = await getSymbolAtPosition(uri, new vscode.Position(0, 0));
+				if (info) {
+					assert.strictEqual(info.kind, 'other');
+				}
 			} finally {
 				await deleteSilently(uri);
 			}

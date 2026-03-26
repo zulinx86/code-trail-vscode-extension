@@ -1,18 +1,18 @@
 import * as vscode from 'vscode';
 
-const ALLOWED_KINDS = [
-	vscode.SymbolKind.Function,
-	vscode.SymbolKind.Method,
-	vscode.SymbolKind.Constructor,
-	vscode.SymbolKind.Class,
-	vscode.SymbolKind.Struct,
-	vscode.SymbolKind.Enum,
-	vscode.SymbolKind.Interface,
-];
+const SYMBOL_KIND_TO_STR: Partial<Record<vscode.SymbolKind, string>> = {
+	[vscode.SymbolKind.Enum]: 'enum',
+	[vscode.SymbolKind.Struct]: 'struct',
+	[vscode.SymbolKind.Class]: 'class',
+	[vscode.SymbolKind.Constructor]: 'constructor',
+	[vscode.SymbolKind.Method]: 'method',
+	[vscode.SymbolKind.Function]: 'function',
+};
 
 export interface SymbolInfo {
 	range: vscode.Range;
 	name: string;
+	kind: string;
 }
 
 export async function getSymbolAtPosition(
@@ -53,9 +53,8 @@ function findSymbolAtPosition(
 		}
 
 		// The innermost one reaches here.
-		if (ALLOWED_KINDS.includes(symbol.kind)) {
-			return { range: symbol.range, name: qualifiedName };
-		}
+		const kind = SYMBOL_KIND_TO_STR[symbol.kind] ?? 'other';
+		return { range: symbol.range, name: qualifiedName, kind };
 	}
 	// No children or no symbol found at position
 	return undefined;

@@ -63,18 +63,21 @@ suite('mark', () => {
 			assert.ok(!result.includes('github:'));
 		});
 
-		test('should include symbol in frontmatter when provided', () => {
+		test('should include symbol and symbolKind in frontmatter when provided', () => {
 			const info: SelectionInfo = {
 				...baseInfo,
 				symbol: 'Server.handleRequest',
+				symbolKind: 'method',
 			};
 			const result = formatMark(info, fixedDate);
 			assert.ok(result.includes('symbol: Server.handleRequest'));
+			assert.ok(result.includes('symbolKind: method'));
 		});
 
-		test('should omit symbol field when not provided', () => {
+		test('should omit symbol and symbolKind fields when not provided', () => {
 			const result = formatMark(baseInfo, fixedDate);
 			assert.ok(!result.includes('symbol:'));
+			assert.ok(!result.includes('symbolKind:'));
 		});
 	});
 

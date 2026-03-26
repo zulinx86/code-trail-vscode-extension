@@ -55,6 +55,9 @@ export function formatMark(
 	if (info.symbol) {
 		frontmatter.push(`symbol: ${info.symbol}`);
 	}
+	if (info.symbolKind) {
+		frontmatter.push(`symbolKind: ${info.symbolKind}`);
+	}
 	if (githubUrl) {
 		frontmatter.push(`github: ${githubUrl}`);
 	}

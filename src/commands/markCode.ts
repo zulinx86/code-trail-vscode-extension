@@ -31,7 +31,7 @@ export async function markCode(): Promise<void> {
 		return;
 	}
 
-	const info = buildSelectionInfo(editor.document, range, symbolInfo?.name);
+	const info = buildSelectionInfo(editor.document, range, symbolInfo);
 	const githubUrl = getGitHubUrl(info.filePath, info.startLine, info.endLine);
 
 	try {

@@ -33,6 +33,7 @@ suite('selection', () => {
 				assert.strictEqual(info.selectedText, 'line0\nline1');
 				assert.strictEqual(info.languageId, 'typescript');
 				assert.strictEqual(info.symbol, undefined);
+				assert.strictEqual(info.symbolKind, undefined);
 			} finally {
 				await deleteSilently(doc.uri);
 			}
@@ -49,12 +50,13 @@ suite('selection', () => {
 			}
 		});
 
-		test('should include symbol name when provided', async () => {
+		test('should include symbol name and kind when provided', async () => {
 			const doc = await openTsFile('tmp-sel-symbol.ts', 'function foo() {}\n');
 			try {
 				const range = new vscode.Range(0, 0, 0, 17);
-				const info = buildSelectionInfo(doc, range, 'foo');
+				const info = buildSelectionInfo(doc, range, { name: 'foo', kind: 'function', range });
 				assert.strictEqual(info.symbol, 'foo');
+				assert.strictEqual(info.symbolKind, 'function');
 			} finally {
 				await deleteSilently(doc.uri);
 			}
