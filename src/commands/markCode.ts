@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { buildSelectionInfo } from '../utils/selection';
 import { getSymbolAtPosition } from '../utils/symbol';
-import { saveMark } from '../utils/mark';
+import { saveMark, findExistingMark } from '../utils/mark';
 import { getGitHubUrl } from '../utils/git';
 
 export async function markCode(): Promise<void> {
@@ -32,6 +32,19 @@ export async function markCode(): Promise<void> {
 	}
 
 	const info = buildSelectionInfo(editor.document, range, symbolInfo);
+
+	if (info.symbol) {
+		const existing = await findExistingMark(info.filePath, info.symbol);
+		if (existing) {
+			vscode.window.showWarningMessage(
+				`Mark already exists: ${existing.markId}`,
+			);
+			const doc = await vscode.workspace.openTextDocument(existing.uri);
+			await vscode.window.showTextDocument(doc);
+			return;
+		}
+	}
+
 	const githubUrl = getGitHubUrl(info.filePath, info.startLine, info.endLine);
 
 	try {

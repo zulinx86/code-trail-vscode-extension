@@ -1,6 +1,11 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { formatMark, generateMarkFileName, saveMark } from '../../utils/mark';
+import {
+	formatMark,
+	generateMarkFileName,
+	saveMark,
+	findExistingMark,
+} from '../../utils/mark';
 import type { SelectionInfo } from '../../utils/selection';
 
 suite('mark', () => {
@@ -137,6 +142,38 @@ suite('mark', () => {
 
 			const stat = await vscode.workspace.fs.stat(outputDir);
 			assert.strictEqual(stat.type, vscode.FileType.Directory);
+		});
+	});
+
+	suite('findExistingMark', () => {
+		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
+
+		async function cleanup() {
+			try {
+				await vscode.workspace.fs.delete(outputDir, { recursive: true });
+			} catch {}
+		}
+
+		setup(cleanup);
+		teardown(cleanup);
+
+		test('should return existing mark with same file and symbol', async () => {
+			const info: SelectionInfo = {
+				...baseInfo,
+				symbol: 'foo',
+				symbolKind: 'function',
+			};
+			await saveMark(info, fixedDate);
+			const existing = await findExistingMark('src/example.ts', 'foo');
+			assert.ok(existing);
+			assert.strictEqual(existing.fm.file, 'src/example.ts');
+			assert.strictEqual(existing.fm.symbol, 'foo');
+		});
+
+		test('should return undefined when no matching mark exists', async () => {
+			const existing = await findExistingMark('src/example.ts', 'foo');
+			assert.strictEqual(existing, undefined);
 		});
 	});
 });

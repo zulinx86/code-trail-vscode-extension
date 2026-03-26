@@ -119,6 +119,14 @@ export interface MarkInfo {
 	fm: Frontmatter;
 }
 
+export async function findExistingMark(
+	filePath: string,
+	symbol: string,
+): Promise<MarkInfo | undefined> {
+	const marks = await getMarks();
+	return marks.find((m) => m.fm.file === filePath && m.fm.symbol === symbol);
+}
+
 export async function getMarks(): Promise<MarkInfo[]> {
 	const files = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
 	const marks: MarkInfo[] = [];
