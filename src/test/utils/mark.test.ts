@@ -106,6 +106,15 @@ suite('mark', () => {
 			const result = generateMarkFileName(info, fixedDate);
 			assert.strictEqual(result, '20260322-123456_example-ts_Foo-bar.md');
 		});
+
+		test('should replace spaces in symbol name with hyphens', () => {
+			const info: SelectionInfo = {
+				...baseInfo,
+				symbol: 'impl Test',
+			};
+			const result = generateMarkFileName(info, fixedDate);
+			assert.strictEqual(result, '20260322-123456_example-ts_impl-Test.md');
+		});
 	});
 
 	suite('saveMark', () => {

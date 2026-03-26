@@ -88,7 +88,7 @@ export function generateMarkFileName(
 	const fileName = info.fileName.replaceAll('.', '-');
 	const parts = [dtStr, fileName];
 	if (info.symbol) {
-		parts.push(info.symbol.replaceAll('.', '-'));
+		parts.push(info.symbol.replaceAll('.', '-').replaceAll(' ', '-'));
 	}
 	return `${parts.join('_')}.md`;
 }

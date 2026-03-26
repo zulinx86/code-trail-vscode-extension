@@ -5,6 +5,7 @@
 ### Fixed
 
 - Reduce VSIX size by including only vis-network standalone JS
+- Replace spaces in symbol names with hyphens in mark filenames
 
 ## [0.0.4] - 2026-03-26
 
