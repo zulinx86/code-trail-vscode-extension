@@ -2,8 +2,7 @@
 .vscode-test/**
 out/**
 node_modules/**
-!node_modules/vis-network/**
-!node_modules/vis-data/**
+!node_modules/vis-network/standalone/umd/vis-network.min.js
 src/**
 coverage/**
 code-trail/**

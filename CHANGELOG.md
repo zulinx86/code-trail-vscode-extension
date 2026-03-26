@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.5] - Unreleased
+
+### Fixed
+
+- Reduce VSIX size by including only vis-network standalone JS
+
 ## [0.0.4] - 2026-03-26
 
 ### Added
