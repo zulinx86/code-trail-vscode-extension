@@ -28,6 +28,10 @@
 			{
 				"command": "codeTrail.linkMark",
 				"title": "Code Trail: Link Mark"
+			},
+			{
+				"command": "codeTrail.showGraph",
+				"title": "Code Trail: Show Graph"
 			}
 		],
 		"keybindings": [
@@ -40,6 +44,10 @@
 				"command": "codeTrail.linkMark",
 				"key": "ctrl+shift+l",
 				"when": "editorTextFocus"
+			},
+			{
+				"command": "codeTrail.showGraph",
+				"key": "ctrl+shift+g"
 			}
 		]
 	},
@@ -72,5 +80,9 @@
 		"prettier": "^3.8.1",
 		"typescript": "^5.9.3",
 		"typescript-eslint": "^8.56.1"
+	},
+	"dependencies": {
+		"vis-data": "^8.0.3",
+		"vis-network": "^10.0.2"
 	}
 }

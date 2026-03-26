@@ -54,7 +54,11 @@ suite('selection', () => {
 			const doc = await openTsFile('tmp-sel-symbol.ts', 'function foo() {}\n');
 			try {
 				const range = new vscode.Range(0, 0, 0, 17);
-				const info = buildSelectionInfo(doc, range, { name: 'foo', kind: 'function', range });
+				const info = buildSelectionInfo(doc, range, {
+					name: 'foo',
+					kind: 'function',
+					range,
+				});
 				assert.strictEqual(info.symbol, 'foo');
 				assert.strictEqual(info.symbolKind, 'function');
 			} finally {
