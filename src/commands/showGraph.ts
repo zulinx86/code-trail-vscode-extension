@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { buildGraphData } from '../utils/graph';
+import { buildGraphData, type GraphData } from '../utils/graph';
+import { OUTPUT_DIR } from '../config';
 import { log } from '../utils/logger';
 
 export async function showGraph(context: vscode.ExtensionContext) {
@@ -10,8 +11,6 @@ export async function showGraph(context: vscode.ExtensionContext) {
 		vscode.ViewColumn.One,
 		{ enableScripts: true, retainContextWhenHidden: true },
 	);
-
-	const graphData = await buildGraphData();
 
 	const visNetworkUri = panel.webview.asWebviewUri(
 		vscode.Uri.joinPath(
@@ -24,8 +23,31 @@ export async function showGraph(context: vscode.ExtensionContext) {
 		),
 	);
 
+	const graphData = await buildGraphData();
 	panel.webview.html = getWebviewContent(visNetworkUri, graphData);
 
+	// Refresh hook: rebuild graph data and send to Webview via postMessage.
+	async function refresh() {
+		const data = await buildGraphData();
+		log(`showGraph: refresh ${data.nodes.length} nodes, ${data.edges.length} edges`);
+		panel.webview.postMessage({ type: 'updateGraph', nodes: data.nodes, edges: data.edges });
+	}
+
+	// Watch for mark file changes to auto-refresh the graph.
+	const watcher = vscode.workspace.createFileSystemWatcher(
+		new vscode.RelativePattern(
+			vscode.workspace.workspaceFolders![0],
+			`${OUTPUT_DIR}/*.md`,
+		),
+	);
+	watcher.onDidCreate(() => refresh());
+	watcher.onDidChange(() => refresh());
+	watcher.onDidDelete(() => refresh());
+
+	// Clean up watcher when panel is closed.
+	panel.onDidDispose(() => watcher.dispose());
+
+	// Open mark file in editor when a node is clicked.
 	panel.webview.onDidReceiveMessage(async (msg) => {
 		if (msg.type === 'openMark') {
 			const files = await vscode.workspace.findFiles(
@@ -44,10 +66,7 @@ export async function showGraph(context: vscode.ExtensionContext) {
 
 function getWebviewContent(
 	visNetworkUri: vscode.Uri,
-	graphData: {
-		nodes: { id: string; label: string; color: string }[];
-		edges: { from: string; to: string }[];
-	},
+	graphData: GraphData,
 ): string {
 	return `<!DOCTYPE html>
 <html>
@@ -90,9 +109,21 @@ function getWebviewContent(
 				dragView: true,
 			},
 		});
+		// Notify extension to open the mark file.
 		network.on('click', (params) => {
 			if (params.nodes.length > 0) {
 				vscode.postMessage({ type: 'openMark', markId: params.nodes[0] });
+			}
+		});
+		// Listen for updateGraph messages from extension to refresh data.
+		// clear() + add() preserves zoom/pan position.
+		window.addEventListener('message', (event) => {
+			const msg = event.data;
+			if (msg.type === 'updateGraph') {
+				nodes.clear();
+				nodes.add(msg.nodes);
+				edges.clear();
+				edges.add(msg.edges);
 			}
 		});
 	</script>
