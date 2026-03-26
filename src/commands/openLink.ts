@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { log } from '../utils/logger';
 
 interface LinkArgs {
 	filePath: string;
@@ -7,8 +8,10 @@ interface LinkArgs {
 }
 
 export async function openLink(args: LinkArgs): Promise<void> {
+	log(`openLink: ${JSON.stringify(args)}`);
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
+		log('openLink: no workspace folder found');
 		vscode.window.showWarningMessage('No workspace folder found.');
 		return;
 	}

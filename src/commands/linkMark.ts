@@ -8,6 +8,7 @@ import {
 import { getSymbolPos } from '../utils/symbol';
 import { OUTPUT_DIR } from '../config';
 import { type MarkInfo, getMarks } from '../utils/mark';
+import { log } from '../utils/logger';
 
 function markToKey(p: MarkInfo): string {
 	return p.fm.symbol
@@ -98,14 +99,17 @@ interface QuickPickCandidate extends vscode.QuickPickItem {
 }
 
 export async function linkMark(): Promise<void> {
+	log('linkMark: started');
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
+		log('linkMark: no active editor found');
 		vscode.window.showWarningMessage('No active editor found.');
 		return;
 	}
 
 	const currentFm = parseFrontmatter(editor.document.getText());
 	if (!currentFm) {
+		log('linkMark: current file is not a valid mark');
 		vscode.window.showWarningMessage('Current file is not a valid mark.');
 		return;
 	}
@@ -113,6 +117,7 @@ export async function linkMark(): Promise<void> {
 	// Get all the marks
 	const currentMarkId = path.basename(editor.document.uri.fsPath);
 	const marks = (await getMarks()).filter((p) => p.markId !== currentMarkId);
+	log(`linkMark: found ${marks.length} other marks`);
 	if (marks.length === 0) {
 		vscode.window.showWarningMessage('No other marks found.');
 		return;
@@ -217,6 +222,7 @@ export async function linkMark(): Promise<void> {
 	// Add links
 	await addLink(currentUri, direction, `${OUTPUT_DIR}/${targetMarkId}`);
 	await addLink(targetUri, reverseDirection, `${OUTPUT_DIR}/${currentMarkId}`);
+	log(`linkMark: linked ${currentMarkId} ${direction} ${targetMarkId}`);
 
 	vscode.window.showInformationMessage(
 		`Linked: ${currentMarkId} ${direction === 'uses' ? '→' : '←'} ${targetMarkId}`,

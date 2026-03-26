@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { log } from './logger';
 
 const SYMBOL_KIND_TO_STR: Partial<Record<vscode.SymbolKind, string>> = {
 	[vscode.SymbolKind.Function]: 'function',
@@ -21,14 +22,19 @@ export async function getSymbolAtPosition(
 	uri: vscode.Uri,
 	position: vscode.Position,
 ): Promise<SymbolInfo | undefined> {
+	log(`getSymbolAtPosition: uri=${uri.fsPath} position=L${position.line + 1}`);
 	const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
 		'vscode.executeDocumentSymbolProvider',
 		uri,
 	);
 	if (!symbols) {
+		log('getSymbolAtPosition: no symbol provider');
 		return undefined;
 	}
-	return findSymbolAtPosition(symbols, position);
+	log(`getSymbolAtPosition: ${symbols.length} top-level symbols`);
+	const result = findSymbolAtPosition(symbols, position);
+	log(`getSymbolAtPosition: result=${JSON.stringify(result)}`);
+	return result;
 }
 
 function findSymbolAtPosition(
@@ -66,14 +72,18 @@ export async function getSymbolPos(
 	uri: vscode.Uri,
 	symbolName: string,
 ): Promise<vscode.Position | undefined> {
+	log(`getSymbolPos: uri=${uri.fsPath} symbolName=${symbolName}`);
 	const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
 		'vscode.executeDocumentSymbolProvider',
 		uri,
 	);
 	if (!symbols) {
+		log('getSymbolPos: no symbol provider');
 		return undefined;
 	}
-	return findSymbolByName(symbols, symbolName)?.selectionRange.start;
+	const pos = findSymbolByName(symbols, symbolName)?.selectionRange.start;
+	log(`getSymbolPos: result=${pos ? `L${pos.line + 1}` : 'undefined'}`);
+	return pos;
 }
 
 function findSymbolByName(

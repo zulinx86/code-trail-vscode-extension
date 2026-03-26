@@ -1,6 +1,7 @@
 import { OUTPUT_DIR } from '../config';
 import { getMarks } from './mark';
 import type { Frontmatter } from './frontmatter';
+import { log } from './logger';
 
 export interface GraphNode {
 	id: string;
@@ -59,6 +60,7 @@ export function nodeColor(symbolKind?: string): string {
 
 export async function buildGraphData(): Promise<GraphData> {
 	const marks = await getMarks();
+	log(`buildGraphData: ${marks.length} marks`);
 	const nodes: GraphNode[] = marks.map((m) => ({
 		id: m.markId,
 		label: nodeLabel(m.fm),
@@ -73,5 +75,6 @@ export async function buildGraphData(): Promise<GraphData> {
 		}
 	}
 
+	log(`buildGraphData: ${nodes.length} nodes, ${edges.length} edges`);
 	return { nodes, edges };
 }

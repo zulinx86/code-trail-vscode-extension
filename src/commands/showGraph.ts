@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import { buildGraphData } from '../utils/graph';
+import { log } from '../utils/logger';
 
 export async function showGraph(context: vscode.ExtensionContext) {
+	log('showGraph: started');
 	const panel = vscode.window.createWebviewPanel(
 		'codeTrailGraph',
 		'Code Trail: Graph',

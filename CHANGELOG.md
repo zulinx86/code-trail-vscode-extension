@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.4] - Unreleased
+
+### Added
+
+- Debug logging via Output panel ("Code Trail" channel) across all commands and utilities
+
 ## [0.0.3] - 2026-03-26
 
 ### Changed

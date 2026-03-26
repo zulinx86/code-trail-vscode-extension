@@ -3,15 +3,19 @@ import { buildSelectionInfo } from '../utils/selection';
 import { getSymbolAtPosition } from '../utils/symbol';
 import { saveMark, findExistingMark } from '../utils/mark';
 import { getGitHubUrl } from '../utils/git';
+import { log } from '../utils/logger';
 
 export async function markCode(): Promise<void> {
+	log('markCode: started');
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
+		log('markCode: no active editor found');
 		vscode.window.showWarningMessage('No active editor found.');
 		return;
 	}
 
 	if (!vscode.workspace.workspaceFolders) {
+		log('markCode: no workspace folder found');
 		vscode.window.showWarningMessage('No workspace folder found.');
 		return;
 	}
@@ -20,6 +24,7 @@ export async function markCode(): Promise<void> {
 		editor.document.uri,
 		editor.selection.start,
 	);
+	log(`markCode: symbolInfo=${JSON.stringify(symbolInfo)}`);
 
 	let range: vscode.Range;
 	if (symbolInfo) {
@@ -27,15 +32,18 @@ export async function markCode(): Promise<void> {
 	} else if (!editor.selection.isEmpty) {
 		range = editor.selection;
 	} else {
+		log('markCode: no selection or symbol found');
 		vscode.window.showWarningMessage('No selection or symbol found at cursor.');
 		return;
 	}
 
 	const info = buildSelectionInfo(editor.document, range, symbolInfo);
+	log(`markCode: selectionInfo=${JSON.stringify(info)}`);
 
 	if (info.symbol) {
 		const existing = await findExistingMark(info.filePath, info.symbol);
 		if (existing) {
+			log(`markCode: duplicate mark found ${existing.markId}`);
 			vscode.window.showWarningMessage(
 				`Mark already exists: ${existing.markId}`,
 			);
@@ -49,12 +57,14 @@ export async function markCode(): Promise<void> {
 
 	try {
 		const fileUri = await saveMark(info, new Date(), githubUrl);
+		log(`markCode: saved ${fileUri.fsPath}`);
 		const doc = await vscode.workspace.openTextDocument(fileUri);
 		await vscode.window.showTextDocument(doc);
 		vscode.window.showInformationMessage(
 			`Saved: ${fileUri.fsPath.split('/').pop()}`,
 		);
 	} catch (e) {
+		log(`markCode: failed to save mark: ${e}`);
 		vscode.window.showErrorMessage(`Failed to save mark: ${e}`);
 	}
 }

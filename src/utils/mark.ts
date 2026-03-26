@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { OUTPUT_DIR } from '../config';
 import { parseFrontmatter, type Frontmatter } from './frontmatter';
 import type { SelectionInfo } from './selection';
+import { log } from './logger';
 
 const LANGUAGE_ID_TO_TAG: Record<string, string> = {
 	typescript: 'ts',
@@ -97,6 +98,7 @@ export async function saveMark(
 	exportedAt: Date,
 	githubUrl?: string,
 ): Promise<vscode.Uri> {
+	log(`saveMark: file=${info.filePath} symbol=${info.symbol}`);
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
 		throw new Error('No workspace folder found.');
@@ -110,6 +112,7 @@ export async function saveMark(
 
 	const fileUri = vscode.Uri.joinPath(dirUri, fileName);
 	await vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, 'utf-8'));
+	log(`saveMark: wrote ${fileUri.fsPath}`);
 	return fileUri;
 }
 
@@ -123,12 +126,18 @@ export async function findExistingMark(
 	filePath: string,
 	symbol: string,
 ): Promise<MarkInfo | undefined> {
+	log(`findExistingMark: file=${filePath} symbol=${symbol}`);
 	const marks = await getMarks();
-	return marks.find((m) => m.fm.file === filePath && m.fm.symbol === symbol);
+	const found = marks.find(
+		(m) => m.fm.file === filePath && m.fm.symbol === symbol,
+	);
+	log(`findExistingMark: ${found ? `found ${found.markId}` : 'not found'}`);
+	return found;
 }
 
 export async function getMarks(): Promise<MarkInfo[]> {
 	const files = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
+	log(`getMarks: found ${files.length} files in ${OUTPUT_DIR}/`);
 	const marks: MarkInfo[] = [];
 	for (const uri of files) {
 		const content = Buffer.from(

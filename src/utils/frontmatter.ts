@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { log } from './logger';
 
 export interface Frontmatter {
 	file: string;
@@ -72,6 +73,7 @@ export async function addLink(
 	field: 'uses' | 'usedBy',
 	targetMarkPath: string,
 ): Promise<void> {
+	log(`addLink: ${fileUri.fsPath} ${field} ${targetMarkPath}`);
 	const content = Buffer.from(
 		await vscode.workspace.fs.readFile(fileUri),
 	).toString('utf-8');
