@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 
-suite('openLink command', () => {
+suite('navigate command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 
 	test('should open file and move cursor to startLine', async () => {
@@ -23,7 +23,7 @@ suite('openLink command', () => {
 			});
 			await vscode.window.showTextDocument(mdDoc);
 
-			await vscode.commands.executeCommand('codeTrail.openLink', {
+			await vscode.commands.executeCommand('codeTrail.navigate', {
 				filePath: 'tmp-test-openlink.ts',
 				startLine: 3,
 				endLine: 4,

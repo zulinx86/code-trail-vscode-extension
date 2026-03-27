@@ -7,11 +7,11 @@ interface LinkArgs {
 	endLine?: number;
 }
 
-export async function openLink(args: LinkArgs): Promise<void> {
-	log(`openLink: ${JSON.stringify(args)}`);
+export async function navigate(args: LinkArgs): Promise<void> {
+	log(`navigate: ${JSON.stringify(args)}`);
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
-		log('openLink: no workspace folder found');
+		log('navigate: no workspace folder found');
 		vscode.window.showWarningMessage('No workspace folder found.');
 		return;
 	}

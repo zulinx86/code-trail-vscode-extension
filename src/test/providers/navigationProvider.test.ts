@@ -1,9 +1,9 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { CodeTrailLinkProvider } from '../../providers/linkProvider';
+import { CodeTrailNavigationProvider } from '../../providers/navigationProvider';
 
-suite('CodeTrailLinkProvider', () => {
-	const provider = new CodeTrailLinkProvider();
+suite('CodeTrailNavigationProvider', () => {
+	const provider = new CodeTrailNavigationProvider();
 
 	test('should detect code-trail: link in frontmatter', async () => {
 		const content = 'link: code-trail:src/editor.ts#L10-L24';
@@ -14,7 +14,7 @@ suite('CodeTrailLinkProvider', () => {
 
 		const links = provider.provideDocumentLinks(doc);
 		assert.strictEqual(links.length, 1);
-		assert.ok(links[0].target?.toString().includes('codeTrail.openLink'));
+		assert.ok(links[0].target?.toString().includes('codeTrail.navigate'));
 	});
 
 	test('should detect multiple links', async () => {

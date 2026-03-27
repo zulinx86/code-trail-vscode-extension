@@ -2,7 +2,9 @@ import * as vscode from 'vscode';
 
 const LINK_PATTERN = /code-trail:([^#\s)]+)(?:#L(\d+)-L(\d+))?/g;
 
-export class CodeTrailLinkProvider implements vscode.DocumentLinkProvider {
+export class CodeTrailNavigationProvider
+	implements vscode.DocumentLinkProvider
+{
 	provideDocumentLinks(document: vscode.TextDocument): vscode.DocumentLink[] {
 		const links: vscode.DocumentLink[] = [];
 		const text = document.getText();
@@ -20,7 +22,7 @@ export class CodeTrailLinkProvider implements vscode.DocumentLinkProvider {
 			const args = encodeURIComponent(
 				JSON.stringify({ filePath, startLine, endLine }),
 			);
-			const commandUri = vscode.Uri.parse(`command:codeTrail.openLink?${args}`);
+			const commandUri = vscode.Uri.parse(`command:codeTrail.navigate?${args}`);
 			links.push(new vscode.DocumentLink(range, commandUri));
 		}
 
