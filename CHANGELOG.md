@@ -2,6 +2,10 @@
 
 ## [0.0.5] - Unreleased
 
+### Added
+
+- Prompt link suggestions based on call hierarchy after marking code
+
 ### Fixed
 
 - Reduce VSIX size by including only vis-network standalone JS

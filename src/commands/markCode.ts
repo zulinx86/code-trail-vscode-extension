@@ -3,7 +3,9 @@ import { buildSelectionInfo } from '../utils/selection';
 import { getSymbolAtPosition } from '../utils/symbol';
 import { saveMark, findExistingMark } from '../utils/mark';
 import { getGitHubUrl } from '../utils/git';
+import { parseFrontmatter } from '../utils/frontmatter';
 import { log } from '../utils/logger';
+import { promptAndLink } from '../utils/link';
 
 export async function markCode(): Promise<void> {
 	log('markCode: started');
@@ -63,6 +65,13 @@ export async function markCode(): Promise<void> {
 		vscode.window.showInformationMessage(
 			`Saved: ${fileUri.fsPath.split('/').pop()}`,
 		);
+
+		// Suggest links based on call hierarchy
+		const content = (await vscode.workspace.fs.readFile(fileUri)).toString();
+		const fm = parseFrontmatter(content);
+		if (fm) {
+			await promptAndLink(fileUri, fm);
+		}
 	} catch (e) {
 		log(`markCode: failed to save mark: ${e}`);
 		vscode.window.showErrorMessage(`Failed to save mark: ${e}`);
