@@ -40,7 +40,8 @@ export async function markCode(): Promise<void> {
 	}
 
 	const info = buildSelectionInfo(editor.document, range, symbolInfo);
-	log(`markCode: selectionInfo=${JSON.stringify(info)}`);
+	const { selectedText: _, ...logInfo } = info;
+	log(`markCode: selectionInfo=${JSON.stringify(logInfo)}`);
 
 	if (info.symbol) {
 		const existing = await findExistingMark(info.filePath, info.symbol);
