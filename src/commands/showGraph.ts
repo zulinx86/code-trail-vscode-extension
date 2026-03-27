@@ -91,7 +91,7 @@ function getWebviewContent(
 					direction: 'LR',
 					sortMethod: 'directed',
 					levelSeparation: 200,
-					nodeSpacing: 100,
+					nodeSpacing: 200,
 				},
 			},
 			edges: {

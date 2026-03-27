@@ -6,6 +6,7 @@
 
 - Reduce VSIX size by including only vis-network standalone JS
 - Replace spaces in symbol names with hyphens in mark filenames
+- Increase graph node spacing to prevent overlapping
 
 ## [0.0.4] - 2026-03-26
 
