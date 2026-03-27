@@ -51,6 +51,7 @@ async function getCallHierarchyCandidates(
 		if (fm.symbol) {
 			const symbolPos = await getSymbolPos(fileUri, fm.symbol);
 			if (!symbolPos) {
+				log(`getCallHierarchyCandidates: symbol '${fm.symbol}' not found`);
 				return { outgoing, incoming };
 			}
 			pos = symbolPos;
@@ -59,13 +60,16 @@ async function getCallHierarchyCandidates(
 		}
 
 		// Prepare for provideOutgoingCalls and provideIncomingCalls
+		log(`getCallHierarchyCandidates: preparing call hierarchy for ${fileUri.fsPath} L${pos.line + 1}`);
 		const items = await vscode.commands.executeCommand<
 			vscode.CallHierarchyItem[]
 		>('vscode.prepareCallHierarchy', fileUri, pos);
 		if (!items?.length) {
+			log('getCallHierarchyCandidates: prepareCallHierarchy returned empty');
 			return { outgoing, incoming };
 		}
 		const item = items[0];
+		log(`getCallHierarchyCandidates: prepared call hiarchy (name=${item.name} kind=${item.kind})`);
 
 		const wsRoot = workspaceFolder.fsPath;
 
@@ -74,6 +78,7 @@ async function getCallHierarchyCandidates(
 			vscode.CallHierarchyOutgoingCall[]
 		>('vscode.provideOutgoingCalls', item);
 		for (const call of outCalls ?? []) {
+			log(`getCallHierarchyCandidates: outgoing item (name=${call.to.name} kind=${call.to.kind})`);
 			outgoing.add(callItemToKey(wsRoot, call.to));
 			outgoing.add(callItemToRangeKey(wsRoot, call.to));
 		}
@@ -83,11 +88,13 @@ async function getCallHierarchyCandidates(
 			vscode.CallHierarchyIncomingCall[]
 		>('vscode.provideIncomingCalls', item);
 		for (const call of inCalls ?? []) {
+			log(`getCallHierarchyCandidates: incoming item (name=${call.from.name} kind=${call.from.kind})`);
 			incoming.add(callItemToKey(wsRoot, call.from));
 			incoming.add(callItemToRangeKey(wsRoot, call.from));
 		}
-	} catch {
-		// Language server may not support call hierarchy
+		log(`getCallHierarchyCandidates: ${outgoing.size} outgoing, ${incoming.size} incoming`);
+	} catch (e) {
+		log(`getCallHierarchyCandidates: error ${e}`);
 	}
 
 	return { outgoing, incoming };
@@ -113,6 +120,7 @@ export async function linkMark(): Promise<void> {
 		vscode.window.showWarningMessage('Current file is not a valid mark.');
 		return;
 	}
+	log(`linkMark: current mark (file=${currentFm.file})`);
 
 	// Get all the marks
 	const currentMarkId = path.basename(editor.document.uri.fsPath);
@@ -137,36 +145,37 @@ export async function linkMark(): Promise<void> {
 	const items: QuickPickCandidate[] = [];
 	const others: QuickPickCandidate[] = [];
 
-	for (const p of marks) {
-		const key = markToKey(p);
+	for (const mark of marks) {
+		const key = markToKey(mark);
+		log(`linkMark: checking mark ${mark.markId} key=${key}`);
 		const isOutgoing = outgoing.has(key);
 		const isIncoming = incoming.has(key);
 
-		const desc = `${p.fm.file}${p.fm.symbol ? ' · ' + p.fm.symbol : ''}`;
+		const desc = `${mark.fm.file}${mark.fm.symbol ? ' · ' + mark.fm.symbol : ''}`;
 
 		if (isOutgoing) {
 			items.push({
 				label: `$(arrow-right) ${desc}`,
-				description: p.markId,
+				description: mark.markId,
 				detail: 'Suggested',
-				mark: p,
+				mark: mark,
 				direction: 'uses',
 			});
 		}
 		if (isIncoming) {
 			items.push({
 				label: `$(arrow-left) ${desc}`,
-				description: p.markId,
+				description: mark.markId,
 				detail: 'Suggested',
-				mark: p,
+				mark: mark,
 				direction: 'usedBy',
 			});
 		}
 		if (!isOutgoing && !isIncoming) {
 			others.push({
 				label: desc,
-				description: p.markId,
-				mark: p,
+				description: mark.markId,
+				mark: mark,
 				direction: 'uses',
 			});
 		}
