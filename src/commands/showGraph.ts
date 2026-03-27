@@ -3,7 +3,9 @@ import { buildGraphData, type GraphData } from '../utils/graph';
 import { OUTPUT_DIR } from '../config';
 import { log } from '../utils/logger';
 
-export async function showGraph(context: vscode.ExtensionContext) {
+export async function showGraph(
+	context: vscode.ExtensionContext,
+): Promise<vscode.WebviewPanel> {
 	log('showGraph: started');
 	const panel = vscode.window.createWebviewPanel(
 		'codeTrailGraph',
@@ -26,19 +28,6 @@ export async function showGraph(context: vscode.ExtensionContext) {
 	const graphData = await buildGraphData();
 	panel.webview.html = getWebviewContent(visNetworkUri, graphData);
 
-	// Refresh hook: rebuild graph data and send to Webview via postMessage.
-	async function refresh() {
-		const data = await buildGraphData();
-		log(
-			`showGraph: refresh ${data.nodes.length} nodes, ${data.edges.length} edges`,
-		);
-		panel.webview.postMessage({
-			type: 'updateGraph',
-			nodes: data.nodes,
-			edges: data.edges,
-		});
-	}
-
 	// Watch for mark file changes to auto-refresh the graph.
 	const watcher = vscode.workspace.createFileSystemWatcher(
 		new vscode.RelativePattern(
@@ -46,28 +35,17 @@ export async function showGraph(context: vscode.ExtensionContext) {
 			`${OUTPUT_DIR}/*.md`,
 		),
 	);
-	watcher.onDidCreate(() => refresh());
-	watcher.onDidChange(() => refresh());
-	watcher.onDidDelete(() => refresh());
+	watcher.onDidCreate(() => refreshGraph(panel));
+	watcher.onDidChange(() => refreshGraph(panel));
+	watcher.onDidDelete(() => refreshGraph(panel));
 
 	// Clean up watcher when panel is closed.
 	panel.onDidDispose(() => watcher.dispose());
 
 	// Open mark file in editor when a node is clicked.
-	panel.webview.onDidReceiveMessage(async (msg) => {
-		if (msg.type === 'openMark') {
-			const files = await vscode.workspace.findFiles(
-				`code-trail/${msg.markId}`,
-			);
-			if (files.length > 0) {
-				const doc = await vscode.workspace.openTextDocument(files[0]);
-				await vscode.window.showTextDocument(doc, {
-					viewColumn: vscode.ViewColumn.Two,
-					preserveFocus: true,
-				});
-			}
-		}
-	});
+	panel.webview.onDidReceiveMessage((msg) => handleWebviewMessage(msg));
+
+	return panel;
 }
 
 function getWebviewContent(
@@ -135,4 +113,31 @@ function getWebviewContent(
 	</script>
 </body>
 </html>`;
+}
+
+export async function refreshGraph(panel: vscode.WebviewPanel): Promise<void> {
+	const data = await buildGraphData();
+	log(`refreshGraph: ${data.nodes.length} nodes, ${data.edges.length} edges`);
+	try {
+		panel.webview.postMessage({
+			type: 'updateGraph',
+			nodes: data.nodes,
+			edges: data.edges,
+		});
+	} catch {
+		// Panel may have been disposed
+	}
+}
+
+export async function handleWebviewMessage(msg: any): Promise<void> {
+	if (msg.type === 'openMark') {
+		const files = await vscode.workspace.findFiles(`code-trail/${msg.markId}`);
+		if (files.length > 0) {
+			const doc = await vscode.workspace.openTextDocument(files[0]);
+			await vscode.window.showTextDocument(doc, {
+				viewColumn: vscode.ViewColumn.Two,
+				preserveFocus: true,
+			});
+		}
+	}
 }
