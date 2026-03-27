@@ -29,8 +29,14 @@ export async function showGraph(context: vscode.ExtensionContext) {
 	// Refresh hook: rebuild graph data and send to Webview via postMessage.
 	async function refresh() {
 		const data = await buildGraphData();
-        log(`showGraph: refresh ${data.nodes.length} nodes, ${data.edges.length} edges`);
-        panel.webview.postMessage({ type: 'updateGraph', nodes: data.nodes, edges: data.edges });
+		log(
+			`showGraph: refresh ${data.nodes.length} nodes, ${data.edges.length} edges`,
+		);
+		panel.webview.postMessage({
+			type: 'updateGraph',
+			nodes: data.nodes,
+			edges: data.edges,
+		});
 	}
 
 	// Watch for mark file changes to auto-refresh the graph.
