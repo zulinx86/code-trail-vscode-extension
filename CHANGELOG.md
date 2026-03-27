@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.0.5] - Unreleased
+## [0.0.5]
 
 ### Added
 
@@ -12,20 +12,20 @@
 - Replace spaces in symbol names with hyphens in mark filenames
 - Increase graph node spacing to prevent overlapping
 
-## [0.0.4] - 2026-03-26
+## [0.0.4]
 
 ### Added
 
 - Debug logging via Output panel ("Code Trail" channel) across all commands and utilities
 - Auto-refresh graph view when marks are added, changed, or deleted
 
-## [0.0.3] - 2026-03-26
+## [0.0.3]
 
 ### Changed
 
 - Update README
 
-## [0.0.2] - 2026-03-26
+## [0.0.2]
 
 ### Added
 
@@ -33,7 +33,7 @@
 - `symbolKind` field in mark metadata (function, method, class, struct, enum, interface, const, etc.)
 - Duplicate mark detection by file path and symbol name
 
-## [0.0.1] - 2025-03-24
+## [0.0.1]
 
 ### Added
 
