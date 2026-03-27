@@ -85,4 +85,41 @@ suite('markCode command', () => {
 			await vscode.workspace.fs.delete(tmpFileUri);
 		}
 	});
+
+	test('should not create duplicate mark for same symbol', async () => {
+		const tmpFileUri = vscode.Uri.joinPath(workspaceUri, 'tmp-mark-dup.ts');
+		await vscode.workspace.fs.writeFile(
+			tmpFileUri,
+			Buffer.from('function greet() {\n  return "hi";\n}\n', 'utf-8'),
+		);
+
+		try {
+			const doc = await vscode.workspace.openTextDocument(tmpFileUri);
+			const editor = await vscode.window.showTextDocument(doc);
+			editor.selection = new vscode.Selection(1, 0, 1, 0);
+
+			// First mark
+			await vscode.commands.executeCommand('codeTrail.markCode');
+			const entries1 = await vscode.workspace.fs.readDirectory(outputDir);
+			const files1 = entries1.filter(
+				([, type]) => type === vscode.FileType.File,
+			);
+			assert.strictEqual(files1.length, 1, 'should create one mark');
+
+			// Re-open source file and place cursor in same function
+			const doc2 = await vscode.workspace.openTextDocument(tmpFileUri);
+			const editor2 = await vscode.window.showTextDocument(doc2);
+			editor2.selection = new vscode.Selection(1, 0, 1, 0);
+
+			// Second mark of same symbol
+			await vscode.commands.executeCommand('codeTrail.markCode');
+			const entries2 = await vscode.workspace.fs.readDirectory(outputDir);
+			const files2 = entries2.filter(
+				([, type]) => type === vscode.FileType.File,
+			);
+			assert.strictEqual(files2.length, 1, 'should not create duplicate mark');
+		} finally {
+			await vscode.workspace.fs.delete(tmpFileUri);
+		}
+	});
 });
