@@ -83,6 +83,7 @@
 		"typescript-eslint": "^8.56.1"
 	},
 	"dependencies": {
+		"@dagrejs/dagre": "^3.0.0",
 		"vis-data": "^8.0.3",
 		"vis-network": "^10.0.2"
 	}

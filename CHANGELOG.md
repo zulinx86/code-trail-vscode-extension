@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6]
+
+### Fixed
+
+- Use Dagre for graph layout to prevent node overlapping with long labels
+- Allow dragging nodes in all directions in graph view
+
 ## [0.0.5]
 
 ### Added

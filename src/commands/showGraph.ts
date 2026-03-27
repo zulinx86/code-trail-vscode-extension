@@ -66,18 +66,12 @@ function getWebviewContent(
 	<script src="${visNetworkUri}"></script>
 	<script>
 		const vscode = acquireVsCodeApi();
-		const nodes = new vis.DataSet(${JSON.stringify(graphData.nodes)});
+		const nodes = new vis.DataSet(${JSON.stringify(graphData.nodes)}.map(n => ({
+			...n, x: n.x, y: n.y
+		})));
 		const edges = new vis.DataSet(${JSON.stringify(graphData.edges)});
 		const container = document.getElementById('graph');
 		const network = new vis.Network(container, { nodes, edges }, {
-			layout: {
-				hierarchical: {
-					direction: 'LR',
-					sortMethod: 'directed',
-					levelSeparation: 200,
-					nodeSpacing: 200,
-				},
-			},
 			edges: {
 				arrows: { to: true },
 				smooth: { type: 'cubicBezier' },
@@ -91,6 +85,7 @@ function getWebviewContent(
 			interaction: {
 				zoomView: true,
 				dragView: true,
+				dragNodes: true,
 			},
 		});
 		// Notify extension to open the mark file.
