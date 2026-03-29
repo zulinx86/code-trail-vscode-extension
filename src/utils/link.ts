@@ -62,7 +62,7 @@ export async function getOutgoingAndIncomingCalls(
 		}
 		const item = items[0];
 		log(
-			`getOutgoingAndIncomingCalls: prepared call hierarchy for name=${item.name} kind=${item.kind}`,
+			`getOutgoingAndIncomingCalls: prepared call hierarchy for name=${item.name} detail=${item.detail} kind=${item.kind}`,
 		);
 
 		const wsRoot = workspaceFolder.fsPath;
@@ -73,7 +73,7 @@ export async function getOutgoingAndIncomingCalls(
 		>('vscode.provideOutgoingCalls', item);
 		for (const call of outgoingCalls ?? []) {
 			log(
-				`getOutgoingAndIncomingCalls: outgoing item (name=${call.to.name} kind=${call.to.kind})`,
+				`getOutgoingAndIncomingCalls: outgoing item (name=${call.to.name} detail=${call.to.detail} kind=${call.to.kind})`,
 			);
 			outgoing.add(callItemToSymbolKey(wsRoot, call.to));
 			outgoing.add(callItemToRangeKey(wsRoot, call.to));
@@ -85,7 +85,7 @@ export async function getOutgoingAndIncomingCalls(
 		>('vscode.provideIncomingCalls', item);
 		for (const call of incomingCalls ?? []) {
 			log(
-				`getOutgoingAndIncomingCalls: incoming item (name=${call.from.name} kind=${call.from.kind}})`,
+				`getOutgoingAndIncomingCalls: incoming item (name=${call.from.name} detail=${call.from.detail} kind=${call.from.kind})`,
 			);
 			incoming.add(callItemToSymbolKey(wsRoot, call.from));
 			incoming.add(callItemToRangeKey(wsRoot, call.from));
