@@ -15,6 +15,7 @@ import { parseFrontmatter } from '../../utils/frontmatter';
 import type { MarkInfo } from '../../utils/mark';
 import type { Frontmatter } from '../../utils/frontmatter';
 import type { SelectionInfo } from '../../utils/selection';
+import { openFixture, waitForSymbols } from '../helpers';
 
 suite('link', () => {
 	suite('callItemToSymbolKey', () => {
@@ -69,131 +70,63 @@ suite('link', () => {
 	suite('getOutgoingAndIncomingCalls', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 
-		async function createTsFile(
-			name: string,
-			content: string,
-		): Promise<vscode.Uri> {
-			const uri = vscode.Uri.joinPath(workspaceUri, name);
-			await vscode.workspace.fs.writeFile(uri, Buffer.from(content, 'utf-8'));
-			const doc = await vscode.workspace.openTextDocument(uri);
-			await vscode.window.showTextDocument(doc);
-			await waitForSymbols(uri);
-			return uri;
-		}
-
-		async function waitForSymbols(
-			uri: vscode.Uri,
-			timeout = 2000,
-		): Promise<void> {
-			const start = Date.now();
-			while (Date.now() - start < timeout) {
-				const symbols = await vscode.commands.executeCommand<
-					vscode.DocumentSymbol[]
-				>('vscode.executeDocumentSymbolProvider', uri);
-				if (symbols?.length) {
-					return;
-				}
-				await new Promise((r) => setTimeout(r, 100));
-			}
-		}
-
-		async function deleteSilently(uri: vscode.Uri) {
-			try {
-				await vscode.workspace.fs.delete(uri);
-			} catch {}
-		}
-
 		test('should detect outgoing calls', async function () {
 			this.timeout(10000);
-			const calleeUri = await createTsFile(
-				'tmp-callee.ts',
-				'export function callee() { return 1; }\n',
+			const doc = await openFixture('call-hierarchy.ts');
+			await waitForSymbols(doc.uri);
+			const fm: Frontmatter = {
+				file: 'src/test/fixtures/call-hierarchy.ts',
+				startLine: 5,
+				endLine: 7,
+				symbol: 'caller',
+				link: 'code-trail:src/test/fixtures/call-hierarchy.ts#L5-L7',
+				exportedAt: '2026-01-01T00:00:00Z',
+			};
+			const { outgoing } = await getOutgoingAndIncomingCalls(fm, workspaceUri);
+			const keys = [...outgoing];
+			assert.ok(
+				keys.some((k) => k.includes('callee')),
+				`outgoing should contain callee, got: ${keys.join(', ')}`,
 			);
-			const callerUri = await createTsFile(
-				'tmp-caller.ts',
-				'import { callee } from "./tmp-callee";\nexport function caller() { callee(); }\n',
-			);
-			try {
-				const fm: Frontmatter = {
-					file: 'tmp-caller.ts',
-					startLine: 2,
-					endLine: 2,
-					symbol: 'caller',
-					link: 'code-trail:tmp-caller.ts#L2-L2',
-					exportedAt: '2026-01-01T00:00:00Z',
-				};
-				const { outgoing } = await getOutgoingAndIncomingCalls(
-					fm,
-					workspaceUri,
-				);
-				const keys = [...outgoing];
-				assert.ok(
-					keys.some((k) => k.includes('callee')),
-					`outgoing should contain callee, got: ${keys.join(', ')}`,
-				);
-			} finally {
-				await deleteSilently(callerUri);
-				await deleteSilently(calleeUri);
-			}
 		});
 
 		test('should detect incoming calls', async function () {
 			this.timeout(10000);
-			const calleeUri = await createTsFile(
-				'tmp-callee2.ts',
-				'export function callee2() { return 1; }\n',
+			const doc = await openFixture('call-hierarchy.ts');
+			await waitForSymbols(doc.uri);
+			const fm: Frontmatter = {
+				file: 'src/test/fixtures/call-hierarchy.ts',
+				startLine: 1,
+				endLine: 3,
+				symbol: 'callee',
+				link: 'code-trail:src/test/fixtures/call-hierarchy.ts#L1-L3',
+				exportedAt: '2026-01-01T00:00:00Z',
+			};
+			const { incoming } = await getOutgoingAndIncomingCalls(fm, workspaceUri);
+			const keys = [...incoming];
+			assert.ok(
+				keys.some((k) => k.includes('caller')),
+				`incoming should contain caller, got: ${keys.join(', ')}`,
 			);
-			const callerUri = await createTsFile(
-				'tmp-caller2.ts',
-				'import { callee2 } from "./tmp-callee2";\nexport function caller2() { callee2(); }\n',
-			);
-			try {
-				const fm: Frontmatter = {
-					file: 'tmp-callee2.ts',
-					startLine: 1,
-					endLine: 1,
-					symbol: 'callee2',
-					link: 'code-trail:tmp-callee2.ts#L1-L1',
-					exportedAt: '2026-01-01T00:00:00Z',
-				};
-				const { incoming } = await getOutgoingAndIncomingCalls(
-					fm,
-					workspaceUri,
-				);
-				const keys = [...incoming];
-				assert.ok(
-					keys.some((k) => k.includes('caller2')),
-					`incoming should contain caller2, got: ${keys.join(', ')}`,
-				);
-			} finally {
-				await deleteSilently(callerUri);
-				await deleteSilently(calleeUri);
-			}
 		});
 
-		test('should return empty sets when no callers and no callees', async () => {
-			const uri = await createTsFile(
-				'tmp-nosym.ts',
-				'export function exists() {}\n',
+		test('should return empty sets when symbol not found', async () => {
+			const doc = await openFixture('symbols.ts');
+			await waitForSymbols(doc.uri);
+			const fm: Frontmatter = {
+				file: 'src/test/fixtures/symbols.ts',
+				startLine: 1,
+				endLine: 1,
+				symbol: 'doesNotExist',
+				link: 'code-trail:src/test/fixtures/symbols.ts#L1-L1',
+				exportedAt: '2026-01-01T00:00:00Z',
+			};
+			const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
+				fm,
+				workspaceUri,
 			);
-			try {
-				const fm: Frontmatter = {
-					file: 'tmp-nosym.ts',
-					startLine: 1,
-					endLine: 1,
-					symbol: 'doesNotExist',
-					link: 'code-trail:tmp-nosym.ts#L1-L1',
-					exportedAt: '2026-01-01T00:00:00Z',
-				};
-				const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
-					fm,
-					workspaceUri,
-				);
-				assert.strictEqual(outgoing.size, 0);
-				assert.strictEqual(incoming.size, 0);
-			} finally {
-				await deleteSilently(uri);
-			}
+			assert.strictEqual(outgoing.size, 0);
+			assert.strictEqual(incoming.size, 0);
 		});
 	});
 

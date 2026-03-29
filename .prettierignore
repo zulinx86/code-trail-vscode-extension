@@ -3,3 +3,4 @@ dist/
 coverage/
 code-atlas/
 *.vsix
+src/test/fixtures/
