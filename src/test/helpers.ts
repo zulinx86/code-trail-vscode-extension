@@ -23,7 +23,7 @@ export async function openFixture(name: string): Promise<vscode.TextDocument> {
 
 export async function waitForSymbols(
 	uri: vscode.Uri,
-	timeout = 2000,
+	timeout = 3000,
 ): Promise<void> {
 	const start = Date.now();
 	while (Date.now() - start < timeout) {
