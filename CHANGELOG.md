@@ -5,6 +5,7 @@
 ### Changed
 
 - Use monospace font for graph view nodes
+- In graph view, scroll to pan and Ctrl/Cmd+scroll to zoom
 
 ## [0.0.6]
 

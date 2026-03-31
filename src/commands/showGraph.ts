@@ -83,12 +83,25 @@ function getWebviewContent(
 			},
 			physics: false,
 			interaction: {
-				zoomView: true,
+				zoomView: false,
 				dragView: true,
 				dragNodes: true,
 			},
 		});
 		// Notify extension to open the mark file.
+		// Scroll to pan, Ctrl/Cmd+scroll to zoom.
+		container.addEventListener('wheel', (e) => {
+			e.preventDefault();
+			const pos = network.getViewPosition();
+			const scale = network.getScale();
+			if (e.ctrlKey || e.metaKey) {
+				const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+				network.moveTo({ scale: scale * zoomFactor });
+			} else {
+				network.moveTo({ position: { x: pos.x + e.deltaX / scale, y: pos.y + e.deltaY / scale } });
+			}
+		}, { passive: false });
+
 		network.on('click', (params) => {
 			if (params.nodes.length > 0) {
 				vscode.postMessage({ type: 'openMark', markId: params.nodes[0] });
