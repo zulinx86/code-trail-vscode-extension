@@ -1,15 +1,32 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { getOutgoingAndIncomingCalls } from '../../../utils/link';
+import {
+	getOutgoingAndIncomingCalls,
+	getLinkSuggestions,
+	markToKeys,
+} from '../../../utils/link';
+import { getSymbolAtPosition } from '../../../utils/symbol';
+import { buildSelectionInfo } from '../../../utils/selection';
+import { saveMark, getMarks } from '../../../utils/mark';
+import { parseFrontmatter, type Frontmatter } from '../../../utils/frontmatter';
 import {
 	openFixture,
 	waitForSymbols,
 	waitForCallHierarchy,
 } from '../../helpers';
-import type { Frontmatter } from '../../../utils/frontmatter';
 
 suite('link (Rust)', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
+
+	async function cleanup() {
+		try {
+			await vscode.workspace.fs.delete(outputDir, { recursive: true });
+		} catch {}
+	}
+
+	setup(cleanup);
+	teardown(cleanup);
 
 	suite('getOutgoingAndIncomingCalls', () => {
 		test('should detect outgoing calls', async function () {
@@ -53,6 +70,94 @@ suite('link (Rust)', () => {
 			assert.ok(
 				keys.some((k) => k.includes('my_caller')),
 				`incoming should contain my_caller, got: [${keys.join(', ')}]`,
+			);
+		});
+	});
+
+	suite('getLinkSuggestions', () => {
+		async function saveMarkAtPosition(
+			doc: vscode.TextDocument,
+			position: vscode.Position,
+		): Promise<vscode.Uri> {
+			const symbolInfo = await getSymbolAtPosition(doc.uri, position);
+			assert.ok(symbolInfo, `should find symbol at L${position.line + 1}`);
+			const info = buildSelectionInfo(doc, symbolInfo.range, symbolInfo);
+			return saveMark(info, new Date());
+		}
+
+		test('should suggest impl method callee as outgoing', async function () {
+			const doc = await openFixture('rust/src/lib.rs');
+			await waitForSymbols(doc.uri);
+			await waitForCallHierarchy(doc.uri, new vscode.Position(44, 7));
+
+			// L45: fn my_impl_caller of impl MyImplCall
+			const callerUri = await saveMarkAtPosition(
+				doc,
+				new vscode.Position(45, 8),
+			);
+			// L41: fn my_impl_callee of impl MyImplCall
+			const calleeUri = await saveMarkAtPosition(
+				doc,
+				new vscode.Position(41, 8),
+			);
+
+			const callerContent = Buffer.from(
+				await vscode.workspace.fs.readFile(callerUri),
+			).toString('utf-8');
+			const callerFm = parseFrontmatter(callerContent)!;
+
+			const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
+				callerFm,
+				workspaceUri,
+			);
+			const marks = await getMarks();
+			const suggestions = getLinkSuggestions(marks, outgoing, incoming);
+			const suggested = suggestions.filter((s) => s.suggested);
+
+			const calleeMarkId = calleeUri.fsPath.split('/').pop()!;
+			assert.ok(
+				suggested.some(
+					(s) => s.mark.markId === calleeMarkId && s.direction === 'uses',
+				),
+				'should suggest my_impl_callee as uses',
+			);
+		});
+
+		test('should suggest impl method caller as incoming', async function () {
+			const doc = await openFixture('rust/src/lib.rs');
+			await waitForSymbols(doc.uri);
+			await waitForCallHierarchy(doc.uri, new vscode.Position(40, 7));
+
+			// L41: fn my_impl_callee of impl MyImplCall
+			const calleeUri = await saveMarkAtPosition(
+				doc,
+				new vscode.Position(41, 8),
+			);
+			// L45: fn my_impl_caller of impl MyImplCall
+			const callerUri = await saveMarkAtPosition(
+				doc,
+				new vscode.Position(45, 8),
+			);
+
+			const calleeContent = Buffer.from(
+				await vscode.workspace.fs.readFile(calleeUri),
+			).toString('utf-8');
+			const calleeFm = parseFrontmatter(calleeContent)!;
+
+			const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
+				calleeFm,
+				workspaceUri,
+			);
+			const marks = await getMarks();
+			const suggestions = getLinkSuggestions(marks, outgoing, incoming);
+			const suggested = suggestions.filter((s) => s.suggested);
+
+			const callerMarkId = callerUri.fsPath.split('/').pop()!;
+			assert.ok(
+				suggested.some(
+					(s) => s.mark.markId === callerMarkId && s.direction === 'usedBy',
+				),
+				'should suggest my_impl_caller as usedBy',
 			);
 		});
 	});

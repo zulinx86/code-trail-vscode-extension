@@ -6,13 +6,12 @@ import { type MarkInfo, getMarks } from './mark';
 import { OUTPUT_DIR } from '../config';
 import { log } from './logger';
 
-export function callItemToSymbolKey(
+export function callItemToNameKey(
 	wsRoot: string,
 	item: vscode.CallHierarchyItem,
 ): string {
 	const file = path.relative(wsRoot, item.uri.fsPath);
-	const name = item.detail ? `${item.detail}.${item.name}` : item.name;
-	return `${file}#${name}`;
+	return `${file}#${item.name}`;
 }
 
 export function callItemToRangeKey(
@@ -75,7 +74,7 @@ export async function getOutgoingAndIncomingCalls(
 			log(
 				`getOutgoingAndIncomingCalls: outgoing item (name=${call.to.name} detail=${call.to.detail} kind=${call.to.kind})`,
 			);
-			outgoing.add(callItemToSymbolKey(wsRoot, call.to));
+			outgoing.add(callItemToNameKey(wsRoot, call.to));
 			outgoing.add(callItemToRangeKey(wsRoot, call.to));
 		}
 
@@ -87,7 +86,7 @@ export async function getOutgoingAndIncomingCalls(
 			log(
 				`getOutgoingAndIncomingCalls: incoming item (name=${call.from.name} detail=${call.from.detail} kind=${call.from.kind})`,
 			);
-			incoming.add(callItemToSymbolKey(wsRoot, call.from));
+			incoming.add(callItemToNameKey(wsRoot, call.from));
 			incoming.add(callItemToRangeKey(wsRoot, call.from));
 		}
 		log(
@@ -107,10 +106,13 @@ interface LinkSuggestion {
 	suggested: boolean;
 }
 
-export function markToKey(m: MarkInfo): string {
-	return m.fm.symbol
-		? `${m.fm.file}#${m.fm.symbol}`
-		: `${m.fm.file}#L${m.fm.startLine}-L${m.fm.endLine}`;
+export function markToKeys(m: MarkInfo): string[] {
+	const rangeKey = `${m.fm.file}#L${m.fm.startLine}-L${m.fm.endLine}`;
+	if (!m.fm.symbol) {
+		return [rangeKey];
+	}
+	const lastSegment = m.fm.symbol.split('.').pop()!;
+	return [`${m.fm.file}#${lastSegment}`, rangeKey];
 }
 
 export function markToDescription(m: MarkInfo): string {
@@ -128,11 +130,13 @@ export function getLinkSuggestions(
 	const suggestions: LinkSuggestion[] = [];
 
 	for (const mark of marks) {
-		const key = markToKey(mark);
+		const keys = markToKeys(mark);
 		const desc = markToDescription(mark);
-		const isOutgoing = outgoing.has(key);
-		const isIncoming = incoming.has(key);
-		log(`getLinkSuggestions: checking mark ${mark.markId} key=${key}`);
+		const isOutgoing = keys.some((k) => outgoing.has(k));
+		const isIncoming = keys.some((k) => incoming.has(k));
+		log(
+			`getLinkSuggestions: checking mark ${mark.markId} keys=[${keys.join(', ')}]`,
+		);
 		if (isOutgoing) {
 			suggestions.push({
 				mark,

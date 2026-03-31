@@ -4,4 +4,7 @@ export default defineConfig({
 	files: 'out/test/**/*.test.js',
 	workspaceFolder: '.',
 	installExtensions: ['rust-lang.rust-analyzer'],
+	mocha: {
+		timeout: 3000,
+	},
 });

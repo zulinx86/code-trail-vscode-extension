@@ -2,10 +2,14 @@
 
 ## [0.0.6]
 
+### Added
+
+- Allow dragging nodes in all directions in graph view
+
 ### Fixed
 
 - Use Dagre for graph layout to prevent node overlapping with long labels
-- Allow dragging nodes in all directions in graph view
+- Fix link suggestions for Rust by matching on name only
 
 ## [0.0.5]
 

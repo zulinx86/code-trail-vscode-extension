@@ -1,11 +1,11 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import {
-	markToKey,
+	markToKeys,
 	markToDescription,
 	getLinkSuggestions,
 	getOutgoingAndIncomingCalls,
-	callItemToSymbolKey,
+	callItemToNameKey,
 	callItemToRangeKey,
 	linkSuggestionsToQuickPickItems,
 	promptAndLink,
@@ -18,7 +18,7 @@ import type { SelectionInfo } from '../../utils/selection';
 import { openFixture, waitForSymbols } from '../helpers';
 
 suite('link', () => {
-	suite('callItemToSymbolKey', () => {
+	suite('callItemToNameKey', () => {
 		test('should return file#name for item without detail', () => {
 			const item = new vscode.CallHierarchyItem(
 				vscode.SymbolKind.Function,
@@ -28,13 +28,10 @@ suite('link', () => {
 				new vscode.Range(0, 0, 2, 0),
 				new vscode.Range(0, 0, 0, 3),
 			);
-			assert.strictEqual(
-				callItemToSymbolKey('/workspace', item),
-				'src/a.ts#foo',
-			);
+			assert.strictEqual(callItemToNameKey('/workspace', item), 'src/a.ts#foo');
 		});
 
-		test('should return file#detail.name for item with detail', () => {
+		test('should return file#name for item with detail', () => {
 			const item = new vscode.CallHierarchyItem(
 				vscode.SymbolKind.Method,
 				'bar',
@@ -43,10 +40,7 @@ suite('link', () => {
 				new vscode.Range(1, 0, 3, 0),
 				new vscode.Range(1, 0, 1, 3),
 			);
-			assert.strictEqual(
-				callItemToSymbolKey('/workspace', item),
-				'src/a.ts#Foo.bar',
-			);
+			assert.strictEqual(callItemToNameKey('/workspace', item), 'src/a.ts#bar');
 		});
 	});
 
@@ -146,15 +140,27 @@ suite('link', () => {
 		};
 	}
 
-	suite('markToKey', () => {
-		test('should use file#symbol when symbol exists', () => {
+	suite('markToKeys', () => {
+		test('should include name key and range key when symbol exists', () => {
 			const m = makeMarkInfo('a.md', { ...baseFm, symbol: 'foo' });
-			assert.strictEqual(markToKey(m), 'src/a.ts#foo');
+			const keys = markToKeys(m);
+			assert.ok(keys.includes('src/a.ts#foo'));
+			assert.ok(keys.includes('src/a.ts#L10-L24'));
+			assert.strictEqual(keys.length, 2);
 		});
 
-		test('should use file#range when no symbol', () => {
+		test('should use last segment for qualified symbol', () => {
+			const m = makeMarkInfo('a.md', { ...baseFm, symbol: 'impl Foo.bar' });
+			const keys = markToKeys(m);
+			assert.ok(keys.includes('src/a.ts#bar'));
+			assert.ok(keys.includes('src/a.ts#L10-L24'));
+			assert.strictEqual(keys.length, 2);
+		});
+
+		test('should return only range key when no symbol', () => {
 			const m = makeMarkInfo('a.md', baseFm);
-			assert.strictEqual(markToKey(m), 'src/a.ts#L10-L24');
+			const keys = markToKeys(m);
+			assert.deepStrictEqual(keys, ['src/a.ts#L10-L24']);
 		});
 	});
 
