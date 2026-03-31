@@ -26,3 +26,11 @@ enum MyEnum {
     A,
     B,
 }
+
+fn my_callee() -> i32 {
+    1
+}
+
+fn my_caller() -> i32 {
+    my_callee()
+}

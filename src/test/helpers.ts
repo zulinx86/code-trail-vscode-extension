@@ -36,3 +36,21 @@ export async function waitForSymbols(
 		await new Promise((r) => setTimeout(r, 100));
 	}
 }
+
+export async function waitForCallHierarchy(
+	uri: vscode.Uri,
+	position: vscode.Position,
+	timeout = 3000,
+): Promise<vscode.CallHierarchyItem[]> {
+	const start = Date.now();
+	while (Date.now() - start < timeout) {
+		const items = await vscode.commands.executeCommand<
+			vscode.CallHierarchyItem[]
+		>('vscode.prepareCallHierarchy', uri, position);
+		if (items && items.length > 0) {
+			return items;
+		}
+		await new Promise((r) => setTimeout(r, 100));
+	}
+	return [];
+}

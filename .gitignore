@@ -5,3 +5,5 @@ node_modules
 *.vsix
 code-trail/
 coverage/
+Cargo.lock
+target/

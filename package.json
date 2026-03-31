@@ -60,7 +60,7 @@
 		"package": "npm run check-types && npm run lint && npm run fmt && node esbuild.js --production",
 		"vscode:prepublish": "npm run package",
 		"compile-tests": "tsc -p . --outDir out",
-		"pretest": "npm run compile-tests && npm run compile",
+		"pretest": "rm -rf out && npm run compile-tests && npm run compile",
 		"test": "vscode-test --coverage --coverage-reporter html",
 		"install-local": "npx vsce package && code --install-extension zulinx86-code-trail-0.0.5.vsix",
 		"publish": "npx vsce publish",
