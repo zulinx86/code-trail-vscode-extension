@@ -78,7 +78,7 @@ function getWebviewContent(
 			},
 			nodes: {
 				shape: 'box',
-				font: { size: 14 },
+				font: { size: 14, face: 'monospace' },
 				margin: 10,
 			},
 			physics: false,

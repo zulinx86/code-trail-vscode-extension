@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.0.7]
+
+### Changed
+
+- Use monospace font for graph view nodes
+
 ## [0.0.6]
 
 ### Added
