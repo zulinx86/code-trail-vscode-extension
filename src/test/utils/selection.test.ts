@@ -6,7 +6,7 @@ import { openFixture } from '../helpers';
 suite('selection', () => {
 	suite('buildSelectionInfo', () => {
 		test('should return correct SelectionInfo for a range', async () => {
-			const doc = await openFixture('plain-text.ts');
+			const doc = await openFixture('typescript/plain-text.ts');
 			const range = new vscode.Range(0, 0, 1, 5);
 			const info = buildSelectionInfo(doc, range);
 			assert.strictEqual(info.fileName, 'plain-text.ts');
@@ -19,14 +19,14 @@ suite('selection', () => {
 		});
 
 		test('should expand partial selection to full lines', async () => {
-			const doc = await openFixture('plain-text.ts');
+			const doc = await openFixture('typescript/plain-text.ts');
 			const range = new vscode.Range(0, 2, 1, 3);
 			const info = buildSelectionInfo(doc, range);
 			assert.strictEqual(info.selectedText, 'line0\nline1');
 		});
 
 		test('should include symbol name and kind when provided', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			// L3: function myFunction() {}
 			const range = new vscode.Range(2, 0, 2, 23);
 			const info = buildSelectionInfo(doc, range, {

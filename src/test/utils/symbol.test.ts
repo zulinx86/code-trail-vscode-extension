@@ -8,7 +8,7 @@ suite('symbol', () => {
 
 	suite('getSymbolAtPosition', () => {
 		test('should return innermost function at position', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			// L7: inside myInnerFunction
 			const info = await getSymbolAtPosition(
@@ -21,7 +21,7 @@ suite('symbol', () => {
 		});
 
 		test('should return outer function when position is outside inner', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			// L5: function myOuterFunction() { line
 			const info = await getSymbolAtPosition(
@@ -34,7 +34,7 @@ suite('symbol', () => {
 		});
 
 		test('should return class method at position', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			// L13: inside myMethod
 			const info = await getSymbolAtPosition(
@@ -47,7 +47,7 @@ suite('symbol', () => {
 		});
 
 		test('should return class at position', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			// L11: class MyClass
 			const info = await getSymbolAtPosition(
@@ -60,7 +60,7 @@ suite('symbol', () => {
 		});
 
 		test('should return interface at position', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			// L17: interface MyInterface
 			const info = await getSymbolAtPosition(
@@ -73,7 +73,7 @@ suite('symbol', () => {
 		});
 
 		test('should return enum at position', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			// L21: enum MyEnum
 			const info = await getSymbolAtPosition(
@@ -86,7 +86,7 @@ suite('symbol', () => {
 		});
 
 		test('should return kind as other for unmapped symbol kinds', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			// L1: const myConst
 			const info = await getSymbolAtPosition(
@@ -114,7 +114,7 @@ suite('symbol', () => {
 
 	suite('getSymbolPos', () => {
 		test('should return position for a top-level function', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			const pos = await getSymbolPos(doc.uri, 'myFunction');
 			assert.ok(pos, 'should find symbol myFunction');
@@ -122,7 +122,7 @@ suite('symbol', () => {
 		});
 
 		test('should return position for a nested function using qualified name', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			const pos = await getSymbolPos(
 				doc.uri,
@@ -133,7 +133,7 @@ suite('symbol', () => {
 		});
 
 		test('should return position for a class method', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			const pos = await getSymbolPos(doc.uri, 'MyClass.myMethod');
 			assert.ok(pos, 'should find symbol MyClass.myMethod');
@@ -141,7 +141,7 @@ suite('symbol', () => {
 		});
 
 		test('should return undefined for a non-existent symbol', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			const pos = await getSymbolPos(doc.uri, 'doesNotExist');
 			assert.strictEqual(pos, undefined);

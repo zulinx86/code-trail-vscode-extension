@@ -33,7 +33,7 @@ suite('markCode command', () => {
 	});
 
 	test('should create a mark file from selection', async () => {
-		const doc = await openFixture('plain-text.ts');
+		const doc = await openFixture('typescript/plain-text.ts');
 		const editor = await vscode.window.showTextDocument(doc);
 		editor.selection = new vscode.Selection(1, 0, 2, 5);
 
@@ -45,7 +45,7 @@ suite('markCode command', () => {
 	});
 
 	test('should mark symbol when cursor is inside a function', async () => {
-		const doc = await openFixture('symbols.ts');
+		const doc = await openFixture('typescript/index.ts');
 		await waitForSymbols(doc.uri);
 		const editor = await vscode.window.showTextDocument(doc);
 		// L3: function myFunction() {}
@@ -65,7 +65,7 @@ suite('markCode command', () => {
 	});
 
 	test('should not create duplicate mark for same symbol', async () => {
-		const doc = await openFixture('symbols.ts');
+		const doc = await openFixture('typescript/index.ts');
 		await waitForSymbols(doc.uri);
 		const editor = await vscode.window.showTextDocument(doc);
 		// L3: function myFunction() {}
@@ -78,7 +78,7 @@ suite('markCode command', () => {
 		assert.strictEqual(files1.length, 1, 'should create one mark');
 
 		// Re-open and place cursor in same function
-		const doc2 = await openFixture('symbols.ts');
+		const doc2 = await openFixture('typescript/index.ts');
 		await waitForSymbols(doc2.uri);
 		const editor2 = await vscode.window.showTextDocument(doc2);
 		editor2.selection = new vscode.Selection(2, 0, 2, 0);

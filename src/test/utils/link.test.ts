@@ -72,53 +72,53 @@ suite('link', () => {
 
 		test('should detect outgoing calls', async function () {
 			this.timeout(10000);
-			const doc = await openFixture('call-hierarchy.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			const fm: Frontmatter = {
-				file: 'src/test/fixtures/call-hierarchy.ts',
-				startLine: 5,
-				endLine: 7,
-				symbol: 'caller',
-				link: 'code-trail:src/test/fixtures/call-hierarchy.ts#L5-L7',
+				file: 'src/test/fixtures/typescript/index.ts',
+				startLine: 30,
+				endLine: 32,
+				symbol: 'myCaller',
+				link: 'code-trail:src/test/fixtures/typescript/index.ts#L30-L32',
 				exportedAt: '2026-01-01T00:00:00Z',
 			};
 			const { outgoing } = await getOutgoingAndIncomingCalls(fm, workspaceUri);
 			const keys = [...outgoing];
 			assert.ok(
-				keys.some((k) => k.includes('callee')),
-				`outgoing should contain callee, got: ${keys.join(', ')}`,
+				keys.some((k) => k.includes('myCallee')),
+				`outgoing should contain myCallee, got: ${keys.join(', ')}`,
 			);
 		});
 
 		test('should detect incoming calls', async function () {
 			this.timeout(10000);
-			const doc = await openFixture('call-hierarchy.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			const fm: Frontmatter = {
-				file: 'src/test/fixtures/call-hierarchy.ts',
-				startLine: 1,
-				endLine: 3,
-				symbol: 'callee',
-				link: 'code-trail:src/test/fixtures/call-hierarchy.ts#L1-L3',
+				file: 'src/test/fixtures/typescript/index.ts',
+				startLine: 26,
+				endLine: 28,
+				symbol: 'myCallee',
+				link: 'code-trail:src/test/fixtures/typescript/index.ts#L26-L28',
 				exportedAt: '2026-01-01T00:00:00Z',
 			};
 			const { incoming } = await getOutgoingAndIncomingCalls(fm, workspaceUri);
 			const keys = [...incoming];
 			assert.ok(
-				keys.some((k) => k.includes('caller')),
-				`incoming should contain caller, got: ${keys.join(', ')}`,
+				keys.some((k) => k.includes('myCaller')),
+				`incoming should contain myCaller, got: ${keys.join(', ')}`,
 			);
 		});
 
 		test('should return empty sets when symbol not found', async () => {
-			const doc = await openFixture('symbols.ts');
+			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			const fm: Frontmatter = {
-				file: 'src/test/fixtures/symbols.ts',
+				file: 'src/test/fixtures/typescript/index.ts',
 				startLine: 1,
 				endLine: 1,
 				symbol: 'doesNotExist',
-				link: 'code-trail:src/test/fixtures/symbols.ts#L1-L1',
+				link: 'code-trail:src/test/fixtures/typescript/index.ts#L1-L1',
 				exportedAt: '2026-01-01T00:00:00Z',
 			};
 			const { outgoing, incoming } = await getOutgoingAndIncomingCalls(

@@ -22,3 +22,11 @@ enum MyEnum {
   A,
   B,
 }
+
+function myCallee() {
+  return 1;
+}
+
+function myCaller() {
+  myCallee();
+}
