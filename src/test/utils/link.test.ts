@@ -137,6 +137,7 @@ suite('link', () => {
 			markId,
 			uri: vscode.Uri.file(`/tmp/${markId}`),
 			fm,
+			content: '',
 		};
 	}
 

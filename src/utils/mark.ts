@@ -120,6 +120,7 @@ export interface MarkInfo {
 	markId: string;
 	uri: vscode.Uri;
 	fm: Frontmatter;
+	content: string;
 }
 
 export async function findExistingMark(
@@ -147,7 +148,7 @@ export async function getMarks(): Promise<MarkInfo[]> {
 			if (!fm) {
 				return undefined;
 			}
-			return { markId: path.basename(uri.fsPath), uri, fm };
+			return { markId: path.basename(uri.fsPath), uri, fm, content };
 		}),
 	);
 	return results.filter((m): m is MarkInfo => m !== undefined);

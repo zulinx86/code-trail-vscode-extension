@@ -175,17 +175,10 @@ function extractCode(
 export async function buildGraphData(): Promise<GraphData> {
 	const marks = await getMarks();
 	log(`buildGraphData: ${marks.length} marks`);
-	const contents = await Promise.all(
-		marks.map((mark) =>
-			vscode.workspace.fs
-				.readFile(mark.uri)
-				.then((bytes) => Buffer.from(bytes).toString('utf-8')),
-		),
-	);
 	const cfg = loadConfig();
-	const rawNodes = marks.map((mark, idx) => {
+	const rawNodes = marks.map((mark) => {
 		const label = nodeLabel(mark.fm);
-		const code = extractCode(contents[idx], mark.fm.file, cfg);
+		const code = extractCode(mark.content, mark.fm.file, cfg);
 		const size = measureNodeSize(label, code);
 		return {
 			id: mark.markId,
