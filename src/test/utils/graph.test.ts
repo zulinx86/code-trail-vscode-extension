@@ -115,7 +115,10 @@ suite('graph', () => {
 		});
 
 		test('should return default color for undefined', () => {
-			assert.strictEqual(nodeColor(defaultCfg, undefined), nodeColor(defaultCfg, 'unknown'));
+			assert.strictEqual(
+				nodeColor(defaultCfg, undefined),
+				nodeColor(defaultCfg, 'unknown'),
+			);
 		});
 	});
 

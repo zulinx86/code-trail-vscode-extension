@@ -63,7 +63,10 @@ function loadConfig(): GraphConfig {
 	const config = vscode.workspace.getConfiguration('codeTrail');
 	return {
 		tabSize: config.get<number>('tabSize', 4),
-		tabSizeByLanguage: config.get<Record<string, number>>('tabSizeByLanguage', {}),
+		tabSizeByLanguage: config.get<Record<string, number>>(
+			'tabSizeByLanguage',
+			{},
+		),
 		symbolColors: config.get<Record<string, string>>('symbolColors', {}),
 	};
 }
@@ -93,7 +96,8 @@ export function nodeLabel(fm: Frontmatter): string {
 
 export function nodeColor(cfg: GraphConfig, symbolKind?: string): string {
 	const kind = symbolKind ?? '';
-	return cfg.symbolColors[kind] ?? DEFAULT_SYMBOL_COLORS[kind] ?? DEFAULT_COLOR;
+	if (Object.hasOwn(cfg.symbolColors, kind)) return cfg.symbolColors[kind];
+	return DEFAULT_SYMBOL_COLORS[kind] ?? DEFAULT_COLOR;
 }
 
 export function measureNodeSize(
@@ -153,11 +157,17 @@ function layoutWithDagre(
 
 function expandTabs(code: string, filePath: string, cfg: GraphConfig): string {
 	const ext = filePath.split('.').pop() ?? '';
-	const tabSize = cfg.tabSizeByLanguage[ext] ?? cfg.tabSize;
+	const tabSize = Object.hasOwn(cfg.tabSizeByLanguage, ext)
+		? cfg.tabSizeByLanguage[ext]
+		: cfg.tabSize;
 	return code.replace(/\t/g, ' '.repeat(tabSize));
 }
 
-function extractCode(content: string, filePath: string, cfg: GraphConfig): string {
+function extractCode(
+	content: string,
+	filePath: string,
+	cfg: GraphConfig,
+): string {
 	const match = content.match(/# Code\s+```[^\n]*\n([\s\S]*?)\n```/);
 	return match ? expandTabs(match[1], filePath, cfg) : '';
 }
