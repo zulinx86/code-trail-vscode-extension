@@ -137,7 +137,7 @@ function layoutWithDagre(
 
 function extractCode(content: string): string {
 	const match = content.match(/# Code\s+```[^\n]*\n([\s\S]*?)\n```/);
-	return match ? match[1] : '';
+	return match ? match[1].replace(/\t/g, '    ') : '';
 }
 
 export async function buildGraphData(): Promise<GraphData> {

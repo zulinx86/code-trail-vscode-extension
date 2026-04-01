@@ -5,6 +5,7 @@
 ### Fixed
 
 - Prevent nodes from disappearing when partially outside the viewport in graph view
+- Expand tabs to 4 spaces in code snippets in graph view
 
 ## [0.1.0]
 
