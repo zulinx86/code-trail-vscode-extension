@@ -2,6 +2,9 @@ import typescriptEslint from 'typescript-eslint';
 
 export default [
 	{
+		ignores: ['src/test/fixtures/**'],
+	},
+	{
 		files: ['**/*.ts'],
 	},
 	{
