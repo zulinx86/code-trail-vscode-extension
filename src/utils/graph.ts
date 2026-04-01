@@ -53,6 +53,21 @@ const DEFAULT_SYMBOL_COLORS: Record<string, string> = {
 };
 const DEFAULT_COLOR = '#DBDBDB';
 
+interface GraphConfig {
+	tabSize: number;
+	tabSizeByLanguage: Record<string, number>;
+	symbolColors: Record<string, string>;
+}
+
+function loadConfig(): GraphConfig {
+	const config = vscode.workspace.getConfiguration('codeTrail');
+	return {
+		tabSize: config.get<number>('tabSize', 4),
+		tabSizeByLanguage: config.get<Record<string, number>>('tabSizeByLanguage', {}),
+		symbolColors: config.get<Record<string, string>>('symbolColors', {}),
+	};
+}
+
 export function nodeLabel(fm: Frontmatter): string {
 	if (!fm.symbol) {
 		return `${fm.file}#L${fm.startLine}-L${fm.endLine}`;
@@ -76,11 +91,9 @@ export function nodeLabel(fm: Frontmatter): string {
 	return fm.symbol;
 }
 
-export function nodeColor(symbolKind?: string): string {
-	const config = vscode.workspace.getConfiguration('codeTrail');
-	const userColors = config.get<Record<string, string>>('symbolColors', {});
+export function nodeColor(cfg: GraphConfig, symbolKind?: string): string {
 	const kind = symbolKind ?? '';
-	return userColors[kind] ?? DEFAULT_SYMBOL_COLORS[kind] ?? DEFAULT_COLOR;
+	return cfg.symbolColors[kind] ?? DEFAULT_SYMBOL_COLORS[kind] ?? DEFAULT_COLOR;
 }
 
 export function measureNodeSize(
@@ -138,17 +151,15 @@ function layoutWithDagre(
 	});
 }
 
-function expandTabs(code: string, filePath: string): string {
-	const config = vscode.workspace.getConfiguration('codeTrail');
+function expandTabs(code: string, filePath: string, cfg: GraphConfig): string {
 	const ext = filePath.split('.').pop() ?? '';
-	const byLang = config.get<Record<string, number>>('tabSizeByLanguage', {});
-	const tabSize = byLang[ext] ?? config.get<number>('tabSize', 4);
+	const tabSize = cfg.tabSizeByLanguage[ext] ?? cfg.tabSize;
 	return code.replace(/\t/g, ' '.repeat(tabSize));
 }
 
-function extractCode(content: string, filePath: string): string {
+function extractCode(content: string, filePath: string, cfg: GraphConfig): string {
 	const match = content.match(/# Code\s+```[^\n]*\n([\s\S]*?)\n```/);
-	return match ? expandTabs(match[1], filePath) : '';
+	return match ? expandTabs(match[1], filePath, cfg) : '';
 }
 
 export async function buildGraphData(): Promise<GraphData> {
@@ -161,16 +172,17 @@ export async function buildGraphData(): Promise<GraphData> {
 				.then((bytes) => Buffer.from(bytes).toString('utf-8')),
 		),
 	);
+	const cfg = loadConfig();
 	const rawNodes = marks.map((mark, idx) => {
 		const label = nodeLabel(mark.fm);
-		const code = extractCode(contents[idx], mark.fm.file);
+		const code = extractCode(contents[idx], mark.fm.file, cfg);
 		const size = measureNodeSize(label, code);
 		return {
 			id: mark.markId,
 			label,
 			code,
 			file: `${mark.fm.file}#L${mark.fm.startLine}-L${mark.fm.endLine}`,
-			color: nodeColor(mark.fm.symbolKind),
+			color: nodeColor(cfg, mark.fm.symbolKind),
 			width: size.width,
 			height: size.height,
 		};

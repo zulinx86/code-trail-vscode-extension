@@ -88,32 +88,34 @@ suite('graph', () => {
 		});
 	});
 
+	const defaultCfg = { tabSize: 4, tabSizeByLanguage: {}, symbolColors: {} };
+
 	suite('nodeColor', () => {
 		test('should return blue for function/method/constructor', () => {
-			const color = nodeColor('function');
-			assert.strictEqual(nodeColor('method'), color);
-			assert.strictEqual(nodeColor('constructor'), color);
+			const color = nodeColor(defaultCfg, 'function');
+			assert.strictEqual(nodeColor(defaultCfg, 'method'), color);
+			assert.strictEqual(nodeColor(defaultCfg, 'constructor'), color);
 		});
 
 		test('should return green for class/struct', () => {
-			const color = nodeColor('class');
-			assert.strictEqual(nodeColor('struct'), color);
+			const color = nodeColor(defaultCfg, 'class');
+			assert.strictEqual(nodeColor(defaultCfg, 'struct'), color);
 		});
 
 		test('should return different colors for each group', () => {
 			const colors = new Set([
-				nodeColor('function'),
-				nodeColor('class'),
-				nodeColor('enum'),
-				nodeColor('interface'),
-				nodeColor('const'),
-				nodeColor(undefined),
+				nodeColor(defaultCfg, 'function'),
+				nodeColor(defaultCfg, 'class'),
+				nodeColor(defaultCfg, 'enum'),
+				nodeColor(defaultCfg, 'interface'),
+				nodeColor(defaultCfg, 'const'),
+				nodeColor(defaultCfg, undefined),
 			]);
 			assert.strictEqual(colors.size, 6);
 		});
 
 		test('should return default color for undefined', () => {
-			assert.strictEqual(nodeColor(undefined), nodeColor('unknown'));
+			assert.strictEqual(nodeColor(defaultCfg, undefined), nodeColor(defaultCfg, 'unknown'));
 		});
 	});
 
