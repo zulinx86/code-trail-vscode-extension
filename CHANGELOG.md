@@ -2,6 +2,10 @@
 
 ## [0.0.8]
 
+### Added
+
+- Demo GIF in README
+
 ### Changed
 
 - Use Ctrl/Cmd+Click instead of double-click to open mark files in graph view

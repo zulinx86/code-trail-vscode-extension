@@ -2,6 +2,8 @@
 
 A VS Code extension for recording code reading notes.
 
+![demo](demo.gif)
+
 ## Features
 
 - Save code snippets as Markdown notes ("marks") with YAML frontmatter
