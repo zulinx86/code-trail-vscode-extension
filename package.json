@@ -34,6 +34,34 @@
 				"title": "Code Trail: Show Graph"
 			}
 		],
+		"configuration": {
+			"title": "Code Trail",
+			"properties": {
+				"codeTrail.tabSize": {
+					"type": "number",
+					"default": 4,
+					"minimum": 1,
+					"description": "Number of spaces to use when expanding tabs in graph view code snippets."
+				},
+				"codeTrail.tabSizeByLanguage": {
+					"type": "object",
+					"default": {},
+					"additionalProperties": {
+						"type": "number",
+						"minimum": 1
+					},
+					"description": "Per-language tab size overrides for graph view (e.g. {\"go\": 8}). Language is detected from the file extension."
+				},
+				"codeTrail.symbolColors": {
+					"type": "object",
+					"default": {},
+					"additionalProperties": {
+						"type": "string"
+					},
+					"markdownDescription": "Override node colors by symbol kind in graph view (e.g. `{\"function\": \"#A8D8F0\", \"class\": \"#A8E6CF\"}`). Supported kinds: `function`, `method`, `constructor`, `class`, `struct`, `enum`, `interface`, `const`."
+				}
+			}
+		},
 		"keybindings": [
 			{
 				"command": "codeTrail.markCode",

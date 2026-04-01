@@ -41,7 +41,7 @@ export interface GraphData {
 	edges: GraphEdge[];
 }
 
-const SYMBOL_KIND_TO_COLOR: Record<string, string> = {
+const DEFAULT_SYMBOL_COLORS: Record<string, string> = {
 	function: '#A8D8F0',
 	method: '#A8D8F0',
 	constructor: '#A8D8F0',
@@ -77,7 +77,10 @@ export function nodeLabel(fm: Frontmatter): string {
 }
 
 export function nodeColor(symbolKind?: string): string {
-	return SYMBOL_KIND_TO_COLOR[symbolKind ?? ''] ?? DEFAULT_COLOR;
+	const config = vscode.workspace.getConfiguration('codeTrail');
+	const userColors = config.get<Record<string, string>>('symbolColors', {});
+	const kind = symbolKind ?? '';
+	return userColors[kind] ?? DEFAULT_SYMBOL_COLORS[kind] ?? DEFAULT_COLOR;
 }
 
 export function measureNodeSize(
@@ -135,9 +138,17 @@ function layoutWithDagre(
 	});
 }
 
-function extractCode(content: string): string {
+function expandTabs(code: string, filePath: string): string {
+	const config = vscode.workspace.getConfiguration('codeTrail');
+	const ext = filePath.split('.').pop() ?? '';
+	const byLang = config.get<Record<string, number>>('tabSizeByLanguage', {});
+	const tabSize = byLang[ext] ?? config.get<number>('tabSize', 4);
+	return code.replace(/\t/g, ' '.repeat(tabSize));
+}
+
+function extractCode(content: string, filePath: string): string {
 	const match = content.match(/# Code\s+```[^\n]*\n([\s\S]*?)\n```/);
-	return match ? match[1].replace(/\t/g, '    ') : '';
+	return match ? expandTabs(match[1], filePath) : '';
 }
 
 export async function buildGraphData(): Promise<GraphData> {
@@ -152,7 +163,7 @@ export async function buildGraphData(): Promise<GraphData> {
 	);
 	const rawNodes = marks.map((mark, idx) => {
 		const label = nodeLabel(mark.fm);
-		const code = extractCode(contents[idx]);
+		const code = extractCode(contents[idx], mark.fm.file);
 		const size = measureNodeSize(label, code);
 		return {
 			id: mark.markId,

@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2]
+
+### Added
+
+- `codeTrail.tabSize` setting to configure tab expansion width in graph view (default: 4)
+- `codeTrail.tabSizeByLanguage` setting for per-language tab size overrides (e.g. `{"go": 8}`)
+- `codeTrail.symbolColors` setting to override node colors by symbol kind in graph view
+
 ## [0.1.1]
 
 ### Fixed
