@@ -9,7 +9,10 @@ A VS Code extension for recording code reading notes.
   - Records file path, line range, symbol name, symbol kind, timestamp, GitHub URL, and the selected code
 - Link marks to each other with `uses`/`usedBy` relationships, with call hierarchy suggestions
 - Clickable `code-trail:` links to jump between marks and source code
-- Visualize marks as a directed graph with color-coded nodes by symbol kind
+- Visualize marks as a directed graph
+  - Nodes show code snippets with file path and line range
+  - Click a node to expand/collapse code
+  - Double-click a node to open mark file
 
 ## Commands
 

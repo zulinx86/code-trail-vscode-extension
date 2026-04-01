@@ -1,5 +1,8 @@
 const esbuild = require('esbuild');
 
+const fs = require('fs');
+const path = require('path');
+
 const production = process.argv.includes('--production');
 const watch = process.argv.includes('--watch');
 
@@ -25,6 +28,20 @@ const esbuildProblemMatcherPlugin = {
 	},
 };
 
+const copyWebviewPlugin = {
+	name: 'copy-webview',
+	setup(build) {
+		build.onEnd(() => {
+			const src = path.join(__dirname, 'src', 'webview');
+			const dest = path.join(__dirname, 'dist', 'webview');
+			fs.mkdirSync(dest, { recursive: true });
+			for (const file of fs.readdirSync(src)) {
+				fs.copyFileSync(path.join(src, file), path.join(dest, file));
+			}
+		});
+	},
+};
+
 async function main() {
 	const ctx = await esbuild.context({
 		entryPoints: ['src/extension.ts'],
@@ -37,10 +54,7 @@ async function main() {
 		outfile: 'dist/extension.js',
 		external: ['vscode', 'vis-network', 'vis-data'],
 		logLevel: 'silent',
-		plugins: [
-			/* add to the end of plugins array */
-			esbuildProblemMatcherPlugin,
-		],
+		plugins: [copyWebviewPlugin, esbuildProblemMatcherPlugin],
 	});
 	if (watch) {
 		await ctx.watch();

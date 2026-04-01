@@ -1,5 +1,19 @@
 import * as vscode from 'vscode';
-import { buildGraphData, type GraphData } from '../utils/graph';
+import * as fs from 'fs';
+import * as path from 'path';
+import {
+	buildGraphData,
+	type GraphData,
+	FONT_SIZE,
+	HEADER_FONT_SIZE,
+	LINE_HEIGHT,
+	HEADER_HEIGHT,
+	PADDING,
+	CHAR_WIDTH,
+	HEADER_CHAR_WIDTH,
+	EXT_LABEL_FONT_SIZE,
+	EXT_LABEL_GAP,
+} from '../utils/graph';
 import { OUTPUT_DIR } from '../config';
 import { log } from '../utils/logger';
 
@@ -26,7 +40,7 @@ export async function showGraph(
 	);
 
 	const graphData = await buildGraphData();
-	panel.webview.html = getWebviewContent(visNetworkUri, graphData);
+	panel.webview.html = getWebviewContent(context, visNetworkUri, graphData);
 
 	// Watch for mark file changes to auto-refresh the graph.
 	const watcher = vscode.workspace.createFileSystemWatcher(
@@ -42,87 +56,63 @@ export async function showGraph(
 	// Clean up watcher when panel is closed.
 	panel.onDidDispose(() => watcher.dispose());
 
-	// Open mark file in editor when a node is clicked.
+	// Hook function to handle a message from webview.
 	panel.webview.onDidReceiveMessage((msg) => handleWebviewMessage(msg));
 
 	return panel;
 }
 
+// Escape '<' and '>' to Unicode so that strings like "</script>" in code
+// snippets don't break the HTML <script> tag.
+function escapeForScriptTag(s: string): string {
+	return s.replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+}
+
+// Build webview content
 function getWebviewContent(
+	context: vscode.ExtensionContext,
 	visNetworkUri: vscode.Uri,
 	graphData: GraphData,
 ): string {
-	return `<!DOCTYPE html>
-<html>
-<head>
-	<meta charset="UTF-8">
-	<style>
-		body { margin: 0; overflow: hidden; }
-		#graph { width: 100vw; height: 100vh; }
-	</style>
-</head>
-<body>
-	<div id="graph"></div>
-	<script src="${visNetworkUri}"></script>
-	<script>
-		const vscode = acquireVsCodeApi();
-		const nodes = new vis.DataSet(${JSON.stringify(graphData.nodes)}.map(n => ({
-			...n, x: n.x, y: n.y
-		})));
-		const edges = new vis.DataSet(${JSON.stringify(graphData.edges)});
-		const container = document.getElementById('graph');
-		const network = new vis.Network(container, { nodes, edges }, {
-			edges: {
-				arrows: { to: true },
-				smooth: { type: 'cubicBezier' },
-			},
-			nodes: {
-				shape: 'box',
-				font: { size: 14, face: 'monospace' },
-				margin: 10,
-			},
-			physics: false,
-			interaction: {
-				zoomView: false,
-				dragView: true,
-				dragNodes: true,
-			},
-		});
-		// Notify extension to open the mark file.
-		// Scroll to pan, Ctrl/Cmd+scroll to zoom.
-		container.addEventListener('wheel', (e) => {
-			e.preventDefault();
-			const pos = network.getViewPosition();
-			const scale = network.getScale();
-			if (e.ctrlKey || e.metaKey) {
-				const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-				network.moveTo({ scale: scale * zoomFactor });
-			} else {
-				network.moveTo({ position: { x: pos.x + e.deltaX / scale, y: pos.y + e.deltaY / scale } });
-			}
-		}, { passive: false });
+	// * 1st JSON.stringify: convert graphData object to a JSON string.
+	// * escapeForScript: replace '<' and '>' with Unicode for safe HTML
+	//   embedding.
+	// * 2nd JSON.stringify: wrap the result as a quoted JS string literal
+	//   so it can be embedded in the HTML template as JSON.parse(...).
+	const jsonData = JSON.stringify(
+		escapeForScriptTag(JSON.stringify(graphData)),
+	);
 
-		network.on('click', (params) => {
-			if (params.nodes.length > 0) {
-				vscode.postMessage({ type: 'openMark', markId: params.nodes[0] });
-			}
-		});
-		// Listen for updateGraph messages from extension to refresh data.
-		// clear() + add() preserves zoom/pan position.
-		window.addEventListener('message', (event) => {
-			const msg = event.data;
-			if (msg.type === 'updateGraph') {
-				nodes.clear();
-				nodes.add(msg.nodes);
-				edges.clear();
-				edges.add(msg.edges);
-			}
-		});
-	</script>
-</body>
-</html>`;
+	const constants: Record<string, number> = {
+		FONT_SIZE,
+		HEADER_FONT_SIZE,
+		LINE_HEIGHT,
+		HEADER_HEIGHT,
+		PADDING,
+		CHAR_WIDTH,
+		HEADER_CHAR_WIDTH,
+		EXT_LABEL_FONT_SIZE,
+		EXT_LABEL_GAP,
+	};
+
+	const templatePath = path.join(
+		context.extensionPath,
+		'dist',
+		'webview',
+		'graph.html',
+	);
+	const template = fs.readFileSync(templatePath, 'utf-8');
+
+	let result = template
+		.replace('{{VIS_NETWORK_URI}}', String(visNetworkUri))
+		.replace('{{GRAPH_DATA}}', jsonData);
+	for (const [key, value] of Object.entries(constants)) {
+		result = result.replace(`{{${key}}}`, String(value));
+	}
+	return result;
 }
 
+// Hook function to refresh the graph
 export async function refreshGraph(panel: vscode.WebviewPanel): Promise<void> {
 	const data = await buildGraphData();
 	log(`refreshGraph: ${data.nodes.length} nodes, ${data.edges.length} edges`);
@@ -137,6 +127,8 @@ export async function refreshGraph(panel: vscode.WebviewPanel): Promise<void> {
 	}
 }
 
+// Hook function to handle a message sent from graph.html via
+// vscodeApi.postMessage()
 export async function handleWebviewMessage(msg: any): Promise<void> {
 	if (msg.type === 'openMark') {
 		const files = await vscode.workspace.findFiles(`code-trail/${msg.markId}`);

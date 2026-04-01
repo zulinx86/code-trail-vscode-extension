@@ -1,13 +1,32 @@
+import * as vscode from 'vscode';
 import { OUTPUT_DIR } from '../config';
 import { getMarks } from './mark';
 import type { Frontmatter } from './frontmatter';
 import { log } from './logger';
 import dagre from '@dagrejs/dagre';
 
+// Node layout constants (shared with src/webview/graph.html via template
+// placeholders)
+export const FONT_SIZE = 18;
+export const HEADER_FONT_SIZE = 20;
+export const PADDING = 12;
+// 1.4x font size for comfortable line spacing in code display.
+export const LINE_HEIGHT = FONT_SIZE * 1.4;
+export const HEADER_HEIGHT = HEADER_FONT_SIZE + PADDING * 2;
+// Approximate character width for monospace fonts (~0.62 of font size).
+export const CHAR_WIDTH = FONT_SIZE * 0.62;
+export const HEADER_CHAR_WIDTH = HEADER_FONT_SIZE * 0.62;
+export const EXT_LABEL_FONT_SIZE = 14;
+export const EXT_LABEL_GAP = 4;
+
 export interface GraphNode {
 	id: string;
 	label: string;
+	code: string;
+	file: string;
 	color: string;
+	width: number;
+	height: number;
 	x: number;
 	y: number;
 }
@@ -61,12 +80,27 @@ export function nodeColor(symbolKind?: string): string {
 	return SYMBOL_KIND_TO_COLOR[symbolKind ?? ''] ?? DEFAULT_COLOR;
 }
 
-const CHAR_WIDTH = 8;
-const NODE_PADDING = 20;
-const NODE_HEIGHT = 40;
-
-function estimateNodeWidth(label: string): number {
-	return label.length * CHAR_WIDTH + NODE_PADDING * 2;
+export function measureNodeSize(
+	label: string,
+	code: string,
+): { width: number; height: number } {
+	const headerWidth = label.length * HEADER_CHAR_WIDTH + PADDING * 2;
+	if (!code) {
+		return { width: Math.max(headerWidth, 60), height: HEADER_HEIGHT };
+	}
+	const lines = code.split('\n');
+	let maxLineLen = 0;
+	for (const line of lines) {
+		if (line.length > maxLineLen) {
+			maxLineLen = line.length;
+		}
+	}
+	const codeWidth = maxLineLen * CHAR_WIDTH + PADDING * 2;
+	const codeHeight = lines.length * LINE_HEIGHT + PADDING * 2;
+	return {
+		width: Math.max(headerWidth, codeWidth, 60),
+		height: HEADER_HEIGHT + codeHeight,
+	};
 }
 
 function layoutWithDagre(
@@ -75,17 +109,16 @@ function layoutWithDagre(
 ): GraphNode[] {
 	const g = new dagre.graphlib.Graph();
 	g.setGraph({
-		rankdir: 'LR', // Left-to-right layout
-		nodesep: 30, // Minimum vertical spacing between nodes in the same rank
-		ranksep: 80, // Horizontal spacing between ranks (columns)
+		rankdir: 'LR', // Left to Right
+		nodesep: 50, // Minimum vertical gap between nodes in the same column
+		ranksep: 100, // Minimum horizontal gap between columns
 	});
 	g.setDefaultEdgeLabel(() => ({}));
 
 	for (const node of nodes) {
 		g.setNode(node.id, {
-			label: node.label,
-			width: estimateNodeWidth(node.label),
-			height: NODE_HEIGHT,
+			width: node.width,
+			height: node.height,
 		});
 	}
 	for (const edge of edges) {
@@ -102,20 +135,41 @@ function layoutWithDagre(
 	});
 }
 
+function extractCode(content: string): string {
+	const match = content.match(/# Code\s+```[^\n]*\n([\s\S]*?)\n```/);
+	return match ? match[1] : '';
+}
+
 export async function buildGraphData(): Promise<GraphData> {
 	const marks = await getMarks();
 	log(`buildGraphData: ${marks.length} marks`);
-	const rawNodes = marks.map((m) => ({
-		id: m.markId,
-		label: nodeLabel(m.fm),
-		color: nodeColor(m.fm.symbolKind),
-	}));
+	const contents = await Promise.all(
+		marks.map((mark) =>
+			vscode.workspace.fs
+				.readFile(mark.uri)
+				.then((bytes) => Buffer.from(bytes).toString('utf-8')),
+		),
+	);
+	const rawNodes = marks.map((mark, idx) => {
+		const label = nodeLabel(mark.fm);
+		const code = extractCode(contents[idx]);
+		const size = measureNodeSize(label, code);
+		return {
+			id: mark.markId,
+			label,
+			code,
+			file: `${mark.fm.file}#L${mark.fm.startLine}-L${mark.fm.endLine}`,
+			color: nodeColor(mark.fm.symbolKind),
+			width: size.width,
+			height: size.height,
+		};
+	});
 
 	const edges: GraphEdge[] = [];
-	for (const m of marks) {
-		for (const link of m.fm.uses ?? []) {
+	for (const mark of marks) {
+		for (const link of mark.fm.uses ?? []) {
 			const target = link.replace(`code-trail:${OUTPUT_DIR}/`, '');
-			edges.push({ from: m.markId, to: target });
+			edges.push({ from: mark.markId, to: target });
 		}
 	}
 

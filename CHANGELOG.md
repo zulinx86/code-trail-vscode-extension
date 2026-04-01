@@ -4,8 +4,11 @@
 
 ### Changed
 
-- Use monospace font for graph view nodes
-- In graph view, scroll to pan and Ctrl/Cmd+scroll to zoom
+- Scroll to pan and Ctrl/Cmd+scroll to zoom in graph view
+- Show code snippets inside graph nodes (expanded by default, click to toggle)
+- Show file path and line range above each node
+- Double-click a node to open the mark file
+- Scroll to pan, Ctrl/Cmd+scroll to zoom in graph view
 
 ## [0.0.6]
 

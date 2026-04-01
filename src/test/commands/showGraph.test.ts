@@ -76,7 +76,10 @@ suite('showGraph command', () => {
 	});
 
 	test('should refresh graph without errors', async () => {
-		const context = { extensionUri: workspaceUri } as any;
+		const context = {
+			extensionUri: workspaceUri,
+			extensionPath: workspaceUri.fsPath,
+		} as any;
 		const panel = await showGraph(context);
 
 		try {

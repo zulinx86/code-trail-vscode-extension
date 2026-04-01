@@ -1,0 +1,257 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<style>
+			body {
+				margin: 0;
+				overflow: hidden;
+			}
+			#graph {
+				width: 100vw;
+				height: 100vh;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="graph"></div>
+		<script src="{{VIS_NETWORK_URI}}"></script>
+		<script>
+			var vscodeApi = acquireVsCodeApi();
+			var graphData = JSON.parse({{GRAPH_DATA}});
+
+			// Map node ID to its state
+			var nodeMap = {};
+			graphData.nodes.forEach(function(node) {
+				nodeMap[node.id] = {
+					label: node.label,
+					code: node.code,
+					color: node.color,
+					file: node.file,
+					width: node.width,
+					height: node.height,
+					expanded: true
+				};
+			});
+
+			// Constants injected from graph.ts via showGraph.ts
+			var FONT_SIZE = {{FONT_SIZE}};
+			var HEADER_FONT_SIZE = {{HEADER_FONT_SIZE}};
+			var PADDING = {{PADDING}};
+			var LINE_HEIGHT = {{LINE_HEIGHT}};
+			var HEADER_HEIGHT = {{HEADER_HEIGHT}};
+			var CHAR_WIDTH = {{CHAR_WIDTH}};
+			var HEADER_CHAR_WIDTH = {{HEADER_CHAR_WIDTH}};
+			var EXT_LABEL_FONT_SIZE = {{EXT_LABEL_FONT_SIZE}};
+			var EXT_LABEL_GAP = {{EXT_LABEL_GAP}};
+
+			// Other constants (e.g. colors)
+			var NEWLINE = String.fromCharCode(10);
+			var HEADER_COLOR = '#000000';
+			var BORDER_RADIUS = 4;
+			var BORDER_COLOR = '#454545';
+			var CODE_BG_COLOR = '#1e1e1e';
+			var CODE_FG_COLOR = '#d4d4d4';
+			var EXT_LABEL_COLOR = '#888888';
+
+			function measureNode(id) {
+				var node = nodeMap[id];
+				if (node.expanded) {
+					return { w: node.width, h: node.height };
+				}
+				var headerWidth = node.label.length * HEADER_CHAR_WIDTH + PADDING * 2;
+				return { w: Math.max(headerWidth, 60), h: HEADER_HEIGHT };
+			}
+
+			function drawNode(ctx, id, x, y, size) {
+				var node = nodeMap[id];
+				var w = size.w, h = size.h;
+				var left = x - w / 2, top = y - h / 2;
+
+				// Background
+				ctx.beginPath();
+				ctx.roundRect(left, top, w, h, BORDER_RADIUS);
+				ctx.fillStyle = node.color;
+				ctx.fill();
+				ctx.strokeStyle = BORDER_COLOR;
+				ctx.lineWidth = 1;
+				ctx.stroke();
+
+				// Header text
+				ctx.fillStyle = HEADER_COLOR;
+				ctx.font = HEADER_FONT_SIZE + 'px monospace';
+				ctx.textBaseline = 'middle';
+				ctx.textAlign = 'left';
+				ctx.fillText(node.label, left + PADDING, top + HEADER_HEIGHT / 2);
+
+				if (node.expanded && node.code) {
+					var codeTop = top + HEADER_HEIGHT;
+
+					// Code background
+					ctx.beginPath();
+					ctx.moveTo(left, codeTop);
+					ctx.lineTo(left + w, codeTop);
+					ctx.lineTo(left + w, top + h - BORDER_RADIUS);
+					ctx.arcTo(left + w, top + h, left + w - BORDER_RADIUS, top + h, BORDER_RADIUS);
+					ctx.lineTo(left + BORDER_RADIUS, top + h);
+					ctx.arcTo(left, top + h, left, top + h - BORDER_RADIUS, BORDER_RADIUS);
+					ctx.lineTo(left, codeTop);
+					ctx.fillStyle = CODE_BG_COLOR;
+					ctx.fill();
+
+					// Separator line
+					ctx.beginPath();
+					ctx.moveTo(left, codeTop);
+					ctx.lineTo(left + w, codeTop);
+					ctx.strokeStyle = BORDER_COLOR;
+					ctx.lineWidth = 1;
+					ctx.stroke();
+
+					// Code text
+					ctx.fillStyle = CODE_FG_COLOR;
+					ctx.font = FONT_SIZE + 'px monospace';
+					var lines = node.code.split(NEWLINE);
+					for (var i = 0; i < lines.length; i++) {
+						ctx.fillText(lines[i], left + PADDING, codeTop + PADDING + i * LINE_HEIGHT + FONT_SIZE / 2);
+					}
+				}
+			}
+
+			function drawExternalLabel(ctx, id, x, y, size) {
+				var node = nodeMap[id];
+				if (!node.file) return;
+				ctx.fillStyle = EXT_LABEL_COLOR;
+				ctx.font = EXT_LABEL_FONT_SIZE + 'px monospace';
+				ctx.textBaseline = 'bottom';
+				ctx.textAlign = 'left';
+				ctx.fillText(node.file, x - size.w / 2, y - size.h / 2 - EXT_LABEL_GAP);
+			}
+
+			function ctxRenderer(args) {
+				var ctx = args.ctx;
+				var id = args.id;
+				var x = args.x;
+				var y = args.y;
+				var size = measureNode(id);
+
+				return {
+					drawNode: function() { drawNode(ctx, id, x, y, size); },
+					drawExternalLabel: function() { drawExternalLabel(ctx, id, x, y, size); },
+					nodeDimensions: { width: size.w, height: size.h }
+				};
+			}
+
+			// Construct nodes, edges and network.
+			var visNodes = new vis.DataSet(graphData.nodes.map(function(n) {
+				return {
+					id: n.id,
+					x: n.x,
+					y: n.y,
+					color: n.color,
+					shape: 'custom',
+					ctxRenderer: ctxRenderer,
+				};
+			}));
+			var visEdges = new vis.DataSet(graphData.edges);
+			var container = document.getElementById('graph');
+
+			var network = new vis.Network(
+				container,
+				{
+					nodes: visNodes,
+					edges: visEdges,
+				},
+				{
+					edges: {
+						arrows: { to: true },
+						smooth: { type: 'cubicBezier' },
+						// Do nothing when chosen
+						chosen: false,
+					},
+					physics: false,
+					interaction: {
+						zoomView: false,
+						dragView: true,
+						dragNodes: true,
+						// Don't highlight edges.
+						selectConnectedEdges: false,
+					},
+				},
+			);
+
+			// Fit all nodes into view after initial draw.
+			// network.fit() doesn't account for custom shape dimensions,
+			// so we compute the bounding box manually.
+			network.once('afterDrawing', function() {
+				var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+				graphData.nodes.forEach(function(n) {
+					var hw = n.width / 2, hh = n.height / 2;
+					if (n.x - hw < minX) minX = n.x - hw;
+					if (n.x + hw > maxX) maxX = n.x + hw;
+					if (n.y - hh < minY) minY = n.y - hh;
+					if (n.y + hh > maxY) maxY = n.y + hh;
+				});
+				var graphW = maxX - minX;
+				var graphH = maxY - minY;
+				var pad = 50;
+				var scaleX = (container.clientWidth - pad * 2) / graphW;
+				var scaleY = (container.clientHeight - pad * 2) / graphH;
+				var scale = Math.min(scaleX, scaleY, 1);
+				network.moveTo({
+					position: { x: (minX + maxX) / 2, y: (minY + maxY) / 2 },
+					scale: scale,
+					animation: false
+				});
+			});
+
+			// Single click to toggle the code expansion
+			network.on('click', function(params) {
+				if (params.nodes.length === 0) return;
+				var id = params.nodes[0];
+				if (!nodeMap[id] || !nodeMap[id].code) return;
+				nodeMap[id].expanded = !nodeMap[id].expanded;
+				visNodes.update({ id: id, ctxRenderer: ctxRenderer });
+			});
+
+			// Double click to send a 'openMark' message to TypeScript
+			network.on('doubleClick', function(params) {
+				if (params.nodes.length > 0) {
+					vscodeApi.postMessage({ type: 'openMark', markId: params.nodes[0] });
+				}
+			});
+
+			// Event listener for wheel events
+			container.addEventListener('wheel', function(e) {
+				e.preventDefault();
+				var pos = network.getViewPosition();
+				var scale = network.getScale();
+				if (e.ctrlKey || e.metaKey) {
+					network.moveTo({ scale: scale * (e.deltaY > 0 ? 0.9 : 1.1) });
+				} else {
+					network.moveTo({ position: { x: pos.x + e.deltaX / scale, y: pos.y + e.deltaY / scale } });
+				}
+			}, { passive: false });
+
+			// Event listener for messages sent from TypeScript via
+			// panel.webview.postMessage()
+			window.addEventListener('message', function(event) {
+				var msg = event.data;
+				if (msg.type === 'updateGraph') {
+					msg.nodes.forEach(function(n) {
+						nodeMap[n.id] = {
+							label: n.label, code: n.code, color: n.color, file: n.file,
+							width: n.width, height: n.height,
+							expanded: true
+						};
+					});
+					visNodes.clear();
+					visNodes.add(msg.nodes.map(function(n) {
+						return { id: n.id, x: n.x, y: n.y, shape: 'custom', ctxRenderer: ctxRenderer, color: n.color };
+					}));
+					visEdges.clear();
+					visEdges.add(msg.edges);
+				}
+			});
+		</script>
+	</body>
+</html>

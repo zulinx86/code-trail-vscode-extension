@@ -4,3 +4,4 @@ coverage/
 code-atlas/
 *.vsix
 src/test/fixtures/
+src/webview/
