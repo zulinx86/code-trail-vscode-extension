@@ -117,6 +117,22 @@
 				}
 			}
 
+			function wrapText(ctx, text, maxWidth) {
+				var lines = [];
+				var line = '';
+				for (var i = 0; i < text.length; i++) {
+					var test = line + text[i];
+					if (ctx.measureText(test).width > maxWidth && line) {
+						lines.push(line);
+						line = text[i];
+					} else {
+						line = test;
+					}
+				}
+				if (line) lines.push(line);
+				return lines;
+			}
+
 			function drawExternalLabel(ctx, id, x, y, size) {
 				var node = nodeMap[id];
 				if (!node.file) return;
@@ -124,7 +140,13 @@
 				ctx.font = EXT_LABEL_FONT_SIZE + 'px monospace';
 				ctx.textBaseline = 'bottom';
 				ctx.textAlign = 'left';
-				ctx.fillText(node.file, x - size.w / 2, y - size.h / 2 - EXT_LABEL_GAP);
+				var lines = wrapText(ctx, node.file, size.w);
+				var lineH = EXT_LABEL_FONT_SIZE * 1.2;
+				var baseY = y - size.h / 2 - EXT_LABEL_GAP;
+				var leftX = x - size.w / 2;
+				for (var i = lines.length - 1; i >= 0; i--) {
+					ctx.fillText(lines[i], leftX, baseY - (lines.length - 1 - i) * lineH);
+				}
 			}
 
 			function ctxRenderer(args) {
