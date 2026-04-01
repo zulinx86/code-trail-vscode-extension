@@ -226,20 +226,18 @@
 				});
 			});
 
-			// Single click to toggle the code expansion
+			// Click to toggle code expansion, Ctrl/Cmd+Click to open mark
 			network.on('click', function(params) {
 				if (params.nodes.length === 0) return;
 				var id = params.nodes[0];
+				var e = params.event.srcEvent;
+				if (e.ctrlKey || e.metaKey) {
+					vscodeApi.postMessage({ type: 'openMark', markId: id });
+					return;
+				}
 				if (!nodeMap[id] || !nodeMap[id].code) return;
 				nodeMap[id].expanded = !nodeMap[id].expanded;
 				visNodes.update({ id: id, ctxRenderer: ctxRenderer });
-			});
-
-			// Double click to send a 'openMark' message to TypeScript
-			network.on('doubleClick', function(params) {
-				if (params.nodes.length > 0) {
-					vscodeApi.postMessage({ type: 'openMark', markId: params.nodes[0] });
-				}
 			});
 
 			// Event listener for wheel events

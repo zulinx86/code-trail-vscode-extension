@@ -2,6 +2,10 @@
 
 ## [0.0.8]
 
+### Changed
+
+- Use Ctrl/Cmd+Click instead of double-click to open mark files in graph view
+
 ### Fixed
 
 - Wrap external label text to fit within node width in graph view
