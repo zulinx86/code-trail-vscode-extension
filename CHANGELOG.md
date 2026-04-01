@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.1]
+
+### Fixed
+
+- Prevent nodes from disappearing when partially outside the viewport in graph view
+
 ## [0.1.0]
 
 ### Added

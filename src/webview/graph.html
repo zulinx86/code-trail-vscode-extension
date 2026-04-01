@@ -201,6 +201,21 @@
 				},
 			);
 
+			// Expand bounding boxes after each draw so that vis-network
+			// does not cull nodes that are only partially outside the viewport.
+			network.on('afterDrawing', function() {
+				var nodes = network.body.nodes;
+				for (var id in nodes) {
+					var bb = nodes[id].shape.boundingBox;
+					if (bb) {
+						bb.left = -1e9;
+						bb.top = -1e9;
+						bb.right = 1e9;
+						bb.bottom = 1e9;
+					}
+				}
+			});
+
 			// Fit all nodes into view after initial draw.
 			// network.fit() doesn't account for custom shape dimensions,
 			// so we compute the bounding box manually.
