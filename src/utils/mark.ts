@@ -138,19 +138,17 @@ export async function findExistingMark(
 export async function getMarks(): Promise<MarkInfo[]> {
 	const files = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
 	log(`getMarks: found ${files.length} files in ${OUTPUT_DIR}/`);
-	const marks: MarkInfo[] = [];
-	for (const uri of files) {
-		const content = Buffer.from(
-			await vscode.workspace.fs.readFile(uri),
-		).toString('utf-8');
-		const fm = parseFrontmatter(content);
-		if (fm) {
-			marks.push({
-				markId: path.basename(uri.fsPath),
-				uri,
-				fm,
-			});
-		}
-	}
-	return marks;
+	const results = await Promise.all(
+		files.map(async (uri) => {
+			const content = Buffer.from(
+				await vscode.workspace.fs.readFile(uri),
+			).toString('utf-8');
+			const fm = parseFrontmatter(content);
+			if (!fm) {
+				return undefined;
+			}
+			return { markId: path.basename(uri.fsPath), uri, fm };
+		}),
+	);
+	return results.filter((m): m is MarkInfo => m !== undefined);
 }
