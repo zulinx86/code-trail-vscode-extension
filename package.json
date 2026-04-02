@@ -32,6 +32,10 @@
 			{
 				"command": "codeTrail.showGraph",
 				"title": "Code Trail: Show Graph"
+			},
+			{
+				"command": "codeTrail.addTitle",
+				"title": "Code Trail: Add Title"
 			}
 		],
 		"configuration": {
@@ -57,6 +61,13 @@
 					"minimum": 8,
 					"maximum": 48,
 					"description": "Font size (in pixels) for file path labels above nodes in the graph view."
+				},
+				"codeTrail.graphTitleFontSize": {
+					"type": "number",
+					"default": 48,
+					"minimum": 8,
+					"maximum": 72,
+					"description": "Font size (in pixels) for title nodes in the graph view."
 				},
 				"codeTrail.tabSize": {
 					"type": "number",
@@ -97,6 +108,10 @@
 			{
 				"command": "codeTrail.showGraph",
 				"key": "ctrl+shift+g"
+			},
+			{
+				"command": "codeTrail.addTitle",
+				"key": "ctrl+shift+t"
 			}
 		]
 	},

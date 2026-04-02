@@ -14,6 +14,9 @@ export let CODE_CHAR_WIDTH = CODE_FONT_SIZE * 0.62;
 export let HEADER_FONT_SIZE = 20;
 export let HEADER_HEIGHT = HEADER_FONT_SIZE + PADDING * 2;
 export let HEADER_CHAR_WIDTH = HEADER_FONT_SIZE * 0.62;
+export let TITLE_FONT_SIZE = 32;
+export let TITLE_CHAR_WIDTH = TITLE_FONT_SIZE * 0.62;
+export let TITLE_HEIGHT = TITLE_FONT_SIZE + PADDING * 2;
 export let EXT_LABEL_FONT_SIZE = 14;
 export const EXT_LABEL_GAP = 4;
 
@@ -21,6 +24,7 @@ function applyFontSizes(
 	fontSize: number,
 	headerFontSize: number,
 	labelFontSize: number,
+	titleFontSize: number,
 ): void {
 	CODE_FONT_SIZE = fontSize;
 	CODE_LINE_HEIGHT = CODE_FONT_SIZE * 1.4;
@@ -28,6 +32,9 @@ function applyFontSizes(
 	HEADER_FONT_SIZE = headerFontSize;
 	HEADER_HEIGHT = HEADER_FONT_SIZE + PADDING * 2;
 	HEADER_CHAR_WIDTH = HEADER_FONT_SIZE * 0.62;
+	TITLE_FONT_SIZE = titleFontSize;
+	TITLE_CHAR_WIDTH = TITLE_FONT_SIZE * 0.62;
+	TITLE_HEIGHT = TITLE_FONT_SIZE + PADDING * 2;
 	EXT_LABEL_FONT_SIZE = labelFontSize;
 }
 
@@ -37,6 +44,7 @@ export interface GraphNode {
 	code: string;
 	file: string;
 	color: string;
+	isTitle: boolean;
 	width: number;
 	height: number;
 	x: number;
@@ -62,6 +70,7 @@ const DEFAULT_SYMBOL_COLORS: Record<string, string> = {
 	enum: '#FFE0B2',
 	interface: '#D7BDE2',
 	const: '#F5B7B1',
+	title: '#FFFFFF',
 };
 const DEFAULT_COLOR = '#DBDBDB';
 
@@ -77,6 +86,7 @@ function loadConfig(): GraphConfig {
 		config.get<number>('graphCodeFontSize', 18),
 		config.get<number>('graphHeaderFontSize', 20),
 		config.get<number>('graphLabelFontSize', 14),
+		config.get<number>('graphTitleFontSize', 32),
 	);
 	return {
 		tabSize: config.get<number>('tabSize', 4),
@@ -89,6 +99,9 @@ function loadConfig(): GraphConfig {
 }
 
 export function nodeLabel(fm: Frontmatter): string {
+	if (fm.symbolKind === 'title') {
+		return fm.symbol ?? '';
+	}
 	if (!fm.symbol) {
 		return `${fm.file}#L${fm.startLine}-L${fm.endLine}`;
 	}
@@ -120,7 +133,12 @@ export function nodeColor(cfg: GraphConfig, symbolKind?: string): string {
 export function measureNodeSize(
 	label: string,
 	code: string,
+	isTitle?: boolean,
 ): { width: number; height: number } {
+	if (isTitle) {
+		const w = label.length * TITLE_CHAR_WIDTH + PADDING * 2;
+		return { width: Math.max(w, 60), height: TITLE_HEIGHT };
+	}
 	const headerWidth = label.length * HEADER_CHAR_WIDTH + PADDING * 2;
 	if (!code) {
 		return { width: Math.max(headerWidth, 60), height: HEADER_HEIGHT };
@@ -195,14 +213,18 @@ export async function buildGraphData(): Promise<GraphData> {
 	const cfg = loadConfig();
 	const rawNodes = marks.map((mark) => {
 		const label = nodeLabel(mark.fm);
-		const code = extractCode(mark.content, mark.fm.file, cfg);
-		const size = measureNodeSize(label, code);
+		const isTitle = mark.fm.symbolKind === 'title';
+		const code = isTitle ? '' : extractCode(mark.content, mark.fm.file, cfg);
+		const size = measureNodeSize(label, code, isTitle);
 		return {
 			id: mark.markId,
 			label,
 			code,
-			file: `${mark.fm.file}#L${mark.fm.startLine}-L${mark.fm.endLine}`,
+			file: isTitle
+				? ''
+				: `${mark.fm.file}#L${mark.fm.startLine}-L${mark.fm.endLine}`,
 			color: nodeColor(cfg, mark.fm.symbolKind),
+			isTitle,
 			width: size.width,
 			height: size.height,
 		};

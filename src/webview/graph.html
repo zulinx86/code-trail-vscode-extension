@@ -28,6 +28,7 @@
 					code: node.code,
 					color: node.color,
 					file: node.file,
+					isTitle: node.isTitle,
 					width: node.width,
 					height: node.height,
 					expanded: true
@@ -42,6 +43,7 @@
 			var HEADER_FONT_SIZE = {{HEADER_FONT_SIZE}};
 			var HEADER_HEIGHT = {{HEADER_HEIGHT}};
 			var HEADER_CHAR_WIDTH = {{HEADER_CHAR_WIDTH}};
+			var TITLE_FONT_SIZE = {{TITLE_FONT_SIZE}};
 			var EXT_LABEL_FONT_SIZE = {{EXT_LABEL_FONT_SIZE}};
 			var EXT_LABEL_GAP = {{EXT_LABEL_GAP}};
 
@@ -67,6 +69,24 @@
 				var node = nodeMap[id];
 				var w = size.w, h = size.h;
 				var left = x - w / 2, top = y - h / 2;
+
+				if (node.isTitle) {
+					ctx.beginPath();
+					ctx.roundRect(left, top, w, h, BORDER_RADIUS);
+					ctx.fillStyle = node.color;
+					ctx.fill();
+
+					ctx.strokeStyle = BORDER_COLOR;
+					ctx.lineWidth = 1;
+					ctx.stroke();
+
+					ctx.fillStyle = HEADER_COLOR;
+					ctx.font = 'bold ' + TITLE_FONT_SIZE + 'px monospace';
+					ctx.textBaseline = 'middle';
+					ctx.textAlign = 'center';
+					ctx.fillText(node.label, x, y);
+					return;
+				}
 
 				// Background
 				ctx.beginPath();
@@ -275,6 +295,7 @@
 					msg.nodes.forEach(function(n) {
 						nodeMap[n.id] = {
 							label: n.label, code: n.code, color: n.color, file: n.file,
+							isTitle: n.isTitle,
 							width: n.width, height: n.height,
 							expanded: true
 						};

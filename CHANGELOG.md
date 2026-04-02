@@ -4,6 +4,8 @@
 
 ### Added
 
+- `Code Trail: Add Title` command (`Ctrl+Shift+T`) to create title nodes in the graph
+- `codeTrail.graphTitleFontSize` setting to configure title node font size in graph view (default: 32)
 - `codeTrail.graphCodeFontSize` setting to configure code snippet font size in graph view (default: 18)
 - `codeTrail.graphHeaderFontSize` setting to configure node header label font size in graph view (default: 20)
 - `codeTrail.graphLabelFontSize` setting to configure file path label font size in graph view (default: 14)
