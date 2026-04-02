@@ -2,7 +2,7 @@
 	"name": "zulinx86-code-trail",
 	"displayName": "Code Trail",
 	"description": "Mark and link code reading notes as Markdown files with YAML frontmatter.",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"publisher": "zulinx86",
 	"license": "Apache-2.0",
 	"repository": {
@@ -126,7 +126,7 @@
 		"compile-tests": "tsc -p . --outDir out",
 		"pretest": "rm -rf out && npm run compile-tests && npm run compile",
 		"test": "vscode-test --coverage --coverage-reporter html",
-		"install-local": "npx vsce package && code --install-extension zulinx86-code-trail-0.1.2.vsix",
+		"install-local": "npx vsce package && code --install-extension zulinx86-code-trail-0.1.3.vsix",
 		"publish": "npx vsce publish",
 		"watch": "npm-run-all -p watch:*",
 		"watch:esbuild": "node esbuild.js --watch",
