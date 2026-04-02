@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { buildSelectionInfo } from '../utils/selection';
+import { Selection } from '../utils/selection';
 import { Symbol } from '../utils/symbol';
 import { saveMark, findExistingMark } from '../utils/mark';
 import { getGitHubUrl } from '../utils/git';
@@ -16,35 +16,21 @@ export async function markCode(): Promise<void> {
 		return;
 	}
 
-	if (!vscode.workspace.workspaceFolders) {
-		log('markCode: no workspace folder found');
-		vscode.window.showWarningMessage('No workspace folder found.');
+	const selection = await Selection.fromEditor(editor);
+	if (!selection) {
+		log('markCode: failed to get selection info');
+		vscode.window.showWarningMessage('markCode: Failed to get selection info.');
 		return;
 	}
 
-	const symbol = await Symbol.findSymbolAtPosition(
-		editor.document.uri,
-		editor.selection.start,
-	);
-	log(`markCode: symbol=${JSON.stringify(symbol)}`);
+	const { selectedText: _, ...logSelection } = selection;
+	log(`markCode: selection=${JSON.stringify(logSelection)}`);
 
-	let range: vscode.Range;
-	if (symbol) {
-		range = symbol.range;
-	} else if (!editor.selection.isEmpty) {
-		range = editor.selection;
-	} else {
-		log('markCode: no selection or symbol found');
-		vscode.window.showWarningMessage('No selection or symbol found at cursor.');
-		return;
-	}
-
-	const info = buildSelectionInfo(editor.document, range, symbol);
-	const { selectedText: _, ...logInfo } = info;
-	log(`markCode: selectionInfo=${JSON.stringify(logInfo)}`);
-
-	if (info.symbol) {
-		const existing = await findExistingMark(info.filePath, info.symbol);
+	if (selection.symbol) {
+		const existing = await findExistingMark(
+			selection.filePath,
+			selection.symbol,
+		);
 		if (existing) {
 			log(`markCode: duplicate mark found ${existing.markId}`);
 			vscode.window.showWarningMessage(
@@ -56,10 +42,14 @@ export async function markCode(): Promise<void> {
 		}
 	}
 
-	const githubUrl = getGitHubUrl(info.filePath, info.startLine, info.endLine);
+	const githubUrl = getGitHubUrl(
+		selection.filePath,
+		selection.startLine,
+		selection.endLine,
+	);
 
 	try {
-		const fileUri = await saveMark(info, new Date(), githubUrl);
+		const fileUri = await saveMark(selection, new Date(), githubUrl);
 		log(`markCode: saved ${fileUri.fsPath}`);
 		const doc = await vscode.workspace.openTextDocument(fileUri);
 		await vscode.window.showTextDocument(doc);

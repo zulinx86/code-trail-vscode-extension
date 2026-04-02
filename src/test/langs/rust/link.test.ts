@@ -5,8 +5,7 @@ import {
 	getLinkSuggestions,
 	markToKeys,
 } from '../../../utils/link';
-import { Symbol } from '../../../utils/symbol';
-import { buildSelectionInfo } from '../../../utils/selection';
+import { Selection } from '../../../utils/selection';
 import { saveMark, getMarks } from '../../../utils/mark';
 import { parseFrontmatter, type Frontmatter } from '../../../utils/frontmatter';
 import {
@@ -79,10 +78,11 @@ suite('link (Rust)', () => {
 			doc: vscode.TextDocument,
 			position: vscode.Position,
 		): Promise<vscode.Uri> {
-			const symbol = await Symbol.findSymbolAtPosition(doc.uri, position);
-			assert.ok(symbol, `should find symbol at L${position.line + 1}`);
-			const info = buildSelectionInfo(doc, symbol.range, symbol);
-			return saveMark(info, new Date());
+			const editor = await vscode.window.showTextDocument(doc);
+			editor.selection = new vscode.Selection(position, position);
+			const sel = await Selection.fromEditor(editor);
+			assert.ok(sel, 'selection should be created');
+			return saveMark(sel, new Date());
 		}
 
 		test('should suggest impl method callee as outgoing', async function () {

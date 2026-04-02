@@ -6,7 +6,7 @@ import {
 	handleWebviewMessage,
 	refreshGraph,
 } from '../../commands/showGraph';
-import type { SelectionInfo } from '../../utils/selection';
+import { Selection } from '../../utils/selection';
 
 suite('showGraph command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
@@ -33,17 +33,16 @@ suite('showGraph command', () => {
 	});
 
 	test('should open graph panel without errors when marks exist', async () => {
-		const info: SelectionInfo = {
-			filePath: 'src/example.ts',
-			fileName: 'example.ts',
-			startLine: 1,
-			endLine: 5,
-			selectedText: 'function foo() {}',
-			languageId: 'typescript',
-			symbol: 'foo',
-			symbolKind: 'function',
-		};
-		await saveMark(info, new Date('2026-03-22T12:34:56Z'));
+		const selection = new Selection(
+			'src/example.ts',
+			1,
+			5,
+			'function foo() {}',
+			'typescript',
+			'foo',
+			'function',
+		);
+		await saveMark(selection, new Date('2026-03-22T12:34:56Z'));
 
 		await vscode.commands.executeCommand('codeTrail.showGraph');
 
@@ -54,17 +53,16 @@ suite('showGraph command', () => {
 	});
 
 	test('should open mark file when openMark message is received', async () => {
-		const info: SelectionInfo = {
-			filePath: 'src/example.ts',
-			fileName: 'example.ts',
-			startLine: 1,
-			endLine: 5,
-			selectedText: 'function foo() {}',
-			languageId: 'typescript',
-			symbol: 'foo',
-			symbolKind: 'function',
-		};
-		const markUri = await saveMark(info, new Date('2026-03-22T12:34:56Z'));
+		const selection = new Selection(
+			'src/example.ts',
+			1,
+			5,
+			'function foo() {}',
+			'typescript',
+			'foo',
+			'function',
+		);
+		const markUri = await saveMark(selection, new Date('2026-03-22T12:34:56Z'));
 		const markId = markUri.fsPath.split('/').pop()!;
 
 		await handleWebviewMessage({ type: 'openMark', markId });
@@ -84,17 +82,16 @@ suite('showGraph command', () => {
 
 		try {
 			// Add a mark after graph is open
-			const info: SelectionInfo = {
-				filePath: 'src/example.ts',
-				fileName: 'example.ts',
-				startLine: 1,
-				endLine: 5,
-				selectedText: 'function foo() {}',
-				languageId: 'typescript',
-				symbol: 'foo',
-				symbolKind: 'function',
-			};
-			await saveMark(info, new Date('2026-03-22T12:34:56Z'));
+			const selection = new Selection(
+				' src/example.ts',
+				1,
+				5,
+				'function foo() {}',
+				'typescript',
+				'foo',
+				'function',
+			);
+			await saveMark(selection, new Date('2026-03-22T12:34:56Z'));
 
 			// Manually call refreshGraph and verify no errors
 			await refreshGraph(panel);

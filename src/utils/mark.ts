@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { OUTPUT_DIR } from '../config';
 import { parseFrontmatter, type Frontmatter } from './frontmatter';
-import type { SelectionInfo } from './selection';
+import { Selection } from './selection';
 import { log } from './logger';
 
 const LANGUAGE_ID_TO_TAG: Record<string, string> = {
@@ -37,27 +37,27 @@ function getLanguageTag(languageId: string): string {
 }
 
 export function formatMark(
-	info: SelectionInfo,
+	selection: Selection,
 	exportedAt: Date,
 	githubUrl?: string,
 ): string {
-	const lang = getLanguageTag(info.languageId);
+	const lang = getLanguageTag(selection.languageId);
 	const timestamp = exportedAt.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
-	const link = `code-trail:${info.filePath}#L${info.startLine}-L${info.endLine}`;
+	const link = `code-trail:${selection.filePath}#L${selection.startLine}-L${selection.endLine}`;
 
 	const frontmatter = [
 		'---',
-		`file: ${info.filePath}`,
-		`range: L${info.startLine}-L${info.endLine}`,
+		`file: ${selection.filePath}`,
+		`range: L${selection.startLine}-L${selection.endLine}`,
 		`link: ${link}`,
 		`exportedAt: ${timestamp}`,
 	];
-	if (info.symbol) {
-		frontmatter.push(`symbol: ${info.symbol}`);
+	if (selection.symbol) {
+		frontmatter.push(`symbol: ${selection.symbol}`);
 	}
-	if (info.symbolKind) {
-		frontmatter.push(`symbolKind: ${info.symbolKind}`);
+	if (selection.symbolKind) {
+		frontmatter.push(`symbolKind: ${selection.symbolKind}`);
 	}
 	if (githubUrl) {
 		frontmatter.push(`github: ${githubUrl}`);
@@ -73,39 +73,39 @@ export function formatMark(
 # Code
 
 \`\`\`${lang}
-${info.selectedText}
+${selection.selectedText}
 \`\`\`
 `;
 }
 
 export function generateMarkFileName(
-	info: SelectionInfo,
+	selection: Selection,
 	exportedAt: Date,
 ): string {
 	const zeroPad = (n: number) => String(n).padStart(2, '0');
 	const dt = exportedAt;
 	const dtStr = `${dt.getFullYear()}${zeroPad(dt.getMonth() + 1)}${zeroPad(dt.getDate())}-${zeroPad(dt.getHours())}${zeroPad(dt.getMinutes())}${zeroPad(dt.getSeconds())}`;
-	const fileName = info.fileName.replaceAll('.', '-');
+	const fileName = path.basename(selection.filePath).replaceAll('.', '-');
 	const parts = [dtStr, fileName];
-	if (info.symbol) {
-		parts.push(info.symbol.replaceAll('.', '-').replaceAll(' ', '-'));
+	if (selection.symbol) {
+		parts.push(selection.symbol.replaceAll('.', '-').replaceAll(' ', '-'));
 	}
 	return `${parts.join('_')}.md`;
 }
 
 export async function saveMark(
-	info: SelectionInfo,
+	selection: Selection,
 	exportedAt: Date,
 	githubUrl?: string,
 ): Promise<vscode.Uri> {
-	log(`saveMark: file=${info.filePath} symbol=${info.symbol}`);
+	log(`saveMark: file=${selection.filePath} symbol=${selection.symbol}`);
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
 		throw new Error('No workspace folder found.');
 	}
 
-	const content = formatMark(info, exportedAt, githubUrl);
-	const fileName = generateMarkFileName(info, exportedAt);
+	const content = formatMark(selection, exportedAt, githubUrl);
+	const fileName = generateMarkFileName(selection, exportedAt);
 
 	const dirUri = vscode.Uri.joinPath(workspaceFolder.uri, OUTPUT_DIR);
 	await vscode.workspace.fs.createDirectory(dirUri);

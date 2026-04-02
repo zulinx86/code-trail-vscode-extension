@@ -2,29 +2,27 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { saveMark } from '../../utils/mark';
 import { addLink } from '../../utils/frontmatter';
-import type { SelectionInfo } from '../../utils/selection';
+import { Selection } from '../../utils/selection';
 
 suite('linkMark command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
-	const infoA: SelectionInfo = {
-		filePath: 'src/a.ts',
-		fileName: 'a.ts',
-		startLine: 1,
-		endLine: 5,
-		selectedText: 'function a() {}',
-		languageId: 'typescript',
-	};
+	const selectionA = new Selection(
+		'src/a.ts',
+		1,
+		5,
+		'function a() {}',
+		'typescript',
+	);
 
-	const infoB: SelectionInfo = {
-		filePath: 'src/b.ts',
-		fileName: 'b.ts',
-		startLine: 10,
-		endLine: 20,
-		selectedText: 'function b() {}',
-		languageId: 'typescript',
-	};
+	const selectionB = new Selection(
+		'src/b.ts',
+		10,
+		20,
+		'function b() {}',
+		'typescript',
+	);
 
 	const fixedDateA = new Date('2026-03-22T12:34:56Z');
 	const fixedDateB = new Date('2026-03-22T12:35:00Z');
@@ -53,7 +51,7 @@ suite('linkMark command', () => {
 	});
 
 	test('should show warning when no other marks exist', async () => {
-		const markUri = await saveMark(infoA, fixedDateA);
+		const markUri = await saveMark(selectionA, fixedDateA);
 
 		const doc = await vscode.workspace.openTextDocument(markUri);
 		await vscode.window.showTextDocument(doc);
@@ -64,8 +62,8 @@ suite('linkMark command', () => {
 	});
 
 	test('should add bidirectional links when a mark is selected', async () => {
-		const markAUri = await saveMark(infoA, fixedDateA);
-		const markBUri = await saveMark(infoB, fixedDateB);
+		const markAUri = await saveMark(selectionA, fixedDateA);
+		const markBUri = await saveMark(selectionB, fixedDateB);
 		const markIdB = markBUri.fsPath.split('/').pop()!;
 
 		const doc = await vscode.workspace.openTextDocument(markAUri);
@@ -109,8 +107,8 @@ suite('linkMark command', () => {
 	});
 
 	test('should not duplicate links when linking the same marks again', async () => {
-		const markAUri = await saveMark(infoA, fixedDateA);
-		const markBUri = await saveMark(infoB, fixedDateB);
+		const markAUri = await saveMark(selectionA, fixedDateA);
+		const markBUri = await saveMark(selectionB, fixedDateB);
 		const markIdA = markAUri.fsPath.split('/').pop()!;
 		const markIdB = markBUri.fsPath.split('/').pop()!;
 
@@ -164,8 +162,8 @@ suite('linkMark command', () => {
 	});
 
 	test('should do nothing when quick pick is cancelled', async () => {
-		const markAUri = await saveMark(infoA, fixedDateA);
-		await saveMark(infoB, fixedDateB);
+		const markAUri = await saveMark(selectionA, fixedDateA);
+		await saveMark(selectionB, fixedDateB);
 
 		const doc = await vscode.workspace.openTextDocument(markAUri);
 		await vscode.window.showTextDocument(doc);

@@ -4,7 +4,7 @@ import { nodeLabel, nodeColor, buildGraphData } from '../../utils/graph';
 import { saveMark } from '../../utils/mark';
 import { addLink } from '../../utils/frontmatter';
 import type { Frontmatter } from '../../utils/frontmatter';
-import type { SelectionInfo } from '../../utils/selection';
+import { Selection } from '../../utils/selection';
 
 suite('graph', () => {
 	const baseFm: Frontmatter = {
@@ -126,27 +126,25 @@ suite('graph', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
-		const infoA: SelectionInfo = {
-			filePath: 'src/a.ts',
-			fileName: 'a.ts',
-			startLine: 1,
-			endLine: 5,
-			selectedText: 'function a() {}',
-			languageId: 'typescript',
-			symbol: 'a',
-			symbolKind: 'function',
-		};
+		const selectionA = new Selection(
+			'src/a.ts',
+			1,
+			5,
+			'function a() {}',
+			'typescript',
+			'a',
+			'function',
+		);
 
-		const infoB: SelectionInfo = {
-			filePath: 'src/b.ts',
-			fileName: 'b.ts',
-			startLine: 1,
-			endLine: 3,
-			selectedText: 'function b() {}',
-			languageId: 'typescript',
-			symbol: 'b',
-			symbolKind: 'function',
-		};
+		const selectionB = new Selection(
+			'src/b.ts',
+			1,
+			3,
+			'function b() {}',
+			'typescript',
+			'b',
+			'function',
+		);
 
 		const fixedDate = new Date('2026-03-22T12:34:56Z');
 
@@ -160,8 +158,8 @@ suite('graph', () => {
 		teardown(cleanup);
 
 		test('should return nodes and edges from marks', async () => {
-			const uriA = await saveMark(infoA, fixedDate);
-			const uriB = await saveMark(infoB, new Date('2026-03-22T12:35:00Z'));
+			const uriA = await saveMark(selectionA, fixedDate);
+			const uriB = await saveMark(selectionB, new Date('2026-03-22T12:35:00Z'));
 
 			await addLink(uriA, 'uses', `code-trail/${uriB.fsPath.split('/').pop()}`);
 
