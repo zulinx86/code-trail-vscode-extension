@@ -6,18 +6,30 @@ import { log } from './logger';
 import dagre from '@dagrejs/dagre';
 
 // Node layout constants (shared with src/webview/graph.html via template
-// placeholders)
-export const FONT_SIZE = 18;
-export const HEADER_FONT_SIZE = 20;
+// placeholders). Font sizes are loaded from config; others are derived.
 export const PADDING = 12;
-// 1.4x font size for comfortable line spacing in code display.
-export const LINE_HEIGHT = FONT_SIZE * 1.4;
-export const HEADER_HEIGHT = HEADER_FONT_SIZE + PADDING * 2;
-// Approximate character width for monospace fonts (~0.62 of font size).
-export const CHAR_WIDTH = FONT_SIZE * 0.62;
-export const HEADER_CHAR_WIDTH = HEADER_FONT_SIZE * 0.62;
-export const EXT_LABEL_FONT_SIZE = 14;
+export let CODE_FONT_SIZE = 18;
+export let CODE_LINE_HEIGHT = CODE_FONT_SIZE * 1.4;
+export let CODE_CHAR_WIDTH = CODE_FONT_SIZE * 0.62;
+export let HEADER_FONT_SIZE = 20;
+export let HEADER_HEIGHT = HEADER_FONT_SIZE + PADDING * 2;
+export let HEADER_CHAR_WIDTH = HEADER_FONT_SIZE * 0.62;
+export let EXT_LABEL_FONT_SIZE = 14;
 export const EXT_LABEL_GAP = 4;
+
+function applyFontSizes(
+	fontSize: number,
+	headerFontSize: number,
+	labelFontSize: number,
+): void {
+	CODE_FONT_SIZE = fontSize;
+	CODE_LINE_HEIGHT = CODE_FONT_SIZE * 1.4;
+	CODE_CHAR_WIDTH = CODE_FONT_SIZE * 0.62;
+	HEADER_FONT_SIZE = headerFontSize;
+	HEADER_HEIGHT = HEADER_FONT_SIZE + PADDING * 2;
+	HEADER_CHAR_WIDTH = HEADER_FONT_SIZE * 0.62;
+	EXT_LABEL_FONT_SIZE = labelFontSize;
+}
 
 export interface GraphNode {
 	id: string;
@@ -61,6 +73,11 @@ interface GraphConfig {
 
 function loadConfig(): GraphConfig {
 	const config = vscode.workspace.getConfiguration('codeTrail');
+	applyFontSizes(
+		config.get<number>('graphCodeFontSize', 18),
+		config.get<number>('graphHeaderFontSize', 20),
+		config.get<number>('graphLabelFontSize', 14),
+	);
 	return {
 		tabSize: config.get<number>('tabSize', 4),
 		tabSizeByLanguage: config.get<Record<string, number>>(
@@ -115,8 +132,8 @@ export function measureNodeSize(
 			maxLineLen = line.length;
 		}
 	}
-	const codeWidth = maxLineLen * CHAR_WIDTH + PADDING * 2;
-	const codeHeight = lines.length * LINE_HEIGHT + PADDING * 2;
+	const codeWidth = maxLineLen * CODE_CHAR_WIDTH + PADDING * 2;
+	const codeHeight = lines.length * CODE_LINE_HEIGHT + PADDING * 2;
 	return {
 		width: Math.max(headerWidth, codeWidth, 60),
 		height: HEADER_HEIGHT + codeHeight,

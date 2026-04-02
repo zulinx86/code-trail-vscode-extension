@@ -35,12 +35,12 @@
 			});
 
 			// Constants injected from graph.ts via showGraph.ts
-			var FONT_SIZE = {{FONT_SIZE}};
-			var HEADER_FONT_SIZE = {{HEADER_FONT_SIZE}};
 			var PADDING = {{PADDING}};
-			var LINE_HEIGHT = {{LINE_HEIGHT}};
+			var CODE_FONT_SIZE = {{CODE_FONT_SIZE}};
+			var CODE_LINE_HEIGHT = {{CODE_LINE_HEIGHT}};
+			var CODE_CHAR_WIDTH = {{CODE_CHAR_WIDTH}};
+			var HEADER_FONT_SIZE = {{HEADER_FONT_SIZE}};
 			var HEADER_HEIGHT = {{HEADER_HEIGHT}};
-			var CHAR_WIDTH = {{CHAR_WIDTH}};
 			var HEADER_CHAR_WIDTH = {{HEADER_CHAR_WIDTH}};
 			var EXT_LABEL_FONT_SIZE = {{EXT_LABEL_FONT_SIZE}};
 			var EXT_LABEL_GAP = {{EXT_LABEL_GAP}};
@@ -109,10 +109,10 @@
 
 					// Code text
 					ctx.fillStyle = CODE_FG_COLOR;
-					ctx.font = FONT_SIZE + 'px monospace';
+					ctx.font = CODE_FONT_SIZE + 'px monospace';
 					var lines = node.code.split(NEWLINE);
 					for (var i = 0; i < lines.length; i++) {
-						ctx.fillText(lines[i], left + PADDING, codeTop + PADDING + i * LINE_HEIGHT + FONT_SIZE / 2);
+						ctx.fillText(lines[i], left + PADDING, codeTop + PADDING + i * CODE_LINE_HEIGHT + CODE_FONT_SIZE / 2);
 					}
 				}
 			}

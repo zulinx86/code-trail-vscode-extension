@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3]
+
+### Added
+
+- `codeTrail.graphCodeFontSize` setting to configure code snippet font size in graph view (default: 18)
+- `codeTrail.graphHeaderFontSize` setting to configure node header label font size in graph view (default: 20)
+- `codeTrail.graphLabelFontSize` setting to configure file path label font size in graph view (default: 14)
+
 ## [0.1.2]
 
 ### Added

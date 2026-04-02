@@ -37,6 +37,27 @@
 		"configuration": {
 			"title": "Code Trail",
 			"properties": {
+				"codeTrail.graphCodeFontSize": {
+					"type": "number",
+					"default": 18,
+					"minimum": 8,
+					"maximum": 48,
+					"description": "Font size (in pixels) for code snippets in the graph view."
+				},
+				"codeTrail.graphHeaderFontSize": {
+					"type": "number",
+					"default": 20,
+					"minimum": 8,
+					"maximum": 48,
+					"description": "Font size (in pixels) for node header labels in the graph view."
+				},
+				"codeTrail.graphLabelFontSize": {
+					"type": "number",
+					"default": 14,
+					"minimum": 8,
+					"maximum": 48,
+					"description": "Font size (in pixels) for file path labels above nodes in the graph view."
+				},
 				"codeTrail.tabSize": {
 					"type": "number",
 					"default": 4,
