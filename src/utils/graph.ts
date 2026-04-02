@@ -150,10 +150,11 @@ export function measureNodeSize(
 			maxLineLen = line.length;
 		}
 	}
+	const minCodeWidth = 80 * CODE_CHAR_WIDTH + PADDING * 2;
 	const codeWidth = maxLineLen * CODE_CHAR_WIDTH + PADDING * 2;
 	const codeHeight = lines.length * CODE_LINE_HEIGHT + PADDING * 2;
 	return {
-		width: Math.max(headerWidth, codeWidth, 60),
+		width: Math.max(headerWidth, codeWidth, minCodeWidth),
 		height: HEADER_HEIGHT + codeHeight,
 	};
 }
