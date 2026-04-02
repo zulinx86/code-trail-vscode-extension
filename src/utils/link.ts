@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { addLink, type Frontmatter } from './frontmatter';
-import { getSymbolPos } from './symbol';
+import { Symbol } from './symbol';
 import { type MarkInfo, getMarks } from './mark';
 import { OUTPUT_DIR } from '../config';
 import { log } from './logger';
@@ -39,12 +39,12 @@ export async function getOutgoingAndIncomingCalls(
 	try {
 		let pos: vscode.Position;
 		if (fm.symbol) {
-			const symbolPos = await getSymbolPos(fileUri, fm.symbol);
-			if (!symbolPos) {
+			const symbol = await Symbol.findSymbolByName(fileUri, fm.symbol);
+			if (!symbol) {
 				log(`getOutgoingAndIncomingCalls: symbol '${fm.symbol}' not found`);
 				return { outgoing, incoming };
 			}
-			pos = symbolPos;
+			pos = symbol.selectionRange.start;
 		} else {
 			pos = new vscode.Position(fm.startLine - 1, 0);
 		}

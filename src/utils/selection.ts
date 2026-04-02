@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import type { SymbolInfo } from './symbol';
+import type { Symbol } from './symbol';
 
 export interface SelectionInfo {
 	filePath: string;
@@ -16,7 +16,7 @@ export interface SelectionInfo {
 export function buildSelectionInfo(
 	document: vscode.TextDocument,
 	range: vscode.Range,
-	symbolInfo?: SymbolInfo,
+	symbol?: Symbol,
 ): SelectionInfo {
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
@@ -39,7 +39,7 @@ export function buildSelectionInfo(
 		endLine: range.end.line + 1,
 		selectedText: document.getText(fullRange),
 		languageId: document.languageId,
-		symbol: symbolInfo?.name,
-		symbolKind: symbolInfo?.kind,
+		symbol: symbol?.name,
+		symbolKind: symbol?.kind,
 	};
 }

@@ -33,6 +33,7 @@ suite('selection', () => {
 				name: 'myFunction',
 				kind: 'function',
 				range,
+				selectionRange: range,
 			});
 			assert.strictEqual(info.symbol, 'myFunction');
 			assert.strictEqual(info.symbolKind, 'function');

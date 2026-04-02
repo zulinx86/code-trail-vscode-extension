@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { buildSelectionInfo } from '../utils/selection';
-import { getSymbolAtPosition } from '../utils/symbol';
+import { Symbol } from '../utils/symbol';
 import { saveMark, findExistingMark } from '../utils/mark';
 import { getGitHubUrl } from '../utils/git';
 import { parseFrontmatter } from '../utils/frontmatter';
@@ -22,15 +22,15 @@ export async function markCode(): Promise<void> {
 		return;
 	}
 
-	const symbolInfo = await getSymbolAtPosition(
+	const symbol = await Symbol.findSymbolAtPosition(
 		editor.document.uri,
 		editor.selection.start,
 	);
-	log(`markCode: symbolInfo=${JSON.stringify(symbolInfo)}`);
+	log(`markCode: symbol=${JSON.stringify(symbol)}`);
 
 	let range: vscode.Range;
-	if (symbolInfo) {
-		range = symbolInfo.range;
+	if (symbol) {
+		range = symbol.range;
 	} else if (!editor.selection.isEmpty) {
 		range = editor.selection;
 	} else {
@@ -39,7 +39,7 @@ export async function markCode(): Promise<void> {
 		return;
 	}
 
-	const info = buildSelectionInfo(editor.document, range, symbolInfo);
+	const info = buildSelectionInfo(editor.document, range, symbol);
 	const { selectedText: _, ...logInfo } = info;
 	log(`markCode: selectionInfo=${JSON.stringify(logInfo)}`);
 

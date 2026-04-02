@@ -1,111 +1,156 @@
 import * as vscode from 'vscode';
 import { log } from './logger';
 
-const SYMBOL_KIND_TO_STR: Partial<Record<vscode.SymbolKind, string>> = {
-	[vscode.SymbolKind.Function]: 'function',
-	[vscode.SymbolKind.Method]: 'method',
-	[vscode.SymbolKind.Constructor]: 'constructor',
-	[vscode.SymbolKind.Class]: 'class',
-	[vscode.SymbolKind.Struct]: 'struct',
-	[vscode.SymbolKind.Enum]: 'enum',
-	[vscode.SymbolKind.Interface]: 'interface',
-	[vscode.SymbolKind.Constant]: 'const',
-};
+export class Symbol {
+	readonly name: string;
+	readonly kind: string;
+	readonly range: vscode.Range;
+	readonly selectionRange: vscode.Range;
 
-export interface SymbolInfo {
-	range: vscode.Range;
-	name: string;
-	kind: string;
-}
-
-export async function getSymbolAtPosition(
-	uri: vscode.Uri,
-	position: vscode.Position,
-): Promise<SymbolInfo | undefined> {
-	log(`getSymbolAtPosition: uri=${uri.fsPath} position=L${position.line + 1}`);
-	const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
-		'vscode.executeDocumentSymbolProvider',
-		uri,
-	);
-	if (!symbols) {
-		log('getSymbolAtPosition: no symbol provider');
-		return undefined;
+	private constructor(
+		name: string,
+		kind: string,
+		range: vscode.Range,
+		selectionRange: vscode.Range,
+	) {
+		this.name = name;
+		this.kind = kind;
+		this.range = range;
+		this.selectionRange = selectionRange;
 	}
-	log(`getSymbolAtPosition: ${symbols.length} top-level symbols`);
-	const result = findSymbolAtPosition(symbols, position);
-	log(`getSymbolAtPosition: result=${JSON.stringify(result)}`);
-	return result;
-}
 
-function findSymbolAtPosition(
-	symbols: vscode.DocumentSymbol[],
-	position: vscode.Position,
-	prefix = '',
-): SymbolInfo | undefined {
-	for (const symbol of symbols) {
-		if (!symbol.range.contains(position)) {
-			continue;
+	private static stringifySymbolKind(kind: vscode.SymbolKind): string {
+		switch (kind) {
+			case vscode.SymbolKind.Constant:
+				return 'const';
+			case vscode.SymbolKind.Enum:
+				return 'enum';
+			case vscode.SymbolKind.Function:
+				return 'function';
+			case vscode.SymbolKind.Struct:
+				return 'struct';
+			case vscode.SymbolKind.Class:
+				return 'class';
+			case vscode.SymbolKind.Constructor:
+				return 'constructor';
+			case vscode.SymbolKind.Method:
+				return 'method';
+			case vscode.SymbolKind.Interface:
+				return 'interface';
+			default:
+				return 'other';
 		}
+	}
 
-		// Symbol found at position
-		const qualifiedName = prefix ? `${prefix}.${symbol.name}` : symbol.name;
-
-		// Search children first to get the innermost.
-		const child = findSymbolAtPosition(
-			symbol.children,
-			position,
-			qualifiedName,
+	static async findSymbolAtPosition(
+		uri: vscode.Uri,
+		position: vscode.Position,
+	): Promise<Symbol | undefined> {
+		log(
+			`findSymbolAtPosition: uri=${uri.fsPath} position=L${position.line + 1}`,
 		);
-		if (child) {
-			return child;
+
+		const symbols = await vscode.commands.executeCommand<
+			vscode.DocumentSymbol[]
+		>('vscode.executeDocumentSymbolProvider', uri);
+		if (!symbols) {
+			log('findSymbolAtPosition: no symbol provider');
+			return undefined;
 		}
+		log(
+			`findSymbolAtPosition: ${symbols.length} top-level symbols found in ${uri.fsPath}`,
+		);
 
-		// The innermost one reaches here.
-		const kind = SYMBOL_KIND_TO_STR[symbol.kind] ?? 'other';
-		return { range: symbol.range, name: qualifiedName, kind };
+		const symbol = this.__findSymbolAtPosition(symbols, position);
+		log(`findSymbolAtPosition: symbol found (${JSON.stringify(symbol)})`);
+		return symbol;
 	}
-	// No children or no symbol found at position
-	return undefined;
-}
 
-export async function getSymbolPos(
-	uri: vscode.Uri,
-	symbolName: string,
-): Promise<vscode.Position | undefined> {
-	log(`getSymbolPos: uri=${uri.fsPath} symbolName=${symbolName}`);
-	const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
-		'vscode.executeDocumentSymbolProvider',
-		uri,
-	);
-	if (!symbols) {
-		log('getSymbolPos: no symbol provider');
-		return undefined;
-	}
-	const pos = findSymbolByName(symbols, symbolName)?.selectionRange.start;
-	log(`getSymbolPos: result=${pos ? `L${pos.line + 1}` : 'undefined'}`);
-	return pos;
-}
+	private static __findSymbolAtPosition(
+		symbols: vscode.DocumentSymbol[],
+		position: vscode.Position,
+		prefix = '',
+	): Symbol | undefined {
+		for (const symbol of symbols) {
+			// Skip if the symbol not contain the position.
+			if (!symbol.range.contains(position)) {
+				continue;
+			}
 
-function findSymbolByName(
-	symbols: vscode.DocumentSymbol[],
-	name: string,
-	prefix = '',
-): vscode.DocumentSymbol | undefined {
-	for (const s of symbols) {
-		const qualifiedName = prefix ? `${prefix}.${s.name}` : s.name;
+			// Symbol found at position. Build a qualified name.
+			const qualifiedName = prefix ? `${prefix}.${symbol.name}` : symbol.name;
 
-		// Symbol found.
-		if (qualifiedName === name) {
-			return s;
-		}
+			// Search children first to get the innermost.
+			const child = this.__findSymbolAtPosition(
+				symbol.children,
+				position,
+				qualifiedName,
+			);
 
-		// Go down to children only if this symbol could be a prefix of the target
-		if (name.startsWith(qualifiedName + '.')) {
-			const child = findSymbolByName(s.children, name, qualifiedName);
+			// Return the child contains the position.
 			if (child) {
 				return child;
 			}
+
+			return new Symbol(
+				qualifiedName,
+				this.stringifySymbolKind(symbol.kind),
+				symbol.range,
+				symbol.selectionRange,
+			);
 		}
 	}
-	return undefined;
+
+	static async findSymbolByName(
+		uri: vscode.Uri,
+		name: string,
+	): Promise<Symbol | undefined> {
+		log(`findSymbolByName: uri=${uri.fsPath} name=${name}`);
+
+		const symbols = await vscode.commands.executeCommand<
+			vscode.DocumentSymbol[]
+		>('vscode.executeDocumentSymbolProvider', uri);
+		if (!symbols) {
+			log(`findSymbolByName: no symbol provider`);
+			return undefined;
+		}
+
+		const symbol = this.__findSymbolByName(symbols, name);
+		log(`findSymbolByName: symbol found (${JSON.stringify(symbol)})`);
+		return symbol;
+	}
+
+	private static __findSymbolByName(
+		symbols: vscode.DocumentSymbol[],
+		name: string,
+		prefix = '',
+	): Symbol | undefined {
+		for (const symbol of symbols) {
+			const qualifiedName = prefix ? `${prefix}.${symbol.name}` : symbol.name;
+
+			// Symbol found.
+			if (qualifiedName === name) {
+				return new Symbol(
+					qualifiedName,
+					this.stringifySymbolKind(symbol.kind),
+					symbol.range,
+					symbol.selectionRange,
+				);
+			}
+
+			// Go down to children only if the qualified name is a prefix.
+			if (name.startsWith(qualifiedName + '.')) {
+				const child = this.__findSymbolByName(
+					symbol.children,
+					name,
+					qualifiedName,
+				);
+				if (child) {
+					// Symbol found in children
+					return child;
+				}
+			}
+		}
+		return undefined;
+	}
 }
