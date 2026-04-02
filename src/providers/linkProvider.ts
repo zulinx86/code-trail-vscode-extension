@@ -2,9 +2,7 @@ import * as vscode from 'vscode';
 
 const LINK_PATTERN = /code-trail:([^#\s)]+)(?:#L(\d+)-L(\d+))?/g;
 
-export class CodeTrailNavigationProvider
-	implements vscode.DocumentLinkProvider
-{
+export class CodeTrailLinkProvider implements vscode.DocumentLinkProvider {
 	provideDocumentLinks(document: vscode.TextDocument): vscode.DocumentLink[] {
 		const links: vscode.DocumentLink[] = [];
 		const text = document.getText();

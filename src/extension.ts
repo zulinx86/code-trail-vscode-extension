@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { markCode } from './commands/markCode';
 import { navigate } from './commands/navigate';
 import { linkMark } from './commands/linkMark';
-import { CodeTrailNavigationProvider } from './providers/navigationProvider';
+import { CodeTrailLinkProvider } from './providers/linkProvider';
 import { showGraph } from './commands/showGraph';
 import { initLogger, log } from './utils/logger';
 
@@ -19,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
 		),
 		vscode.languages.registerDocumentLinkProvider(
 			{ language: 'markdown' },
-			new CodeTrailNavigationProvider(),
+			new CodeTrailLinkProvider(),
 		),
 	);
 }

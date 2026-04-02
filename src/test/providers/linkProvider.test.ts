@@ -1,9 +1,9 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { CodeTrailNavigationProvider } from '../../providers/navigationProvider';
+import { CodeTrailLinkProvider } from '../../providers/linkProvider';
 
-suite('CodeTrailNavigationProvider', () => {
-	const provider = new CodeTrailNavigationProvider();
+suite('CodeTrailLinkProvider', () => {
+	const provider = new CodeTrailLinkProvider();
 
 	test('should detect code-trail: link in frontmatter', async () => {
 		const content = 'link: code-trail:src/editor.ts#L10-L24';
