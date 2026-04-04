@@ -34,7 +34,7 @@ suite('showGraph command', () => {
 
 	test('should open graph panel without errors when marks exist', async () => {
 		const selection = new Selection({
-			filePath: 'src/example.ts',
+			file: 'src/example.ts',
 			startLine: 1,
 			endLine: 5,
 			selectedText: 'function foo() {}',
@@ -53,7 +53,7 @@ suite('showGraph command', () => {
 
 	test('should open mark file when openMark message is received', async () => {
 		const selection = new Selection({
-			filePath: 'src/example.ts',
+			file: 'src/example.ts',
 			startLine: 1,
 			endLine: 5,
 			selectedText: 'function foo() {}',
@@ -81,7 +81,7 @@ suite('showGraph command', () => {
 		try {
 			// Add a mark after graph is open
 			const selection = new Selection({
-				filePath: ' src/example.ts',
+				file: ' src/example.ts',
 				startLine: 1,
 				endLine: 5,
 				selectedText: 'function foo() {}',

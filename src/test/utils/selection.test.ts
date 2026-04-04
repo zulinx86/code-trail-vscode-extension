@@ -7,12 +7,12 @@ suite('selection', () => {
 	suite('constructor', () => {
 		test('should store all fields correctly', () => {
 			const sel = new Selection({
-				filePath: 'src/index.ts',
+				file: 'src/index.ts',
 				startLine: 1,
 				endLine: 2,
 				selectedText: 'line0\nline1',
 			});
-			assert.strictEqual(sel.filePath, 'src/index.ts');
+			assert.strictEqual(sel.file, 'src/index.ts');
 			assert.strictEqual(sel.startLine, 1);
 			assert.strictEqual(sel.endLine, 2);
 			assert.strictEqual(sel.selectedText, 'line0\nline1');
@@ -22,7 +22,7 @@ suite('selection', () => {
 
 		test('should include symbol name and kind when provided', () => {
 			const sel = new Selection({
-				filePath: 'src/index.ts',
+				file: 'src/index.ts',
 				startLine: 3,
 				endLine: 3,
 				selectedText: 'function myFunction() {}',

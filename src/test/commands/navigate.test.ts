@@ -10,7 +10,7 @@ suite('navigate command', () => {
 		await vscode.window.showTextDocument(mdDoc);
 
 		await vscode.commands.executeCommand('codeTrail.navigate', {
-			filePath: 'src/test/fixtures/typescript/plain-text.ts',
+			file: 'src/test/fixtures/typescript/plain-text.ts',
 			startLine: 3,
 			endLine: 4,
 		});

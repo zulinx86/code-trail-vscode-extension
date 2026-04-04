@@ -10,14 +10,14 @@ export function formatMark(
 	exportedAt: Date,
 	githubUrl?: string,
 ): string {
-	const ext = selection.filePath.split('.').pop() ?? '';
+	const ext = selection.file.split('.').pop() ?? '';
 	const timestamp = exportedAt.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
-	const link = `code-trail:${selection.filePath}#L${selection.startLine}-L${selection.endLine}`;
+	const link = `code-trail:${selection.file}#L${selection.startLine}-L${selection.endLine}`;
 
 	const frontmatter = [
 		'---',
-		`file: ${selection.filePath}`,
+		`file: ${selection.file}`,
 		`range: L${selection.startLine}-L${selection.endLine}`,
 		`link: ${link}`,
 		`exportedAt: ${timestamp}`,
@@ -54,7 +54,7 @@ export function generateMarkFileName(
 	const zeroPad = (n: number) => String(n).padStart(2, '0');
 	const dt = exportedAt;
 	const dtStr = `${dt.getFullYear()}${zeroPad(dt.getMonth() + 1)}${zeroPad(dt.getDate())}-${zeroPad(dt.getHours())}${zeroPad(dt.getMinutes())}${zeroPad(dt.getSeconds())}`;
-	const fileName = path.basename(selection.filePath).replaceAll('.', '-');
+	const fileName = path.basename(selection.file).replaceAll('.', '-');
 	const parts = [dtStr, fileName];
 	if (selection.symbol) {
 		parts.push(selection.symbol.replaceAll('.', '-').replaceAll(' ', '-'));
@@ -67,7 +67,7 @@ export async function saveMark(
 	exportedAt: Date,
 	githubUrl?: string,
 ): Promise<vscode.Uri> {
-	log(`saveMark: file=${selection.filePath} symbol=${selection.symbol}`);
+	log(`saveMark: file=${selection.file} symbol=${selection.symbol}`);
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
 	if (!workspaceFolder) {
 		throw new Error('No workspace folder found.');
@@ -93,14 +93,12 @@ export interface MarkInfo {
 }
 
 export async function findExistingMark(
-	filePath: string,
+	file: string,
 	symbol: string,
 ): Promise<MarkInfo | undefined> {
-	log(`findExistingMark: file=${filePath} symbol=${symbol}`);
+	log(`findExistingMark: file=${file} symbol=${symbol}`);
 	const marks = await getMarks();
-	const found = marks.find(
-		(m) => m.fm.file === filePath && m.fm.symbol === symbol,
-	);
+	const found = marks.find((m) => m.fm.file === file && m.fm.symbol === symbol);
 	log(`findExistingMark: ${found ? `found ${found.markId}` : 'not found'}`);
 	return found;
 }

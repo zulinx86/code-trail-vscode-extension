@@ -20,7 +20,7 @@ function getGitApi(): any | undefined {
 }
 
 export function getGitHubUrl(
-	filePath: string,
+	file: string,
 	startLine: number,
 	endLine: number,
 ): string | undefined {
@@ -50,7 +50,7 @@ export function getGitHubUrl(
 	}
 
 	const baseUrl = remoteUrlToHttps(originUrl);
-	const url = `${baseUrl}/blob/${commitHash}/${filePath}#L${startLine}-L${endLine}`;
+	const url = `${baseUrl}/blob/${commitHash}/${file}#L${startLine}-L${endLine}`;
 	log(`getGitHubUrl: ${url}`);
 	return url;
 }

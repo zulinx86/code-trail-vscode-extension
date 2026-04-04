@@ -4,7 +4,7 @@ import { log } from './logger';
 import { Symbol } from './symbol';
 
 export interface SelectionParams {
-	filePath: string;
+	file: string;
 	startLine: number;
 	endLine: number;
 	selectedText: string;
@@ -13,7 +13,7 @@ export interface SelectionParams {
 }
 
 export class Selection {
-	readonly filePath: string;
+	readonly file: string;
 	readonly startLine: number;
 	readonly endLine: number;
 	readonly selectedText: string;
@@ -21,7 +21,7 @@ export class Selection {
 	readonly symbolKind?: string;
 
 	constructor(params: SelectionParams) {
-		this.filePath = params.filePath;
+		this.file = params.file;
 		this.startLine = params.startLine;
 		this.endLine = params.endLine;
 		this.selectedText = params.selectedText;
@@ -40,11 +40,11 @@ export class Selection {
 			return undefined;
 		}
 
-		const filePath = path.relative(
+		const file = path.relative(
 			workspaceFolder.uri.fsPath,
 			editor.document.uri.fsPath,
 		);
-		log(`Selection.fromEditor: path=${filePath}`);
+		log(`Selection.fromEditor: path=${file}`);
 
 		const symbol = await Symbol.findSymbolAtPosition(
 			editor.document.uri,
@@ -65,7 +65,7 @@ export class Selection {
 		);
 
 		return new Selection({
-			filePath: filePath,
+			file: file,
 			startLine: range.start.line + 1,
 			endLine: range.end.line + 1,
 			selectedText: editor.document.getText(fullRange),

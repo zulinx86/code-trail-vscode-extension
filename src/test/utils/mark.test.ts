@@ -10,7 +10,7 @@ import { Selection } from '../../utils/selection';
 
 suite('mark', () => {
 	const baseSelection = new Selection({
-		filePath: 'src/example.ts',
+		file: 'src/example.ts',
 		startLine: 10,
 		endLine: 24,
 		selectedText: 'const x = 1;',

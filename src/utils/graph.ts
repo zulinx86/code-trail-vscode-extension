@@ -191,21 +191,17 @@ function layoutWithDagre(
 	});
 }
 
-function expandTabs(code: string, filePath: string, cfg: GraphConfig): string {
-	const ext = filePath.split('.').pop() ?? '';
+function expandTabs(code: string, file: string, cfg: GraphConfig): string {
+	const ext = file.split('.').pop() ?? '';
 	const tabSize = Object.hasOwn(cfg.tabSizeByLanguage, ext)
 		? cfg.tabSizeByLanguage[ext]
 		: cfg.tabSize;
 	return code.replace(/\t/g, ' '.repeat(tabSize));
 }
 
-function extractCode(
-	content: string,
-	filePath: string,
-	cfg: GraphConfig,
-): string {
+function extractCode(content: string, file: string, cfg: GraphConfig): string {
 	const match = content.match(/# Code\s+```[^\n]*\n([\s\S]*?)\n```/);
-	return match ? expandTabs(match[1], filePath, cfg) : '';
+	return match ? expandTabs(match[1], file, cfg) : '';
 }
 
 export async function buildGraphData(): Promise<GraphData> {

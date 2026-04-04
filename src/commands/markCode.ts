@@ -27,10 +27,7 @@ export async function markCode(): Promise<void> {
 	log(`markCode: selection=${JSON.stringify(logSelection)}`);
 
 	if (selection.symbol) {
-		const existing = await findExistingMark(
-			selection.filePath,
-			selection.symbol,
-		);
+		const existing = await findExistingMark(selection.file, selection.symbol);
 		if (existing) {
 			log(`markCode: duplicate mark found ${existing.markId}`);
 			vscode.window.showWarningMessage(
@@ -43,7 +40,7 @@ export async function markCode(): Promise<void> {
 	}
 
 	const githubUrl = getGitHubUrl(
-		selection.filePath,
+		selection.file,
 		selection.startLine,
 		selection.endLine,
 	);

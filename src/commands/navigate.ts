@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { log } from '../utils/logger';
 
 interface LinkArgs {
-	filePath: string;
+	file: string;
 	startLine?: number;
 	endLine?: number;
 }
@@ -16,7 +16,7 @@ export async function navigate(args: LinkArgs): Promise<void> {
 		return;
 	}
 
-	const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, args.filePath);
+	const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, args.file);
 	const doc = await vscode.workspace.openTextDocument(fileUri);
 	const editor = await vscode.window.showTextDocument(doc);
 

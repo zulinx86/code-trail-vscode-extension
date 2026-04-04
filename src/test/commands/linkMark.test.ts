@@ -9,14 +9,14 @@ suite('linkMark command', () => {
 	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
 	const selectionA = new Selection({
-		filePath: 'src/a.ts',
+		file: 'src/a.ts',
 		startLine: 1,
 		endLine: 5,
 		selectedText: 'function a() {}',
 	});
 
 	const selectionB = new Selection({
-		filePath: 'src/b.ts',
+		file: 'src/b.ts',
 		startLine: 10,
 		endLine: 20,
 		selectedText: 'function b() {}',
