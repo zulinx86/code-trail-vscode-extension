@@ -15,6 +15,7 @@ export interface MarkArgs {
 	exportedAt: Date;
 	uses?: string[];
 	usedBy?: string[];
+	notes?: string;
 	code?: string;
 }
 
@@ -29,6 +30,7 @@ export class Mark {
 	readonly exportedAt: string;
 	uses?: string[];
 	usedBy?: string[];
+	notes?: string;
 	code?: string;
 
 	constructor(params: MarkArgs) {
@@ -42,6 +44,7 @@ export class Mark {
 		this.exportedAt = params.exportedAt.toISOString().replace(/\.\d{3}Z$/, 'Z');
 		this.uses = params.uses;
 		this.usedBy = params.usedBy;
+		this.notes = params.notes;
 		this.code = params.code;
 	}
 
@@ -92,6 +95,9 @@ export class Mark {
 			return undefined;
 		}
 
+		const notesMatch = text.match(/# Notes\s+([\s\S]*?)\s*(?:# Code|$)/);
+		const notes = notesMatch ? notesMatch[1].trim() : undefined;
+
 		const codeMatch = text.match(/# Code\s+```[^\n]*\n([\s\S]*?)\n```/);
 		const code = codeMatch ? codeMatch[1] : undefined;
 
@@ -106,6 +112,7 @@ export class Mark {
 			exportedAt: new Date(frontmatter.exportedAt as string),
 			uses: frontmatter.uses as string[] | undefined,
 			usedBy: frontmatter.usedBy as string[] | undefined,
+			notes: notes,
 			code: code,
 		});
 	}
@@ -154,7 +161,7 @@ export class Mark {
 
 # Notes
 
-<!-- write notes here -->
+${this.notes ? this.notes : '<!-- write notes here -->'}
 
 # Code
 
