@@ -3,6 +3,15 @@ import * as path from 'path';
 import { log } from './logger';
 import { Symbol } from './symbol';
 
+export interface SelectionParams {
+	filePath: string;
+	startLine: number;
+	endLine: number;
+	selectedText: string;
+	symbol?: string;
+	symbolKind?: string;
+}
+
 export class Selection {
 	readonly filePath: string;
 	readonly startLine: number;
@@ -11,20 +20,13 @@ export class Selection {
 	readonly symbol?: string;
 	readonly symbolKind?: string;
 
-	constructor(
-		filePath: string,
-		startLine: number,
-		endLine: number,
-		selectedText: string,
-		symbol?: string,
-		symbolKind?: string,
-	) {
-		this.filePath = filePath;
-		this.startLine = startLine;
-		this.endLine = endLine;
-		this.selectedText = selectedText;
-		this.symbol = symbol;
-		this.symbolKind = symbolKind;
+	constructor(params: SelectionParams) {
+		this.filePath = params.filePath;
+		this.startLine = params.startLine;
+		this.endLine = params.endLine;
+		this.selectedText = params.selectedText;
+		this.symbol = params.symbol;
+		this.symbolKind = params.symbolKind;
 	}
 
 	static async fromEditor(
@@ -62,13 +64,13 @@ export class Selection {
 			editor.document.lineAt(range.end.line).text.length,
 		);
 
-		return new Selection(
-			filePath,
-			range.start.line + 1,
-			range.end.line + 1,
-			editor.document.getText(fullRange),
-			symbol?.name,
-			symbol?.kind,
-		);
+		return new Selection({
+			filePath: filePath,
+			startLine: range.start.line + 1,
+			endLine: range.end.line + 1,
+			selectedText: editor.document.getText(fullRange),
+			symbol: symbol?.name,
+			symbolKind: symbol?.kind,
+		});
 	}
 }

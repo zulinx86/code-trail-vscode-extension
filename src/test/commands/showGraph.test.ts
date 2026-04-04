@@ -33,14 +33,14 @@ suite('showGraph command', () => {
 	});
 
 	test('should open graph panel without errors when marks exist', async () => {
-		const selection = new Selection(
-			'src/example.ts',
-			1,
-			5,
-			'function foo() {}',
-			'foo',
-			'function',
-		);
+		const selection = new Selection({
+			filePath: 'src/example.ts',
+			startLine: 1,
+			endLine: 5,
+			selectedText: 'function foo() {}',
+			symbol: 'foo',
+			symbolKind: 'function',
+		});
 		await saveMark(selection, new Date('2026-03-22T12:34:56Z'));
 
 		await vscode.commands.executeCommand('codeTrail.showGraph');
@@ -52,14 +52,14 @@ suite('showGraph command', () => {
 	});
 
 	test('should open mark file when openMark message is received', async () => {
-		const selection = new Selection(
-			'src/example.ts',
-			1,
-			5,
-			'function foo() {}',
-			'foo',
-			'function',
-		);
+		const selection = new Selection({
+			filePath: 'src/example.ts',
+			startLine: 1,
+			endLine: 5,
+			selectedText: 'function foo() {}',
+			symbol: 'foo',
+			symbolKind: 'function',
+		});
 		const markUri = await saveMark(selection, new Date('2026-03-22T12:34:56Z'));
 		const markId = markUri.fsPath.split('/').pop()!;
 
@@ -80,14 +80,14 @@ suite('showGraph command', () => {
 
 		try {
 			// Add a mark after graph is open
-			const selection = new Selection(
-				' src/example.ts',
-				1,
-				5,
-				'function foo() {}',
-				'foo',
-				'function',
-			);
+			const selection = new Selection({
+				filePath: ' src/example.ts',
+				startLine: 1,
+				endLine: 5,
+				selectedText: 'function foo() {}',
+				symbol: 'foo',
+				symbolKind: 'function',
+			});
 			await saveMark(selection, new Date('2026-03-22T12:34:56Z'));
 
 			// Manually call refreshGraph and verify no errors

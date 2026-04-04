@@ -8,21 +8,19 @@ suite('linkMark command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
-	const selectionA = new Selection(
-		'src/a.ts',
-		1,
-		5,
-		'function a() {}',
-		'typescript',
-	);
+	const selectionA = new Selection({
+		filePath: 'src/a.ts',
+		startLine: 1,
+		endLine: 5,
+		selectedText: 'function a() {}',
+	});
 
-	const selectionB = new Selection(
-		'src/b.ts',
-		10,
-		20,
-		'function b() {}',
-		'typescript',
-	);
+	const selectionB = new Selection({
+		filePath: 'src/b.ts',
+		startLine: 10,
+		endLine: 20,
+		selectedText: 'function b() {}',
+	});
 
 	const fixedDateA = new Date('2026-03-22T12:34:56Z');
 	const fixedDateB = new Date('2026-03-22T12:35:00Z');

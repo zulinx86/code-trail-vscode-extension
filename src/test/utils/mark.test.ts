@@ -9,7 +9,12 @@ import {
 import { Selection } from '../../utils/selection';
 
 suite('mark', () => {
-	const baseSelection = new Selection('src/example.ts', 10, 24, 'const x = 1;');
+	const baseSelection = new Selection({
+		filePath: 'src/example.ts',
+		startLine: 10,
+		endLine: 24,
+		selectedText: 'const x = 1;',
+	});
 	const fixedDate = new Date('2026-03-22T12:34:56Z');
 
 	suite('formatMark', () => {

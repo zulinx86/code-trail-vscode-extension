@@ -341,23 +341,23 @@ suite('link', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
-		const selectionA = new Selection(
-			'src/a.ts',
-			1,
-			5,
-			'function a() {}',
-			'a',
-			'function',
-		);
+		const selectionA = new Selection({
+			filePath: 'src/a.ts',
+			startLine: 1,
+			endLine: 5,
+			selectedText: 'function a() {}',
+			symbol: 'a',
+			symbolKind: 'function',
+		});
 
-		const selectionB = new Selection(
-			'src/b.ts',
-			1,
-			3,
-			'function b() {}',
-			'b',
-			'function',
-		);
+		const selectionB = new Selection({
+			filePath: 'src/b.ts',
+			startLine: 1,
+			endLine: 3,
+			selectedText: 'function b() {}',
+			symbol: 'b',
+			symbolKind: 'function',
+		});
 
 		const fixedDate = new Date('2026-03-22T12:34:56Z');
 
