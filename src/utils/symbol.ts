@@ -1,22 +1,24 @@
 import * as vscode from 'vscode';
 import { log } from './logger';
 
+export interface SymbolParams {
+	name: string;
+	kind: string;
+	range: vscode.Range;
+	selectionRange: vscode.Range;
+}
+
 export class Symbol {
 	readonly name: string;
 	readonly kind: string;
 	readonly range: vscode.Range;
 	readonly selectionRange: vscode.Range;
 
-	private constructor(
-		name: string,
-		kind: string,
-		range: vscode.Range,
-		selectionRange: vscode.Range,
-	) {
-		this.name = name;
-		this.kind = kind;
-		this.range = range;
-		this.selectionRange = selectionRange;
+	private constructor(params: SymbolParams) {
+		this.name = params.name;
+		this.kind = params.kind;
+		this.range = params.range;
+		this.selectionRange = params.selectionRange;
 	}
 
 	private static stringifySymbolKind(kind: vscode.SymbolKind): string {
@@ -92,12 +94,12 @@ export class Symbol {
 				return child;
 			}
 
-			return new Symbol(
-				qualifiedName,
-				this.stringifySymbolKind(symbol.kind),
-				symbol.range,
-				symbol.selectionRange,
-			);
+			return new Symbol({
+				name: qualifiedName,
+				kind: this.stringifySymbolKind(symbol.kind),
+				range: symbol.range,
+				selectionRange: symbol.selectionRange,
+			});
 		}
 	}
 
@@ -130,12 +132,12 @@ export class Symbol {
 
 			// Symbol found.
 			if (qualifiedName === name) {
-				return new Symbol(
-					qualifiedName,
-					this.stringifySymbolKind(symbol.kind),
-					symbol.range,
-					symbol.selectionRange,
-				);
+				return new Symbol({
+					name: qualifiedName,
+					kind: this.stringifySymbolKind(symbol.kind),
+					range: symbol.range,
+					selectionRange: symbol.selectionRange,
+				});
 			}
 
 			// Go down to children only if the qualified name is a prefix.
