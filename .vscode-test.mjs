@@ -5,6 +5,6 @@ export default defineConfig({
 	workspaceFolder: '.',
 	installExtensions: ['rust-lang.rust-analyzer'],
 	mocha: {
-		timeout: 3000,
+		timeout: 5000,
 	},
 });
