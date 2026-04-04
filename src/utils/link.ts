@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { addLink, type Frontmatter } from './frontmatter';
+import { addLink } from './frontmatter';
 import { Symbol } from './symbol';
-import { type MarkInfo, getMarks } from './mark';
+import { Mark, type MarkInfo, getMarks } from './mark';
 import { OUTPUT_DIR } from '../config';
 import { log } from './logger';
 
@@ -25,7 +25,7 @@ export function callItemToRangeKey(
 }
 
 export async function getOutgoingAndIncomingCalls(
-	fm: Frontmatter,
+	mark: Mark,
 	workspaceFolder: vscode.Uri,
 ): Promise<{
 	outgoing: Set<string>;
@@ -34,19 +34,19 @@ export async function getOutgoingAndIncomingCalls(
 	const outgoing = new Set<string>();
 	const incoming = new Set<string>();
 
-	const fileUri = vscode.Uri.joinPath(workspaceFolder, fm.file);
+	const fileUri = vscode.Uri.joinPath(workspaceFolder, mark.file);
 
 	try {
 		let pos: vscode.Position;
-		if (fm.symbol) {
-			const symbol = await Symbol.findSymbolByName(fileUri, fm.symbol);
+		if (mark.symbol) {
+			const symbol = await Symbol.findSymbolByName(fileUri, mark.symbol);
 			if (!symbol) {
-				log(`getOutgoingAndIncomingCalls: symbol '${fm.symbol}' not found`);
+				log(`getOutgoingAndIncomingCalls: symbol '${mark.symbol}' not found`);
 				return { outgoing, incoming };
 			}
 			pos = symbol.selectionRange.start;
 		} else {
-			pos = new vscode.Position(fm.startLine - 1, 0);
+			pos = new vscode.Position(mark.startLine - 1, 0);
 		}
 
 		log(
@@ -107,19 +107,19 @@ interface LinkSuggestion {
 }
 
 export function markToKeys(m: MarkInfo): string[] {
-	const rangeKey = `${m.fm.file}#L${m.fm.startLine}-L${m.fm.endLine}`;
-	if (!m.fm.symbol) {
+	const rangeKey = `${m.mark.file}#L${m.mark.startLine}-L${m.mark.endLine}`;
+	if (!m.mark.symbol) {
 		return [rangeKey];
 	}
-	const lastSegment = m.fm.symbol.split('.').pop()!;
-	return [`${m.fm.file}#${lastSegment}`, rangeKey];
+	const lastSegment = m.mark.symbol.split('.').pop()!;
+	return [`${m.mark.file}#${lastSegment}`, rangeKey];
 }
 
 export function markToDescription(m: MarkInfo): string {
-	if (!m.fm.symbol) {
-		return `${m.fm.file}#L${m.fm.startLine}-L${m.fm.endLine}`;
+	if (!m.mark.symbol) {
+		return `${m.mark.file}#L${m.mark.startLine}-L${m.mark.endLine}`;
 	}
-	return `${m.fm.symbol} (${m.fm.file})`;
+	return `${m.mark.symbol} (${m.mark.file})`;
 }
 
 export function getLinkSuggestions(
@@ -216,7 +216,7 @@ export function linkSuggestionsToQuickPickItems(
 
 export async function promptAndLink(
 	markUri: vscode.Uri,
-	fm: Frontmatter,
+	mark: Mark,
 ): Promise<void> {
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri;
 	if (!workspaceFolder) {
@@ -231,7 +231,7 @@ export async function promptAndLink(
 	}
 
 	const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
-		fm,
+		mark,
 		workspaceFolder,
 	);
 	const linkSuggestions = getLinkSuggestions(marks, outgoing, incoming);

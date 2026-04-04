@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { OUTPUT_DIR } from '../config';
-import { getMarks } from './mark';
-import type { Frontmatter } from './frontmatter';
+import { getMarks, Mark } from './mark';
 import { log } from './logger';
 import dagre from '@dagrejs/dagre';
 
@@ -98,30 +97,30 @@ function loadConfig(): GraphConfig {
 	};
 }
 
-export function nodeLabel(fm: Frontmatter): string {
-	if (fm.symbolKind === 'title') {
-		return fm.symbol ?? '';
+export function nodeLabel(mark: Mark): string {
+	if (mark.symbolKind === 'title') {
+		return mark.symbol ?? '';
 	}
-	if (!fm.symbol) {
-		return `${fm.file}#L${fm.startLine}-L${fm.endLine}`;
-	}
-	if (
-		fm.symbolKind === 'function' ||
-		fm.symbolKind === 'method' ||
-		fm.symbolKind === 'constructor'
-	) {
-		return `${fm.symbol}()`;
+	if (!mark.symbol) {
+		return `${mark.file}#L${mark.startLine}-L${mark.endLine}`;
 	}
 	if (
-		fm.symbolKind === 'enum' ||
-		fm.symbolKind === 'struct' ||
-		fm.symbolKind === 'class' ||
-		fm.symbolKind === 'interface' ||
-		fm.symbolKind === 'const'
+		mark.symbolKind === 'function' ||
+		mark.symbolKind === 'method' ||
+		mark.symbolKind === 'constructor'
 	) {
-		return `${fm.symbolKind} ${fm.symbol}`;
+		return `${mark.symbol}()`;
 	}
-	return fm.symbol;
+	if (
+		mark.symbolKind === 'enum' ||
+		mark.symbolKind === 'struct' ||
+		mark.symbolKind === 'class' ||
+		mark.symbolKind === 'interface' ||
+		mark.symbolKind === 'const'
+	) {
+		return `${mark.symbolKind} ${mark.symbol}`;
+	}
+	return mark.symbol;
 }
 
 export function nodeColor(cfg: GraphConfig, symbolKind?: string): string {
@@ -209,9 +208,9 @@ export async function buildGraphData(): Promise<GraphData> {
 	log(`buildGraphData: ${marks.length} marks`);
 	const cfg = loadConfig();
 	const rawNodes = marks.map((mark) => {
-		const label = nodeLabel(mark.fm);
-		const isTitle = mark.fm.symbolKind === 'title';
-		const code = isTitle ? '' : extractCode(mark.content, mark.fm.file, cfg);
+		const label = nodeLabel(mark.mark);
+		const isTitle = mark.mark.symbolKind === 'title';
+		const code = isTitle ? '' : extractCode(mark.content, mark.mark.file, cfg);
 		const size = measureNodeSize(label, code, isTitle);
 		return {
 			id: mark.markId,
@@ -219,8 +218,8 @@ export async function buildGraphData(): Promise<GraphData> {
 			code,
 			file: isTitle
 				? ''
-				: `${mark.fm.file}#L${mark.fm.startLine}-L${mark.fm.endLine}`,
-			color: nodeColor(cfg, mark.fm.symbolKind),
+				: `${mark.mark.file}#L${mark.mark.startLine}-L${mark.mark.endLine}`,
+			color: nodeColor(cfg, mark.mark.symbolKind),
 			isTitle,
 			width: size.width,
 			height: size.height,
@@ -229,7 +228,7 @@ export async function buildGraphData(): Promise<GraphData> {
 
 	const edges: GraphEdge[] = [];
 	for (const mark of marks) {
-		for (const link of mark.fm.uses ?? []) {
+		for (const link of mark.mark.uses ?? []) {
 			const target = link.replace(`code-trail:${OUTPUT_DIR}/`, '');
 			edges.push({ from: mark.markId, to: target });
 		}

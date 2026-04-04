@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 import { Selection } from '../utils/selection';
-import { Symbol } from '../utils/symbol';
-import { saveMark, findExistingMark } from '../utils/mark';
+import { Mark, findExistingMark } from '../utils/mark';
 import { getGitHubUrl } from '../utils/git';
-import { parseFrontmatter } from '../utils/frontmatter';
 import { log } from '../utils/logger';
 import { promptAndLink } from '../utils/link';
 
@@ -46,7 +44,11 @@ export async function markCode(): Promise<void> {
 	);
 
 	try {
-		const fileUri = await saveMark(selection, new Date(), githubUrl);
+		const fileUri = await Mark.fromSelection(
+			selection,
+			new Date(),
+			githubUrl,
+		).save();
 		log(`markCode: saved ${fileUri.fsPath}`);
 		const doc = await vscode.workspace.openTextDocument(fileUri);
 		await vscode.window.showTextDocument(doc);
@@ -56,9 +58,9 @@ export async function markCode(): Promise<void> {
 
 		// Suggest links based on call hierarchy
 		const content = (await vscode.workspace.fs.readFile(fileUri)).toString();
-		const fm = parseFrontmatter(content);
-		if (fm) {
-			await promptAndLink(fileUri, fm);
+		const mark = Mark.fromText(content);
+		if (mark) {
+			await promptAndLink(fileUri, mark);
 		}
 	} catch (e) {
 		log(`markCode: failed to save mark: ${e}`);

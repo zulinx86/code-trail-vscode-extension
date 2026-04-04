@@ -1,12 +1,11 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { saveMark } from '../../utils/mark';
+import { Mark, MarkArgs } from '../../utils/mark';
 import {
 	showGraph,
 	handleWebviewMessage,
 	refreshGraph,
 } from '../../commands/showGraph';
-import { Selection } from '../../utils/selection';
 
 suite('showGraph command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
@@ -22,6 +21,17 @@ suite('showGraph command', () => {
 	setup(cleanup);
 	teardown(cleanup);
 
+	const markArgs: MarkArgs = {
+		file: 'src/example.ts',
+		startLine: 1,
+		endLine: 5,
+		link: 'code-atlas:src/example.ts#L1-L5',
+		exportedAt: new Date('2026-03-22T12:34:56Z'),
+		symbol: 'foo',
+		symbolKind: 'function',
+		code: 'function foo() {}',
+	};
+
 	test('should open graph panel without errors when no marks exist', async () => {
 		await vscode.commands.executeCommand('codeTrail.showGraph');
 
@@ -33,15 +43,7 @@ suite('showGraph command', () => {
 	});
 
 	test('should open graph panel without errors when marks exist', async () => {
-		const selection = new Selection({
-			file: 'src/example.ts',
-			startLine: 1,
-			endLine: 5,
-			selectedText: 'function foo() {}',
-			symbol: 'foo',
-			symbolKind: 'function',
-		});
-		await saveMark(selection, new Date('2026-03-22T12:34:56Z'));
+		await new Mark(markArgs).save();
 
 		await vscode.commands.executeCommand('codeTrail.showGraph');
 
@@ -52,15 +54,7 @@ suite('showGraph command', () => {
 	});
 
 	test('should open mark file when openMark message is received', async () => {
-		const selection = new Selection({
-			file: 'src/example.ts',
-			startLine: 1,
-			endLine: 5,
-			selectedText: 'function foo() {}',
-			symbol: 'foo',
-			symbolKind: 'function',
-		});
-		const markUri = await saveMark(selection, new Date('2026-03-22T12:34:56Z'));
+		const markUri = await new Mark(markArgs).save();
 		const markId = markUri.fsPath.split('/').pop()!;
 
 		await handleWebviewMessage({ type: 'openMark', markId });
@@ -80,15 +74,7 @@ suite('showGraph command', () => {
 
 		try {
 			// Add a mark after graph is open
-			const selection = new Selection({
-				file: ' src/example.ts',
-				startLine: 1,
-				endLine: 5,
-				selectedText: 'function foo() {}',
-				symbol: 'foo',
-				symbolKind: 'function',
-			});
-			await saveMark(selection, new Date('2026-03-22T12:34:56Z'));
+			await new Mark(markArgs).save();
 
 			// Manually call refreshGraph and verify no errors
 			await refreshGraph(panel);

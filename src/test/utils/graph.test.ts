@@ -1,88 +1,111 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { nodeLabel, nodeColor, buildGraphData } from '../../utils/graph';
-import { saveMark } from '../../utils/mark';
+import { Mark, MarkArgs } from '../../utils/mark';
 import { addLink } from '../../utils/frontmatter';
-import type { Frontmatter } from '../../utils/frontmatter';
-import { Selection } from '../../utils/selection';
 
 suite('graph', () => {
-	const baseFm: Frontmatter = {
+	const markArgs: MarkArgs = {
 		file: 'src/example.ts',
 		startLine: 10,
 		endLine: 24,
 		link: 'code-trail:src/example.ts#L10-L24',
-		exportedAt: '2026-03-22T12:34:56Z',
+		exportedAt: new Date('2026-03-22T12:34:56Z'),
 	};
 
 	suite('nodeLabel', () => {
 		test('should return file#range when no symbol', () => {
-			assert.strictEqual(nodeLabel(baseFm), 'src/example.ts#L10-L24');
+			assert.strictEqual(
+				nodeLabel(new Mark(markArgs)),
+				'src/example.ts#L10-L24',
+			);
 		});
 
 		test('should append () for function', () => {
 			assert.strictEqual(
-				nodeLabel({ ...baseFm, symbol: 'foo', symbolKind: 'function' }),
+				nodeLabel(
+					new Mark({ ...markArgs, symbol: 'foo', symbolKind: 'function' }),
+				),
 				'foo()',
 			);
 		});
 
 		test('should append () for method', () => {
 			assert.strictEqual(
-				nodeLabel({ ...baseFm, symbol: 'Foo.bar', symbolKind: 'method' }),
+				nodeLabel(
+					new Mark({ ...markArgs, symbol: 'Foo.bar', symbolKind: 'method' }),
+				),
 				'Foo.bar()',
 			);
 		});
 
 		test('should append () for constructor', () => {
 			assert.strictEqual(
-				nodeLabel({
-					...baseFm,
-					symbol: 'Foo.constructor',
-					symbolKind: 'constructor',
-				}),
+				nodeLabel(
+					new Mark({
+						...markArgs,
+						symbol: 'Foo.constructor',
+						symbolKind: 'constructor',
+					}),
+				),
 				'Foo.constructor()',
 			);
 		});
 
 		test('should prepend kind for class', () => {
 			assert.strictEqual(
-				nodeLabel({ ...baseFm, symbol: 'Foo', symbolKind: 'class' }),
+				nodeLabel(
+					new Mark({ ...markArgs, symbol: 'Foo', symbolKind: 'class' }),
+				),
 				'class Foo',
 			);
 		});
 
 		test('should prepend kind for struct', () => {
 			assert.strictEqual(
-				nodeLabel({ ...baseFm, symbol: 'Point', symbolKind: 'struct' }),
+				nodeLabel(
+					new Mark({ ...markArgs, symbol: 'Point', symbolKind: 'struct' }),
+				),
 				'struct Point',
 			);
 		});
 
 		test('should prepend kind for enum', () => {
 			assert.strictEqual(
-				nodeLabel({ ...baseFm, symbol: 'Color', symbolKind: 'enum' }),
+				nodeLabel(
+					new Mark({ ...markArgs, symbol: 'Color', symbolKind: 'enum' }),
+				),
 				'enum Color',
 			);
 		});
 
 		test('should return symbol name for interface', () => {
 			assert.strictEqual(
-				nodeLabel({ ...baseFm, symbol: 'Readable', symbolKind: 'interface' }),
+				nodeLabel(
+					new Mark({
+						...markArgs,
+						symbol: 'Readable',
+						symbolKind: 'interface',
+					}),
+				),
 				'interface Readable',
 			);
 		});
 
 		test('should prepend kind for const', () => {
 			assert.strictEqual(
-				nodeLabel({ ...baseFm, symbol: 'MAX_SIZE', symbolKind: 'const' }),
+				nodeLabel(
+					new Mark({ ...markArgs, symbol: 'MAX_SIZE', symbolKind: 'const' }),
+				),
 				'const MAX_SIZE',
 			);
 		});
 
 		test('should return symbol name for other kind', () => {
 			assert.strictEqual(
-				nodeLabel({ ...baseFm, symbol: 'MAX_SIZE', symbolKind: 'other' }),
+				nodeLabel(
+					new Mark({ ...markArgs, symbol: 'MAX_SIZE', symbolKind: 'other' }),
+				),
 				'MAX_SIZE',
 			);
 		});
@@ -126,25 +149,27 @@ suite('graph', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
-		const selectionA = new Selection({
+		const markArgsA: MarkArgs = {
 			file: 'src/a.ts',
 			startLine: 1,
 			endLine: 5,
-			selectedText: 'function a() {}',
+			link: 'code-trail:src/a.ts#L1-L5',
+			exportedAt: new Date('2026-03-22T12:34:56Z'),
 			symbol: 'a',
 			symbolKind: 'function',
-		});
+			code: 'function a() {}',
+		};
 
-		const selectionB = new Selection({
+		const markArgsB: MarkArgs = {
 			file: 'src/b.ts',
 			startLine: 1,
 			endLine: 3,
-			selectedText: 'function b() {}',
+			link: 'code-trail:src/b.ts#L1-L3',
+			exportedAt: new Date('2026-03-22T12:35:00Z'),
 			symbol: 'b',
 			symbolKind: 'function',
-		});
-
-		const fixedDate = new Date('2026-03-22T12:34:56Z');
+			code: 'function b() {}',
+		};
 
 		async function cleanup() {
 			try {
@@ -156,8 +181,8 @@ suite('graph', () => {
 		teardown(cleanup);
 
 		test('should return nodes and edges from marks', async () => {
-			const uriA = await saveMark(selectionA, fixedDate);
-			const uriB = await saveMark(selectionB, new Date('2026-03-22T12:35:00Z'));
+			const uriA = await new Mark(markArgsA).save();
+			const uriB = await new Mark(markArgsB).save();
 
 			await addLink(uriA, 'uses', `code-trail/${uriB.fsPath.split('/').pop()}`);
 

@@ -3,11 +3,9 @@ import * as vscode from 'vscode';
 import {
 	getOutgoingAndIncomingCalls,
 	getLinkSuggestions,
-	markToKeys,
 } from '../../../utils/link';
 import { Selection } from '../../../utils/selection';
-import { saveMark, getMarks } from '../../../utils/mark';
-import { parseFrontmatter, type Frontmatter } from '../../../utils/frontmatter';
+import { Mark, getMarks } from '../../../utils/mark';
 import {
 	openFixture,
 	waitForSymbols,
@@ -34,15 +32,18 @@ suite('link (Rust)', () => {
 			// L34: fn my_caller
 			await waitForCallHierarchy(doc.uri, new vscode.Position(33, 0));
 
-			const fm: Frontmatter = {
+			const mark = new Mark({
 				file: 'src/test/fixtures/rust/src/lib.rs',
 				startLine: 34,
 				endLine: 36,
 				symbol: 'my_caller',
 				link: 'code-trail:src/test/fixtures/rust/src/lib.rs#L34-L36',
-				exportedAt: '2026-01-01T00:00:00Z',
-			};
-			const { outgoing } = await getOutgoingAndIncomingCalls(fm, workspaceUri);
+				exportedAt: new Date('2026-01-01T00:00:00Z'),
+			});
+			const { outgoing } = await getOutgoingAndIncomingCalls(
+				mark,
+				workspaceUri,
+			);
 			const keys = [...outgoing];
 			assert.ok(
 				keys.some((k) => k.includes('my_callee')),
@@ -56,15 +57,18 @@ suite('link (Rust)', () => {
 			// L30: fn my_callee
 			await waitForCallHierarchy(doc.uri, new vscode.Position(29, 0));
 
-			const fm: Frontmatter = {
+			const mark = new Mark({
 				file: 'src/test/fixtures/rust/src/lib.rs',
 				startLine: 30,
 				endLine: 32,
 				symbol: 'my_callee',
 				link: 'code-trail:src/test/fixtures/rust/src/lib.rs#L30-L32',
-				exportedAt: '2026-01-01T00:00:00Z',
-			};
-			const { incoming } = await getOutgoingAndIncomingCalls(fm, workspaceUri);
+				exportedAt: new Date('2026-01-01T00:00:00Z'),
+			});
+			const { incoming } = await getOutgoingAndIncomingCalls(
+				mark,
+				workspaceUri,
+			);
 			const keys = [...incoming];
 			assert.ok(
 				keys.some((k) => k.includes('my_caller')),
@@ -77,12 +81,14 @@ suite('link (Rust)', () => {
 		async function saveMarkAtPosition(
 			doc: vscode.TextDocument,
 			position: vscode.Position,
-		): Promise<vscode.Uri> {
+		): Promise<Mark> {
 			const editor = await vscode.window.showTextDocument(doc);
 			editor.selection = new vscode.Selection(position, position);
 			const sel = await Selection.fromEditor(editor);
 			assert.ok(sel, 'selection should be created');
-			return saveMark(sel, new Date());
+			const mark = Mark.fromSelection(sel, new Date());
+			mark.save();
+			return mark;
 		}
 
 		test('should suggest impl method callee as outgoing', async function () {
@@ -91,30 +97,25 @@ suite('link (Rust)', () => {
 			await waitForCallHierarchy(doc.uri, new vscode.Position(44, 7));
 
 			// L45: fn my_impl_caller of impl MyImplCall
-			const callerUri = await saveMarkAtPosition(
+			const callerMark = await saveMarkAtPosition(
 				doc,
 				new vscode.Position(45, 8),
 			);
 			// L41: fn my_impl_callee of impl MyImplCall
-			const calleeUri = await saveMarkAtPosition(
+			const calleeMark = await saveMarkAtPosition(
 				doc,
 				new vscode.Position(41, 8),
 			);
 
-			const callerContent = Buffer.from(
-				await vscode.workspace.fs.readFile(callerUri),
-			).toString('utf-8');
-			const callerFm = parseFrontmatter(callerContent)!;
-
 			const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
-				callerFm,
+				callerMark,
 				workspaceUri,
 			);
 			const marks = await getMarks();
 			const suggestions = getLinkSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 
-			const calleeMarkId = calleeUri.fsPath.split('/').pop()!;
+			const calleeMarkId = calleeMark.toFilename();
 			assert.ok(
 				suggested.some(
 					(s) => s.mark.markId === calleeMarkId && s.direction === 'uses',
@@ -129,30 +130,25 @@ suite('link (Rust)', () => {
 			await waitForCallHierarchy(doc.uri, new vscode.Position(40, 7));
 
 			// L41: fn my_impl_callee of impl MyImplCall
-			const calleeUri = await saveMarkAtPosition(
+			const calleeMark = await saveMarkAtPosition(
 				doc,
 				new vscode.Position(41, 8),
 			);
 			// L45: fn my_impl_caller of impl MyImplCall
-			const callerUri = await saveMarkAtPosition(
+			const callerMark = await saveMarkAtPosition(
 				doc,
 				new vscode.Position(45, 8),
 			);
 
-			const calleeContent = Buffer.from(
-				await vscode.workspace.fs.readFile(calleeUri),
-			).toString('utf-8');
-			const calleeFm = parseFrontmatter(calleeContent)!;
-
 			const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
-				calleeFm,
+				calleeMark,
 				workspaceUri,
 			);
 			const marks = await getMarks();
 			const suggestions = getLinkSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 
-			const callerMarkId = callerUri.fsPath.split('/').pop()!;
+			const callerMarkId = callerMark.toFilename();
 			assert.ok(
 				suggested.some(
 					(s) => s.mark.markId === callerMarkId && s.direction === 'usedBy',

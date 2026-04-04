@@ -1,85 +1,8 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { addLink, parseFrontmatter } from '../../utils/frontmatter';
+import { addLink } from '../../utils/frontmatter';
 
 suite('frontmatter', () => {
-	suite('parseFrontmatter', () => {
-		test('should parse basic frontmatter', () => {
-			const text = [
-				'---',
-				'file: src/example.ts',
-				'range: L10-L24',
-				'link: code-trail:src/example.ts#L10-L24',
-				'exportedAt: 2026-03-22T12:34:56Z',
-				'---',
-				'',
-				'# Notes',
-			].join('\n');
-			const fm = parseFrontmatter(text);
-			assert.ok(fm);
-			assert.strictEqual(fm.file, 'src/example.ts');
-			assert.strictEqual(fm.startLine, 10);
-			assert.strictEqual(fm.endLine, 24);
-			assert.strictEqual(fm.symbol, undefined);
-			assert.strictEqual(fm.link, 'code-trail:src/example.ts#L10-L24');
-			assert.strictEqual(fm.github, undefined);
-			assert.strictEqual(fm.exportedAt, '2026-03-22T12:34:56Z');
-			assert.strictEqual(fm.uses, undefined);
-			assert.strictEqual(fm.usedBy, undefined);
-		});
-
-		test('should parse frontmatter with symbol and symbolKind', () => {
-			const text = [
-				'---',
-				'file: src/example.ts',
-				'symbol: Server.handleRequest',
-				'symbolKind: method',
-				'range: L10-L24',
-				'link: code-trail:src/example.ts#L10-L24',
-				'exportedAt: 2026-03-22T12:34:56Z',
-				'---',
-			].join('\n');
-			const fm = parseFrontmatter(text);
-			assert.ok(fm);
-			assert.strictEqual(fm.symbol, 'Server.handleRequest');
-			assert.strictEqual(fm.symbolKind, 'method');
-		});
-
-		test('should parse frontmatter with uses and usedBy', () => {
-			const text = [
-				'---',
-				'file: src/example.ts',
-				'range: L10-L24',
-				'link: code-trail:src/example.ts#L10-L24',
-				'exportedAt: 2026-03-22T12:34:56Z',
-				'uses:',
-				'  - code-trail:code-trail/20260322-123500-validator.ts.md',
-				'  - code-trail:code-trail/20260322-123600-handler.ts.md',
-				'usedBy:',
-				'  - code-trail:code-trail/20260322-123400-main.ts.md',
-				'---',
-			].join('\n');
-			const fm = parseFrontmatter(text);
-			assert.ok(fm);
-			assert.deepStrictEqual(fm.uses, [
-				'code-trail:code-trail/20260322-123500-validator.ts.md',
-				'code-trail:code-trail/20260322-123600-handler.ts.md',
-			]);
-			assert.deepStrictEqual(fm.usedBy, [
-				'code-trail:code-trail/20260322-123400-main.ts.md',
-			]);
-		});
-
-		test('should return undefined for invalid frontmatter', () => {
-			assert.strictEqual(parseFrontmatter('no frontmatter'), undefined);
-		});
-
-		test('should return undefined when required fields are missing', () => {
-			const text = ['---', 'file: src/example.ts', '---'].join('\n');
-			assert.strictEqual(parseFrontmatter(text), undefined);
-		});
-	});
-
 	suite('addLink', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 

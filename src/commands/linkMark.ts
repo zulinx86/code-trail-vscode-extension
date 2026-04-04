@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { parseFrontmatter } from '../utils/frontmatter';
 import { log } from '../utils/logger';
 import { promptAndLink } from '../utils/link';
+import { Mark } from '../utils/mark';
 
 export async function linkMark(): Promise<void> {
 	log('linkMark: started');
@@ -13,8 +13,8 @@ export async function linkMark(): Promise<void> {
 		return;
 	}
 
-	const currentFm = parseFrontmatter(editor.document.getText());
-	if (!currentFm) {
+	const mark = Mark.fromText(editor.document.getText());
+	if (!mark) {
 		log('linkMark: current file is not a valid mark');
 		vscode.window.showWarningMessage('Current file is not a valid mark.');
 		return;
@@ -23,5 +23,5 @@ export async function linkMark(): Promise<void> {
 	const currentMarkId = path.basename(editor.document.uri.fsPath);
 	log(`linkMark: current mark ${currentMarkId}`);
 
-	await promptAndLink(editor.document.uri, currentFm);
+	await promptAndLink(editor.document.uri, mark);
 }

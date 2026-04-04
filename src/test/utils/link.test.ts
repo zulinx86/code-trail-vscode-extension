@@ -10,11 +10,8 @@ import {
 	linkSuggestionsToQuickPickItems,
 	promptAndLink,
 } from '../../utils/link';
-import { saveMark } from '../../utils/mark';
-import { parseFrontmatter } from '../../utils/frontmatter';
-import type { MarkInfo } from '../../utils/mark';
-import type { Frontmatter } from '../../utils/frontmatter';
-import { Selection } from '../../utils/selection';
+import { Mark } from '../../utils/mark';
+import type { MarkArgs, MarkInfo } from '../../utils/mark';
 import { openFixture, waitForSymbols } from '../helpers';
 
 suite('link', () => {
@@ -68,15 +65,18 @@ suite('link', () => {
 			this.timeout(10000);
 			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
-			const fm: Frontmatter = {
+			const mark = new Mark({
 				file: 'src/test/fixtures/typescript/index.ts',
 				startLine: 30,
 				endLine: 32,
 				symbol: 'myCaller',
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L30-L32',
-				exportedAt: '2026-01-01T00:00:00Z',
-			};
-			const { outgoing } = await getOutgoingAndIncomingCalls(fm, workspaceUri);
+				exportedAt: new Date('2026-01-01T00:00:00Z'),
+			});
+			const { outgoing } = await getOutgoingAndIncomingCalls(
+				mark,
+				workspaceUri,
+			);
 			const keys = [...outgoing];
 			assert.ok(
 				keys.some((k) => k.includes('myCallee')),
@@ -88,15 +88,18 @@ suite('link', () => {
 			this.timeout(10000);
 			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
-			const fm: Frontmatter = {
+			const mark = new Mark({
 				file: 'src/test/fixtures/typescript/index.ts',
 				startLine: 26,
 				endLine: 28,
 				symbol: 'myCallee',
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L26-L28',
-				exportedAt: '2026-01-01T00:00:00Z',
-			};
-			const { incoming } = await getOutgoingAndIncomingCalls(fm, workspaceUri);
+				exportedAt: new Date('2026-01-01T00:00:00Z'),
+			});
+			const { incoming } = await getOutgoingAndIncomingCalls(
+				mark,
+				workspaceUri,
+			);
 			const keys = [...incoming];
 			assert.ok(
 				keys.some((k) => k.includes('myCaller')),
@@ -107,16 +110,16 @@ suite('link', () => {
 		test('should return empty sets when symbol not found', async () => {
 			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
-			const fm: Frontmatter = {
+			const mark = new Mark({
 				file: 'src/test/fixtures/typescript/index.ts',
 				startLine: 1,
 				endLine: 1,
 				symbol: 'doesNotExist',
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L1-L1',
-				exportedAt: '2026-01-01T00:00:00Z',
-			};
+				exportedAt: new Date('2026-01-01T00:00:00Z'),
+			});
 			const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
-				fm,
+				mark,
 				workspaceUri,
 			);
 			assert.strictEqual(outgoing.size, 0);
@@ -124,26 +127,26 @@ suite('link', () => {
 		});
 	});
 
-	const baseFm: Frontmatter = {
+	const markArgs: MarkArgs = {
 		file: 'src/a.ts',
 		startLine: 10,
 		endLine: 24,
 		link: 'code-trail:src/a.ts#L10-L24',
-		exportedAt: '2026-03-22T12:34:56Z',
+		exportedAt: new Date('2026-03-22T12:34:56Z'),
 	};
 
-	function makeMarkInfo(markId: string, fm: Frontmatter): MarkInfo {
+	function makeMarkInfo(markId: string, mark: Mark): MarkInfo {
 		return {
 			markId,
 			uri: vscode.Uri.file(`/tmp/${markId}`),
-			fm,
+			mark,
 			content: '',
 		};
 	}
 
 	suite('markToKeys', () => {
 		test('should include name key and range key when symbol exists', () => {
-			const m = makeMarkInfo('a.md', { ...baseFm, symbol: 'foo' });
+			const m = makeMarkInfo('a.md', new Mark({ ...markArgs, symbol: 'foo' }));
 			const keys = markToKeys(m);
 			assert.ok(keys.includes('src/a.ts#foo'));
 			assert.ok(keys.includes('src/a.ts#L10-L24'));
@@ -151,7 +154,10 @@ suite('link', () => {
 		});
 
 		test('should use last segment for qualified symbol', () => {
-			const m = makeMarkInfo('a.md', { ...baseFm, symbol: 'impl Foo.bar' });
+			const m = makeMarkInfo(
+				'a.md',
+				new Mark({ ...markArgs, symbol: 'impl Foo.bar' }),
+			);
 			const keys = markToKeys(m);
 			assert.ok(keys.includes('src/a.ts#bar'));
 			assert.ok(keys.includes('src/a.ts#L10-L24'));
@@ -159,7 +165,7 @@ suite('link', () => {
 		});
 
 		test('should return only range key when no symbol', () => {
-			const m = makeMarkInfo('a.md', baseFm);
+			const m = makeMarkInfo('a.md', new Mark(markArgs));
 			const keys = markToKeys(m);
 			assert.deepStrictEqual(keys, ['src/a.ts#L10-L24']);
 		});
@@ -167,30 +173,42 @@ suite('link', () => {
 
 	suite('markToDescription', () => {
 		test('should show symbol (file) when symbol exists', () => {
-			const m = makeMarkInfo('a.md', { ...baseFm, symbol: 'handleRequest' });
+			const m = makeMarkInfo(
+				'a.md',
+				new Mark({ ...markArgs, symbol: 'handleRequest' }),
+			);
 			assert.strictEqual(markToDescription(m), 'handleRequest (src/a.ts)');
 		});
 
 		test('should show file#range when no symbol', () => {
-			const m = makeMarkInfo('a.md', baseFm);
+			const m = makeMarkInfo('a.md', new Mark(markArgs));
 			assert.strictEqual(markToDescription(m), 'src/a.ts#L10-L24');
 		});
 	});
 
 	suite('getLinkSuggestions', () => {
-		const markA = makeMarkInfo('a.md', { ...baseFm, symbol: 'foo' });
-		const markB = makeMarkInfo('b.md', {
-			...baseFm,
-			file: 'src/b.ts',
-			symbol: 'bar',
-			link: 'code-trail:src/b.ts#L10-L24',
-		});
-		const markC = makeMarkInfo('c.md', {
-			...baseFm,
-			file: 'src/c.ts',
-			symbol: 'baz',
-			link: 'code-trail:src/c.ts#L10-L24',
-		});
+		const markA = makeMarkInfo(
+			'a.md',
+			new Mark({ ...markArgs, symbol: 'foo' }),
+		);
+		const markB = makeMarkInfo(
+			'b.md',
+			new Mark({
+				...markArgs,
+				file: 'src/b.ts',
+				symbol: 'bar',
+				link: 'code-trail:src/b.ts#L10-L24',
+			}),
+		);
+		const markC = makeMarkInfo(
+			'c.md',
+			new Mark({
+				...markArgs,
+				file: 'src/c.ts',
+				symbol: 'baz',
+				link: 'code-trail:src/c.ts#L10-L24',
+			}),
+		);
 
 		test('should mark outgoing matches as suggested uses', () => {
 			const outgoing = new Set(['src/a.ts#foo']);
@@ -245,12 +263,18 @@ suite('link', () => {
 	});
 
 	suite('linkSuggestionsToQuickPickItems', () => {
-		const markA = makeMarkInfo('a.md', { ...baseFm, symbol: 'foo' });
-		const markB = makeMarkInfo('b.md', {
-			...baseFm,
-			file: 'src/b.ts',
-			link: 'code-trail:src/b.ts#L10-L24',
-		});
+		const markA = makeMarkInfo(
+			'a.md',
+			new Mark({ ...markArgs, symbol: 'foo' }),
+		);
+		const markB = makeMarkInfo(
+			'b.md',
+			new Mark({
+				...markArgs,
+				file: 'src/b.ts',
+				link: 'code-trail:src/b.ts#L10-L24',
+			}),
+		);
 
 		test('should place suggested items before others', () => {
 			const suggestions = [
@@ -341,25 +365,27 @@ suite('link', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
-		const selectionA = new Selection({
+		const markArgsA: MarkArgs = {
 			file: 'src/a.ts',
 			startLine: 1,
 			endLine: 5,
-			selectedText: 'function a() {}',
+			link: 'code-trail:src/a.ts#L1-L5',
+			exportedAt: new Date('2026-03-22T12:34:56Z'),
 			symbol: 'a',
 			symbolKind: 'function',
-		});
+			code: 'function a() {}',
+		};
 
-		const selectionB = new Selection({
+		const markArgsB: MarkArgs = {
 			file: 'src/b.ts',
 			startLine: 1,
 			endLine: 3,
-			selectedText: 'function b() {}',
+			link: 'code-trail:src/b.ts#L1-L3',
+			exportedAt: new Date('2026-03-22T12:35:00Z'),
 			symbol: 'b',
 			symbolKind: 'function',
-		});
-
-		const fixedDate = new Date('2026-03-22T12:34:56Z');
+			code: 'function b() {}',
+		};
 
 		async function cleanup() {
 			try {
@@ -371,15 +397,11 @@ suite('link', () => {
 		teardown(cleanup);
 
 		test('should add bidirectional links when a mark is selected', async () => {
-			const uriA = await saveMark(selectionA, fixedDate);
-			const uriB = await saveMark(selectionB, new Date('2026-03-22T12:35:00Z'));
+			const markA = new Mark(markArgsA);
+			const uriA = await markA.save();
+			const uriB = await new Mark(markArgsB).save();
 			const markIdA = uriA.fsPath.split('/').pop()!;
 			const markIdB = uriB.fsPath.split('/').pop()!;
-
-			const contentA = Buffer.from(
-				await vscode.workspace.fs.readFile(uriA),
-			).toString('utf-8');
-			const fmA = parseFrontmatter(contentA)!;
 
 			const origShowQuickPick = vscode.window.showQuickPick;
 			let callCount = 0;
@@ -394,7 +416,7 @@ suite('link', () => {
 			};
 
 			try {
-				await promptAndLink(uriA, fmA);
+				await promptAndLink(uriA, markA);
 				// Now the link where mark A uses mark B should be established.
 
 				const textA = Buffer.from(
@@ -416,20 +438,15 @@ suite('link', () => {
 		});
 
 		test('should do nothing when quick pick is cancelled', async () => {
-			const uriA = await saveMark(selectionA, fixedDate);
-			const uriB = await saveMark(selectionB, new Date('2026-03-22T12:35:00Z'));
-			const markIdA = uriA.fsPath.split('/').pop()!;
-
-			const contentA = Buffer.from(
-				await vscode.workspace.fs.readFile(uriA),
-			).toString('utf-8');
-			const fmA = parseFrontmatter(contentA)!;
+			const markA = new Mark(markArgsA);
+			const uriA = await markA.save();
+			const uriB = await new Mark(markArgsB).save();
 
 			const origShowQuickPick = vscode.window.showQuickPick;
 			(vscode.window as any).showQuickPick = async () => undefined; // Do nothing
 
 			try {
-				await promptAndLink(uriA, fmA);
+				await promptAndLink(uriA, markA);
 				// No links should be established.
 
 				const textA = Buffer.from(
@@ -447,20 +464,19 @@ suite('link', () => {
 		});
 
 		test('should do nothing when no other marks exist', async () => {
-			const uriA = await saveMark(selectionA, fixedDate);
+			const markA = new Mark(markArgsA);
+			const uriA = await markA.save();
 
-			const contentA = Buffer.from(
+			const originalContent = Buffer.from(
 				await vscode.workspace.fs.readFile(uriA),
 			).toString('utf-8');
-			const fmA = parseFrontmatter(contentA)!;
-			const originalContent = contentA;
 
-			await promptAndLink(uriA, fmA);
+			await promptAndLink(uriA, markA);
 
-			const textA = Buffer.from(
+			const content = Buffer.from(
 				await vscode.workspace.fs.readFile(uriA),
 			).toString('utf-8');
-			assert.strictEqual(textA, originalContent);
+			assert.strictEqual(content, originalContent);
 		});
 	});
 });

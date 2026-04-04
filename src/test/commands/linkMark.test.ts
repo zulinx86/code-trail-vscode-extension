@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { saveMark } from '../../utils/mark';
+import { Mark, MarkArgs } from '../../utils/mark';
 import { addLink } from '../../utils/frontmatter';
 import { Selection } from '../../utils/selection';
 
@@ -8,22 +8,23 @@ suite('linkMark command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
-	const selectionA = new Selection({
+	const markArgsA: MarkArgs = {
 		file: 'src/a.ts',
 		startLine: 1,
 		endLine: 5,
-		selectedText: 'function a() {}',
-	});
+		link: 'code-trail:code-trail/src/a.ts',
+		exportedAt: new Date('2026-03-22T12:34:56Z'),
+		code: 'function a() {}',
+	};
 
-	const selectionB = new Selection({
+	const markArgsB: MarkArgs = {
 		file: 'src/b.ts',
 		startLine: 10,
 		endLine: 20,
-		selectedText: 'function b() {}',
-	});
-
-	const fixedDateA = new Date('2026-03-22T12:34:56Z');
-	const fixedDateB = new Date('2026-03-22T12:35:00Z');
+		link: 'code-trail:code-trail/src/b.ts',
+		exportedAt: new Date('2026-03-22T12:35:00Z'),
+		code: 'function b() {}',
+	};
 
 	async function cleanup() {
 		try {
@@ -49,7 +50,7 @@ suite('linkMark command', () => {
 	});
 
 	test('should show warning when no other marks exist', async () => {
-		const markUri = await saveMark(selectionA, fixedDateA);
+		const markUri = await new Mark(markArgsA).save();
 
 		const doc = await vscode.workspace.openTextDocument(markUri);
 		await vscode.window.showTextDocument(doc);
@@ -60,8 +61,8 @@ suite('linkMark command', () => {
 	});
 
 	test('should add bidirectional links when a mark is selected', async () => {
-		const markAUri = await saveMark(selectionA, fixedDateA);
-		const markBUri = await saveMark(selectionB, fixedDateB);
+		const markAUri = await new Mark(markArgsA).save();
+		const markBUri = await new Mark(markArgsB).save();
 		const markIdB = markBUri.fsPath.split('/').pop()!;
 
 		const doc = await vscode.workspace.openTextDocument(markAUri);
@@ -105,8 +106,8 @@ suite('linkMark command', () => {
 	});
 
 	test('should not duplicate links when linking the same marks again', async () => {
-		const markAUri = await saveMark(selectionA, fixedDateA);
-		const markBUri = await saveMark(selectionB, fixedDateB);
+		const markAUri = await new Mark(markArgsA).save();
+		const markBUri = await new Mark(markArgsB).save();
 		const markIdA = markAUri.fsPath.split('/').pop()!;
 		const markIdB = markBUri.fsPath.split('/').pop()!;
 
@@ -160,8 +161,8 @@ suite('linkMark command', () => {
 	});
 
 	test('should do nothing when quick pick is cancelled', async () => {
-		const markAUri = await saveMark(selectionA, fixedDateA);
-		await saveMark(selectionB, fixedDateB);
+		const markAUri = await new Mark(markArgsA).save();
+		await new Mark(markArgsB).save();
 
 		const doc = await vscode.workspace.openTextDocument(markAUri);
 		await vscode.window.showTextDocument(doc);
