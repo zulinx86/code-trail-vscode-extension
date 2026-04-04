@@ -5,43 +5,12 @@ import { parseFrontmatter, type Frontmatter } from './frontmatter';
 import { Selection } from './selection';
 import { log } from './logger';
 
-const LANGUAGE_ID_TO_TAG: Record<string, string> = {
-	typescript: 'ts',
-	typescriptreact: 'tsx',
-	javascript: 'js',
-	javascriptreact: 'jsx',
-	python: 'py',
-	go: 'go',
-	rust: 'rs',
-	c: 'c',
-	cpp: 'cpp',
-	java: 'java',
-	ruby: 'rb',
-	php: 'php',
-	swift: 'swift',
-	kotlin: 'kotlin',
-	scala: 'scala',
-	shellscript: 'sh',
-	sql: 'sql',
-	html: 'html',
-	css: 'css',
-	json: 'json',
-	yaml: 'yaml',
-	toml: 'toml',
-	xml: 'xml',
-	markdown: 'md',
-};
-
-function getLanguageTag(languageId: string): string {
-	return LANGUAGE_ID_TO_TAG[languageId] ?? languageId;
-}
-
 export function formatMark(
 	selection: Selection,
 	exportedAt: Date,
 	githubUrl?: string,
 ): string {
-	const lang = getLanguageTag(selection.languageId);
+	const ext = selection.filePath.split('.').pop() ?? '';
 	const timestamp = exportedAt.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
 	const link = `code-trail:${selection.filePath}#L${selection.startLine}-L${selection.endLine}`;
@@ -72,7 +41,7 @@ export function formatMark(
 
 # Code
 
-\`\`\`${lang}
+\`\`\`${ext}
 ${selection.selectedText}
 \`\`\`
 `;

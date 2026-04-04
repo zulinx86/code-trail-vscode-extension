@@ -346,7 +346,6 @@ suite('link', () => {
 			1,
 			5,
 			'function a() {}',
-			'typescript',
 			'a',
 			'function',
 		);
@@ -356,7 +355,6 @@ suite('link', () => {
 			1,
 			3,
 			'function b() {}',
-			'typescript',
 			'b',
 			'function',
 		);

@@ -8,7 +8,6 @@ export class Selection {
 	readonly startLine: number;
 	readonly endLine: number;
 	readonly selectedText: string;
-	readonly languageId: string;
 	readonly symbol?: string;
 	readonly symbolKind?: string;
 
@@ -17,7 +16,6 @@ export class Selection {
 		startLine: number,
 		endLine: number,
 		selectedText: string,
-		languageId: string,
 		symbol?: string,
 		symbolKind?: string,
 	) {
@@ -25,7 +23,6 @@ export class Selection {
 		this.startLine = startLine;
 		this.endLine = endLine;
 		this.selectedText = selectedText;
-		this.languageId = languageId;
 		this.symbol = symbol;
 		this.symbolKind = symbolKind;
 	}
@@ -70,7 +67,6 @@ export class Selection {
 			range.start.line + 1,
 			range.end.line + 1,
 			editor.document.getText(fullRange),
-			editor.document.languageId,
 			symbol?.name,
 			symbol?.kind,
 		);

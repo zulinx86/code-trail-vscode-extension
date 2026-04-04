@@ -131,7 +131,6 @@ suite('graph', () => {
 			1,
 			5,
 			'function a() {}',
-			'typescript',
 			'a',
 			'function',
 		);
@@ -141,7 +140,6 @@ suite('graph', () => {
 			1,
 			3,
 			'function b() {}',
-			'typescript',
 			'b',
 			'function',
 		);

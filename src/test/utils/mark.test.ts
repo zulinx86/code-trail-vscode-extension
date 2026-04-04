@@ -9,13 +9,7 @@ import {
 import { Selection } from '../../utils/selection';
 
 suite('mark', () => {
-	const baseSelection = new Selection(
-		'src/example.ts',
-		10,
-		24,
-		'const x = 1;',
-		'typescript',
-	);
+	const baseSelection = new Selection('src/example.ts', 10, 24, 'const x = 1;');
 	const fixedDate = new Date('2026-03-22T12:34:56Z');
 
 	suite('formatMark', () => {
@@ -41,18 +35,6 @@ suite('mark', () => {
 				'',
 			].join('\n');
 			assert.strictEqual(result, expected);
-		});
-
-		test('should use cpp language tag for cpp languageId', () => {
-			const selection: Selection = { ...baseSelection, languageId: 'cpp' };
-			const result = formatMark(selection, fixedDate);
-			assert.ok(result.includes('```cpp\n'));
-		});
-
-		test('should fall back to languageId for unknown language', () => {
-			const selection: Selection = { ...baseSelection, languageId: 'unknown' };
-			const result = formatMark(selection, fixedDate);
-			assert.ok(result.includes('```unknown\n'));
 		});
 
 		test('should include github url in frontmatter when provided', () => {

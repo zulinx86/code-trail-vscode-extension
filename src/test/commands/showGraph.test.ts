@@ -38,7 +38,6 @@ suite('showGraph command', () => {
 			1,
 			5,
 			'function foo() {}',
-			'typescript',
 			'foo',
 			'function',
 		);
@@ -58,7 +57,6 @@ suite('showGraph command', () => {
 			1,
 			5,
 			'function foo() {}',
-			'typescript',
 			'foo',
 			'function',
 		);
@@ -87,7 +85,6 @@ suite('showGraph command', () => {
 				1,
 				5,
 				'function foo() {}',
-				'typescript',
 				'foo',
 				'function',
 			);
