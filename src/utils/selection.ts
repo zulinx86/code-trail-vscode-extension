@@ -3,7 +3,7 @@ import * as path from 'path';
 import { log } from './logger';
 import { Symbol } from './symbol';
 
-export interface SelectionParams {
+export interface SelectionArgs {
 	file: string;
 	startLine: number;
 	endLine: number;
@@ -20,7 +20,7 @@ export class Selection {
 	readonly symbol?: string;
 	readonly symbolKind?: string;
 
-	constructor(params: SelectionParams) {
+	constructor(params: SelectionArgs) {
 		this.file = params.file;
 		this.startLine = params.startLine;
 		this.endLine = params.endLine;

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { log } from './logger';
 
-export interface SymbolParams {
+export interface SymbolArgs {
 	name: string;
 	kind: string;
 	range: vscode.Range;
@@ -14,7 +14,7 @@ export class Symbol {
 	readonly range: vscode.Range;
 	readonly selectionRange: vscode.Range;
 
-	private constructor(params: SymbolParams) {
+	private constructor(params: SymbolArgs) {
 		this.name = params.name;
 		this.kind = params.kind;
 		this.range = params.range;
