@@ -5,7 +5,7 @@ import {
 	getLinkSuggestions,
 } from '../../../utils/link';
 import { Selection } from '../../../utils/selection';
-import { Mark, getMarks } from '../../../utils/mark';
+import { Mark } from '../../../utils/mark';
 import {
 	openFixture,
 	waitForSymbols,
@@ -111,7 +111,7 @@ suite('link (Rust)', () => {
 				callerMark,
 				workspaceUri,
 			);
-			const marks = await getMarks();
+			const marks = await Mark.getAll();
 			const suggestions = getLinkSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 
@@ -144,7 +144,7 @@ suite('link (Rust)', () => {
 				calleeMark,
 				workspaceUri,
 			);
-			const marks = await getMarks();
+			const marks = await Mark.getAll();
 			const suggestions = getLinkSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 

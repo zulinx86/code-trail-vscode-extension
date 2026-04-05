@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Symbol } from './symbol';
-import { Mark, getMarks } from './mark';
+import { Mark } from './mark';
 import { OUTPUT_DIR } from '../config';
 import { log } from './logger';
 
@@ -221,7 +221,7 @@ export async function promptAndLink(mark: Mark): Promise<void> {
 	}
 
 	const currentMarkId = mark.id;
-	const marks = (await getMarks()).filter((m) => m.id !== currentMarkId);
+	const marks = (await Mark.getAll()).filter((m) => m.id !== currentMarkId);
 	if (marks.length === 0) {
 		log('promptAndLink: no other marks found');
 		return;

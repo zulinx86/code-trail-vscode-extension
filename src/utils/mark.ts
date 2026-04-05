@@ -248,6 +248,17 @@ ${this.code}
 
 		await this.save();
 	}
+
+	static async getAll(): Promise<Mark[]> {
+		const uris = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
+		log(`Mark.getAll: found ${uris.length} files in ${OUTPUT_DIR}/`);
+		const marks = await Promise.all(
+			uris.map(async (uri) => {
+				return await Mark.fromUri(uri);
+			}),
+		);
+		return marks.filter((mark): mark is Mark => mark !== undefined);
+	}
 }
 
 export async function findExistingMark(
@@ -255,25 +266,10 @@ export async function findExistingMark(
 	symbol: string,
 ): Promise<Mark | undefined> {
 	log(`findExistingMark: file=${file} symbol=${symbol}`);
-	const marks = await getMarks();
+	const marks = await Mark.getAll();
 	const found = marks.find(
 		(mark) => mark.file === file && mark.symbol === symbol,
 	);
 	log(`findExistingMark: ${found ? `found ${found.id}` : 'not found'}`);
 	return found;
-}
-
-export async function getMarks(): Promise<Mark[]> {
-	const files = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
-	log(`getMarks: found ${files.length} files in ${OUTPUT_DIR}/`);
-	const results = await Promise.all(
-		files.map(async (uri) => {
-			const mark = await Mark.fromUri(uri);
-			if (!mark) {
-				return undefined;
-			}
-			return mark;
-		}),
-	);
-	return results.filter((m): m is Mark => m !== undefined);
 }

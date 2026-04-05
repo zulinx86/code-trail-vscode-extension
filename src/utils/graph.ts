@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { OUTPUT_DIR } from '../config';
-import { getMarks, Mark } from './mark';
+import { Mark } from './mark';
 import { log } from './logger';
 import dagre from '@dagrejs/dagre';
 
@@ -204,7 +204,7 @@ function expandTabs(
 }
 
 export async function buildGraphData(): Promise<GraphData> {
-	const marks = await getMarks();
+	const marks = await Mark.getAll();
 	log(`buildGraphData: ${marks.length} marks`);
 	const cfg = loadConfig();
 	const rawNodes = marks.map((mark) => {
