@@ -11,7 +11,7 @@ import {
 	promptAndLink,
 } from '../../utils/link';
 import { Mark } from '../../utils/mark';
-import type { MarkArgs, MarkInfo } from '../../utils/mark';
+import type { MarkArgs } from '../../utils/mark';
 import { openFixture, waitForSymbols } from '../helpers';
 
 suite('link', () => {
@@ -135,80 +135,56 @@ suite('link', () => {
 		exportedAt: new Date('2026-03-22T12:34:56Z'),
 	};
 
-	function makeMarkInfo(markId: string, mark: Mark): MarkInfo {
-		return {
-			markId,
-			uri: vscode.Uri.file(`/tmp/${markId}`),
-			mark,
-			content: '',
-		};
-	}
-
 	suite('markToKeys', () => {
 		test('should include name key and range key when symbol exists', () => {
-			const m = makeMarkInfo('a.md', new Mark({ ...markArgs, symbol: 'foo' }));
-			const keys = markToKeys(m);
+			const mark = new Mark({ ...markArgs, symbol: 'foo' });
+			const keys = markToKeys(mark);
 			assert.ok(keys.includes('src/a.ts#foo'));
 			assert.ok(keys.includes('src/a.ts#L10-L24'));
 			assert.strictEqual(keys.length, 2);
 		});
 
 		test('should use last segment for qualified symbol', () => {
-			const m = makeMarkInfo(
-				'a.md',
-				new Mark({ ...markArgs, symbol: 'impl Foo.bar' }),
-			);
-			const keys = markToKeys(m);
+			const mark = new Mark({ ...markArgs, symbol: 'impl Foo.bar' });
+			const keys = markToKeys(mark);
 			assert.ok(keys.includes('src/a.ts#bar'));
 			assert.ok(keys.includes('src/a.ts#L10-L24'));
 			assert.strictEqual(keys.length, 2);
 		});
 
 		test('should return only range key when no symbol', () => {
-			const m = makeMarkInfo('a.md', new Mark(markArgs));
-			const keys = markToKeys(m);
+			const mark = new Mark(markArgs);
+			const keys = markToKeys(mark);
 			assert.deepStrictEqual(keys, ['src/a.ts#L10-L24']);
 		});
 	});
 
 	suite('markToDescription', () => {
 		test('should show symbol (file) when symbol exists', () => {
-			const m = makeMarkInfo(
-				'a.md',
-				new Mark({ ...markArgs, symbol: 'handleRequest' }),
-			);
-			assert.strictEqual(markToDescription(m), 'handleRequest (src/a.ts)');
+			const mark = new Mark({ ...markArgs, symbol: 'handleRequest' });
+			assert.strictEqual(markToDescription(mark), 'handleRequest (src/a.ts)');
 		});
 
 		test('should show file#range when no symbol', () => {
-			const m = makeMarkInfo('a.md', new Mark(markArgs));
-			assert.strictEqual(markToDescription(m), 'src/a.ts#L10-L24');
+			const mark = new Mark(markArgs);
+			assert.strictEqual(markToDescription(mark), 'src/a.ts#L10-L24');
 		});
 	});
 
 	suite('getLinkSuggestions', () => {
-		const markA = makeMarkInfo(
-			'a.md',
-			new Mark({ ...markArgs, symbol: 'foo' }),
-		);
-		const markB = makeMarkInfo(
-			'b.md',
-			new Mark({
-				...markArgs,
-				file: 'src/b.ts',
-				symbol: 'bar',
-				link: 'code-trail:src/b.ts#L10-L24',
-			}),
-		);
-		const markC = makeMarkInfo(
-			'c.md',
-			new Mark({
-				...markArgs,
-				file: 'src/c.ts',
-				symbol: 'baz',
-				link: 'code-trail:src/c.ts#L10-L24',
-			}),
-		);
+		const markA = new Mark({ ...markArgs, symbol: 'foo' });
+		const markB = new Mark({
+			...markArgs,
+			file: 'src/b.ts',
+			symbol: 'bar',
+			link: 'code-trail:src/b.ts#L10-L24',
+		});
+		const markC = new Mark({
+			...markArgs,
+			file: 'src/c.ts',
+			symbol: 'baz',
+			link: 'code-trail:src/c.ts#L10-L24',
+		});
 
 		test('should mark outgoing matches as suggested uses', () => {
 			const outgoing = new Set(['src/a.ts#foo']);
@@ -217,7 +193,7 @@ suite('link', () => {
 			const suggested = suggestions.filter((s) => s.suggested);
 			assert.strictEqual(suggested.length, 1);
 			assert.strictEqual(suggested[0].direction, 'uses');
-			assert.strictEqual(suggested[0].mark.markId, 'a.md');
+			assert.strictEqual(suggested[0].mark.id, markA.id);
 		});
 
 		test('should mark incoming matches as suggested usedBy', () => {
@@ -227,7 +203,7 @@ suite('link', () => {
 			const suggested = suggestions.filter((s) => s.suggested);
 			assert.strictEqual(suggested.length, 1);
 			assert.strictEqual(suggested[0].direction, 'usedBy');
-			assert.strictEqual(suggested[0].mark.markId, 'b.md');
+			assert.strictEqual(suggested[0].mark.id, markB.id);
 		});
 
 		test('should mark non-matching as not suggested', () => {
@@ -263,18 +239,12 @@ suite('link', () => {
 	});
 
 	suite('linkSuggestionsToQuickPickItems', () => {
-		const markA = makeMarkInfo(
-			'a.md',
-			new Mark({ ...markArgs, symbol: 'foo' }),
-		);
-		const markB = makeMarkInfo(
-			'b.md',
-			new Mark({
-				...markArgs,
-				file: 'src/b.ts',
-				link: 'code-trail:src/b.ts#L10-L24',
-			}),
-		);
+		const markA = new Mark({ ...markArgs, symbol: 'foo' });
+		const markB = new Mark({
+			...markArgs,
+			file: 'src/b.ts',
+			link: 'code-trail:src/b.ts#L10-L24',
+		});
 
 		test('should place suggested items before others', () => {
 			const suggestions = [

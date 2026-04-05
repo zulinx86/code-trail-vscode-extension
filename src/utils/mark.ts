@@ -17,6 +17,7 @@ export interface MarkArgs {
 	usedBy?: string[];
 	notes?: string;
 	code?: string;
+	uri?: vscode.Uri;
 }
 
 export class Mark {
@@ -32,6 +33,7 @@ export class Mark {
 	usedBy?: string[];
 	notes?: string;
 	code?: string;
+	uri?: vscode.Uri;
 
 	constructor(params: MarkArgs) {
 		this.file = params.file;
@@ -46,9 +48,10 @@ export class Mark {
 		this.usedBy = params.usedBy;
 		this.notes = params.notes;
 		this.code = params.code;
+		this.uri = params.uri;
 	}
 
-	static fromText(text: string): Mark | undefined {
+	static fromText(text: string, uri?: vscode.Uri): Mark | undefined {
 		const frontmatterMatch = text.match(/^---\n([\s\S]*?)\n---/);
 		if (!frontmatterMatch) {
 			return undefined;
@@ -114,6 +117,7 @@ export class Mark {
 			usedBy: frontmatter.usedBy as string[] | undefined,
 			notes: notes,
 			code: code,
+			uri,
 		});
 	}
 
@@ -122,6 +126,14 @@ export class Mark {
 			'utf-8',
 		);
 		return Mark.fromText(text);
+	}
+
+	static async fromFile(relativePath: string): Promise<Mark | undefined> {
+		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+		if (!workspaceFolder) {
+			return undefined;
+		}
+		return Mark.fromUri(vscode.Uri.joinPath(workspaceFolder.uri, relativePath));
 	}
 
 	static fromSelection(
@@ -237,40 +249,30 @@ ${this.code}
 	}
 }
 
-export interface MarkInfo {
-	markId: string;
-	uri: vscode.Uri;
-	mark: Mark;
-	content: string;
-}
-
 export async function findExistingMark(
 	file: string,
 	symbol: string,
-): Promise<MarkInfo | undefined> {
+): Promise<Mark | undefined> {
 	log(`findExistingMark: file=${file} symbol=${symbol}`);
 	const marks = await getMarks();
 	const found = marks.find(
-		(m) => m.mark.file === file && m.mark.symbol === symbol,
+		(mark) => mark.file === file && mark.symbol === symbol,
 	);
-	log(`findExistingMark: ${found ? `found ${found.markId}` : 'not found'}`);
+	log(`findExistingMark: ${found ? `found ${found.id}` : 'not found'}`);
 	return found;
 }
 
-export async function getMarks(): Promise<MarkInfo[]> {
+export async function getMarks(): Promise<Mark[]> {
 	const files = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
 	log(`getMarks: found ${files.length} files in ${OUTPUT_DIR}/`);
 	const results = await Promise.all(
 		files.map(async (uri) => {
-			const content = Buffer.from(
-				await vscode.workspace.fs.readFile(uri),
-			).toString('utf-8');
-			const mark = Mark.fromText(content);
+			const mark = await Mark.fromUri(uri);
 			if (!mark) {
 				return undefined;
 			}
-			return { markId: path.basename(uri.fsPath), uri, mark, content };
+			return mark;
 		}),
 	);
-	return results.filter((m): m is MarkInfo => m !== undefined);
+	return results.filter((m): m is Mark => m !== undefined);
 }

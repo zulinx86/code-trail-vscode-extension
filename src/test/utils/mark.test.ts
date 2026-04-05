@@ -263,8 +263,8 @@ suite('mark', () => {
 			}).save();
 			const existing = await findExistingMark('src/example.ts', 'foo');
 			assert.ok(existing);
-			assert.strictEqual(existing.mark.file, 'src/example.ts');
-			assert.strictEqual(existing.mark.symbol, 'foo');
+			assert.strictEqual(existing.file, 'src/example.ts');
+			assert.strictEqual(existing.symbol, 'foo');
 		});
 
 		test('should return undefined when no matching mark exists', async () => {

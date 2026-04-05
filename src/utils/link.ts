@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Symbol } from './symbol';
-import { Mark, type MarkInfo, getMarks } from './mark';
+import { Mark, getMarks } from './mark';
+import { OUTPUT_DIR } from '../config';
 import { log } from './logger';
 
 export function callItemToNameKey(
@@ -98,30 +99,30 @@ export async function getOutgoingAndIncomingCalls(
 }
 
 interface LinkSuggestion {
-	mark: MarkInfo;
+	mark: Mark;
 	direction: 'uses' | 'usedBy';
 	description: string;
 	suggested: boolean;
 }
 
-export function markToKeys(m: MarkInfo): string[] {
-	const rangeKey = `${m.mark.file}#L${m.mark.startLine}-L${m.mark.endLine}`;
-	if (!m.mark.symbol) {
+export function markToKeys(mark: Mark): string[] {
+	const rangeKey = `${mark.file}#L${mark.startLine}-L${mark.endLine}`;
+	if (!mark.symbol) {
 		return [rangeKey];
 	}
-	const lastSegment = m.mark.symbol.split('.').pop()!;
-	return [`${m.mark.file}#${lastSegment}`, rangeKey];
+	const lastSegment = mark.symbol.split('.').pop()!;
+	return [`${mark.file}#${lastSegment}`, rangeKey];
 }
 
-export function markToDescription(m: MarkInfo): string {
-	if (!m.mark.symbol) {
-		return `${m.mark.file}#L${m.mark.startLine}-L${m.mark.endLine}`;
+export function markToDescription(mark: Mark): string {
+	if (!mark.symbol) {
+		return `${mark.file}#L${mark.startLine}-L${mark.endLine}`;
 	}
-	return `${m.mark.symbol} (${m.mark.file})`;
+	return `${mark.symbol} (${mark.file})`;
 }
 
 export function getLinkSuggestions(
-	marks: MarkInfo[],
+	marks: Mark[],
 	outgoing: Set<string>,
 	incoming: Set<string>,
 ): LinkSuggestion[] {
@@ -133,7 +134,7 @@ export function getLinkSuggestions(
 		const isOutgoing = keys.some((k) => outgoing.has(k));
 		const isIncoming = keys.some((k) => incoming.has(k));
 		log(
-			`getLinkSuggestions: checking mark ${mark.markId} keys=[${keys.join(', ')}]`,
+			`getLinkSuggestions: checking mark ${mark.id} keys=[${keys.join(', ')}]`,
 		);
 		if (isOutgoing) {
 			suggestions.push({
@@ -169,7 +170,7 @@ export function getLinkSuggestions(
 }
 
 interface QuickPickLinkItem extends vscode.QuickPickItem {
-	mark: MarkInfo;
+	mark: Mark;
 	direction: 'uses' | 'usedBy';
 	suggested: boolean;
 }
@@ -184,7 +185,7 @@ export function linkSuggestionsToQuickPickItems(
 	for (const s of suggested) {
 		items.push({
 			label: `${s.direction === 'uses' ? '$(arrow-right)' : '$(arrow-left)'} ${s.description}`,
-			description: s.mark.markId,
+			description: s.mark.id,
 			detail: 'Suggested',
 			mark: s.mark,
 			direction: s.direction,
@@ -201,7 +202,7 @@ export function linkSuggestionsToQuickPickItems(
 		for (const o of others) {
 			items.push({
 				label: o.description,
-				description: o.mark.markId,
+				description: o.mark.id,
 				mark: o.mark,
 				direction: o.direction,
 				suggested: false,
@@ -220,7 +221,7 @@ export async function promptAndLink(mark: Mark): Promise<void> {
 	}
 
 	const currentMarkId = mark.id;
-	const marks = (await getMarks()).filter((m) => m.markId !== currentMarkId);
+	const marks = (await getMarks()).filter((m) => m.id !== currentMarkId);
 	if (marks.length === 0) {
 		log('promptAndLink: no other marks found');
 		return;
@@ -267,19 +268,19 @@ export async function promptAndLink(mark: Mark): Promise<void> {
 		direction = dirChoice.value;
 	}
 
-	const selectedMark = await Mark.fromUri(selected.mark.uri);
+	const selectedMark = await Mark.fromFile(`${OUTPUT_DIR}/${selected.mark.id}`);
 	if (!selectedMark) {
 		return;
 	}
 	const reverse = direction === 'uses' ? 'usedBy' : 'uses';
 
-	await mark.addLink(direction, selected.mark.markId);
+	await mark.addLink(direction, selected.mark.id);
 	await selectedMark.addLink(reverse, currentMarkId);
 	log(
-		`promptAndLink: linked ${currentMarkId} ${direction} ${selected.mark.markId}`,
+		`promptAndLink: linked ${currentMarkId} ${direction} ${selected.mark.id}`,
 	);
 
 	vscode.window.showInformationMessage(
-		`Linked: ${currentMarkId} ${direction === 'uses' ? '→' : '←'} ${selected.mark.markId}`,
+		`Linked: ${currentMarkId} ${direction === 'uses' ? '→' : '←'} ${selected.mark.id}`,
 	);
 }

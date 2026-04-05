@@ -190,7 +190,12 @@ function layoutWithDagre(
 	});
 }
 
-function expandTabs(code: string, file: string, cfg: GraphConfig): string {
+function expandTabs(
+	code: string | undefined,
+	file: string,
+	cfg: GraphConfig,
+): string {
+	if (!code) return '';
 	const ext = file.split('.').pop() ?? '';
 	const tabSize = Object.hasOwn(cfg.tabSizeByLanguage, ext)
 		? cfg.tabSizeByLanguage[ext]
@@ -198,28 +203,21 @@ function expandTabs(code: string, file: string, cfg: GraphConfig): string {
 	return code.replace(/\t/g, ' '.repeat(tabSize));
 }
 
-function extractCode(content: string, file: string, cfg: GraphConfig): string {
-	const match = content.match(/# Code\s+```[^\n]*\n([\s\S]*?)\n```/);
-	return match ? expandTabs(match[1], file, cfg) : '';
-}
-
 export async function buildGraphData(): Promise<GraphData> {
 	const marks = await getMarks();
 	log(`buildGraphData: ${marks.length} marks`);
 	const cfg = loadConfig();
 	const rawNodes = marks.map((mark) => {
-		const label = nodeLabel(mark.mark);
-		const isTitle = mark.mark.symbolKind === 'title';
-		const code = isTitle ? '' : extractCode(mark.content, mark.mark.file, cfg);
+		const label = nodeLabel(mark);
+		const isTitle = mark.symbolKind === 'title';
+		const code = isTitle ? '' : expandTabs(mark.code, mark.file, cfg);
 		const size = measureNodeSize(label, code, isTitle);
 		return {
-			id: mark.markId,
+			id: mark.id,
 			label,
 			code,
-			file: isTitle
-				? ''
-				: `${mark.mark.file}#L${mark.mark.startLine}-L${mark.mark.endLine}`,
-			color: nodeColor(cfg, mark.mark.symbolKind),
+			file: isTitle ? '' : `${mark.file}#L${mark.startLine}-L${mark.endLine}`,
+			color: nodeColor(cfg, mark.symbolKind),
 			isTitle,
 			width: size.width,
 			height: size.height,
@@ -228,9 +226,9 @@ export async function buildGraphData(): Promise<GraphData> {
 
 	const edges: GraphEdge[] = [];
 	for (const mark of marks) {
-		for (const link of mark.mark.uses ?? []) {
+		for (const link of mark.uses ?? []) {
 			const target = link.replace(`code-trail:${OUTPUT_DIR}/`, '');
-			edges.push({ from: mark.markId, to: target });
+			edges.push({ from: mark.id, to: target });
 		}
 	}
 

@@ -118,7 +118,7 @@ suite('link (Rust)', () => {
 			const calleeMarkId = calleeMark.id;
 			assert.ok(
 				suggested.some(
-					(s) => s.mark.markId === calleeMarkId && s.direction === 'uses',
+					(s) => s.mark.id === calleeMarkId && s.direction === 'uses',
 				),
 				'should suggest my_impl_callee as uses',
 			);
@@ -151,7 +151,7 @@ suite('link (Rust)', () => {
 			const callerMarkId = callerMark.id;
 			assert.ok(
 				suggested.some(
-					(s) => s.mark.markId === callerMarkId && s.direction === 'usedBy',
+					(s) => s.mark.id === callerMarkId && s.direction === 'usedBy',
 				),
 				'should suggest my_impl_caller as usedBy',
 			);
