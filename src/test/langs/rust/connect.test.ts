@@ -2,8 +2,8 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import {
 	getOutgoingAndIncomingCalls,
-	getLinkSuggestions,
-} from '../../../utils/link';
+	getConnectSuggestions,
+} from '../../../utils/connect';
 import { Selection } from '../../../utils/selection';
 import { Mark } from '../../../utils/mark';
 import {
@@ -12,7 +12,7 @@ import {
 	waitForCallHierarchy,
 } from '../../helpers';
 
-suite('link (Rust)', () => {
+suite('connect (Rust)', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
@@ -77,7 +77,7 @@ suite('link (Rust)', () => {
 		});
 	});
 
-	suite('getLinkSuggestions', () => {
+	suite('getConnectSuggestions', () => {
 		async function saveMarkAtPosition(
 			doc: vscode.TextDocument,
 			position: vscode.Position,
@@ -112,7 +112,7 @@ suite('link (Rust)', () => {
 				workspaceUri,
 			);
 			const marks = await Mark.getAll();
-			const suggestions = getLinkSuggestions(marks, outgoing, incoming);
+			const suggestions = getConnectSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 
 			const calleeMarkId = calleeMark.id;
@@ -145,7 +145,7 @@ suite('link (Rust)', () => {
 				workspaceUri,
 			);
 			const marks = await Mark.getAll();
-			const suggestions = getLinkSuggestions(marks, outgoing, incoming);
+			const suggestions = getConnectSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 
 			const callerMarkId = callerMark.id;

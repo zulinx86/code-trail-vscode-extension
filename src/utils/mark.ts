@@ -236,7 +236,7 @@ ${this.code}
 		return fileUri;
 	}
 
-	async addLink(field: 'uses' | 'usedBy', markId: string) {
+	async connect(field: 'uses' | 'usedBy', markId: string) {
 		if (!this[field]) {
 			this[field] = [];
 		}

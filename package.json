@@ -26,8 +26,8 @@
 				"title": "Code Trail: Mark Code"
 			},
 			{
-				"command": "codeTrail.linkMark",
-				"title": "Code Trail: Link Mark"
+				"command": "codeTrail.connectMark",
+				"title": "Code Trail: Connect Mark"
 			},
 			{
 				"command": "codeTrail.showGraph",
@@ -101,7 +101,12 @@
 				"when": "editorTextFocus"
 			},
 			{
-				"command": "codeTrail.linkMark",
+				"command": "codeTrail.connectMark",
+				"key": "ctrl+shift+c",
+				"when": "editorTextFocus"
+			},
+			{
+				"command": "codeTrail.connectMark",
 				"key": "ctrl+shift+l",
 				"when": "editorTextFocus"
 			},

@@ -3,18 +3,18 @@ import * as vscode from 'vscode';
 import {
 	markToKeys,
 	markToDescription,
-	getLinkSuggestions,
+	getConnectSuggestions,
 	getOutgoingAndIncomingCalls,
 	callItemToNameKey,
 	callItemToRangeKey,
-	linkSuggestionsToQuickPickItems,
-	promptAndLink,
-} from '../../utils/link';
+	connectSuggestionsToQuickPickItems,
+	promptAndConnect,
+} from '../../utils/connect';
 import { Mark } from '../../utils/mark';
 import type { MarkArgs } from '../../utils/mark';
 import { openFixture, waitForSymbols } from '../helpers';
 
-suite('link', () => {
+suite('connect', () => {
 	suite('callItemToNameKey', () => {
 		test('should return file#name for item without detail', () => {
 			const item = new vscode.CallHierarchyItem(
@@ -171,7 +171,7 @@ suite('link', () => {
 		});
 	});
 
-	suite('getLinkSuggestions', () => {
+	suite('getConnectSuggestions', () => {
 		const markA = new Mark({ ...markArgs, symbol: 'foo' });
 		const markB = new Mark({
 			...markArgs,
@@ -189,7 +189,7 @@ suite('link', () => {
 		test('should mark outgoing matches as suggested uses', () => {
 			const outgoing = new Set(['src/a.ts#foo']);
 			const incoming = new Set<string>();
-			const suggestions = getLinkSuggestions([markA], outgoing, incoming);
+			const suggestions = getConnectSuggestions([markA], outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 			assert.strictEqual(suggested.length, 1);
 			assert.strictEqual(suggested[0].direction, 'uses');
@@ -199,7 +199,7 @@ suite('link', () => {
 		test('should mark incoming matches as suggested usedBy', () => {
 			const outgoing = new Set<string>();
 			const incoming = new Set(['src/b.ts#bar']);
-			const suggestions = getLinkSuggestions([markB], outgoing, incoming);
+			const suggestions = getConnectSuggestions([markB], outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 			assert.strictEqual(suggested.length, 1);
 			assert.strictEqual(suggested[0].direction, 'usedBy');
@@ -209,7 +209,7 @@ suite('link', () => {
 		test('should mark non-matching as not suggested', () => {
 			const outgoing = new Set<string>();
 			const incoming = new Set<string>();
-			const suggestions = getLinkSuggestions([markA], outgoing, incoming);
+			const suggestions = getConnectSuggestions([markA], outgoing, incoming);
 			assert.strictEqual(suggestions.length, 1);
 			assert.strictEqual(suggestions[0].suggested, false);
 		});
@@ -217,7 +217,7 @@ suite('link', () => {
 		test('should handle both outgoing and incoming for same mark', () => {
 			const outgoing = new Set(['src/a.ts#foo']);
 			const incoming = new Set(['src/a.ts#foo']);
-			const suggestions = getLinkSuggestions([markA], outgoing, incoming);
+			const suggestions = getConnectSuggestions([markA], outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 			assert.strictEqual(suggested.length, 2);
 			assert.ok(suggested.some((s) => s.direction === 'uses'));
@@ -227,7 +227,7 @@ suite('link', () => {
 		test('should include all marks with correct suggested flags', () => {
 			const outgoing = new Set(['src/a.ts#foo']);
 			const incoming = new Set<string>();
-			const suggestions = getLinkSuggestions(
+			const suggestions = getConnectSuggestions(
 				[markA, markB, markC],
 				outgoing,
 				incoming,
@@ -238,7 +238,7 @@ suite('link', () => {
 		});
 	});
 
-	suite('linkSuggestionsToQuickPickItems', () => {
+	suite('connectSuggestionsToQuickPickItems', () => {
 		const markA = new Mark({ ...markArgs, symbol: 'foo' });
 		const markB = new Mark({
 			...markArgs,
@@ -261,7 +261,7 @@ suite('link', () => {
 					suggested: true,
 				},
 			];
-			const items = linkSuggestionsToQuickPickItems(suggestions);
+			const items = connectSuggestionsToQuickPickItems(suggestions);
 			const nonSeparator = items.filter(
 				(i) => i.kind !== vscode.QuickPickItemKind.Separator,
 			);
@@ -284,7 +284,7 @@ suite('link', () => {
 					suggested: false,
 				},
 			];
-			const items = linkSuggestionsToQuickPickItems(suggestions);
+			const items = connectSuggestionsToQuickPickItems(suggestions);
 			assert.strictEqual(items.length, 3);
 			assert.ok(items[0].detail === 'Suggested');
 			assert.strictEqual(items[1].kind, vscode.QuickPickItemKind.Separator);
@@ -300,7 +300,7 @@ suite('link', () => {
 					suggested: true,
 				},
 			];
-			const items = linkSuggestionsToQuickPickItems(suggestions);
+			const items = connectSuggestionsToQuickPickItems(suggestions);
 			assert.strictEqual(items.length, 1);
 			assert.ok(items[0].detail === 'Suggested');
 		});
@@ -320,18 +320,18 @@ suite('link', () => {
 					suggested: true,
 				},
 			];
-			const items = linkSuggestionsToQuickPickItems(suggestions);
+			const items = connectSuggestionsToQuickPickItems(suggestions);
 			assert.ok(items[0].label.includes('$(arrow-right)'));
 			assert.ok(items[1].label.includes('$(arrow-left)'));
 		});
 
 		test('should return empty array for empty suggestions', () => {
-			const items = linkSuggestionsToQuickPickItems([]);
+			const items = connectSuggestionsToQuickPickItems([]);
 			assert.strictEqual(items.length, 0);
 		});
 	});
 
-	suite('promptAndLink', () => {
+	suite('promptAndConnect', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
@@ -366,7 +366,7 @@ suite('link', () => {
 		setup(cleanup);
 		teardown(cleanup);
 
-		test('should add bidirectional links when a mark is selected', async () => {
+		test('should add bidirectional connections when a mark is selected', async () => {
 			const markA = new Mark(markArgsA);
 			const uriA = await markA.save();
 			const uriB = await new Mark(markArgsB).save();
@@ -386,8 +386,8 @@ suite('link', () => {
 			};
 
 			try {
-				await promptAndLink(markA);
-				// Now the link where mark A uses mark B should be established.
+				await promptAndConnect(markA);
+				// Now the connection where mark A uses mark B should be established.
 
 				const textA = Buffer.from(
 					await vscode.workspace.fs.readFile(uriA),
@@ -416,8 +416,8 @@ suite('link', () => {
 			(vscode.window as any).showQuickPick = async () => undefined; // Do nothing
 
 			try {
-				await promptAndLink(markA);
-				// No links should be established.
+				await promptAndConnect(markA);
+				// No connections should be established.
 
 				const textA = Buffer.from(
 					await vscode.workspace.fs.readFile(uriA),
@@ -441,7 +441,7 @@ suite('link', () => {
 				await vscode.workspace.fs.readFile(uriA),
 			).toString('utf-8');
 
-			await promptAndLink(markA);
+			await promptAndConnect(markA);
 
 			const content = Buffer.from(
 				await vscode.workspace.fs.readFile(uriA),

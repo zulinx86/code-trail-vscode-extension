@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.4]
+
+### Changed
+
+- Rename `Code Trail: Link Mark` command to `Code Trail: Connect Mark` (`Ctrl+Shift+C`). `Ctrl+Shift+L` keybinding is kept as an alias for backward compatibility.
+
 ## [0.1.3]
 
 ### Added

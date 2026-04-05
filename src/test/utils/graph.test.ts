@@ -185,7 +185,7 @@ suite('graph', () => {
 			const markB = new Mark(markArgsB);
 			const uriB = await markB.save();
 
-			await markA.addLink('uses', markB.id);
+			await markA.connect('uses', markB.id);
 
 			const data = await buildGraphData();
 			assert.strictEqual(data.nodes.length, 2);

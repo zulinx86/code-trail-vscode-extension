@@ -98,7 +98,7 @@ export async function getOutgoingAndIncomingCalls(
 	return { outgoing, incoming };
 }
 
-interface LinkSuggestion {
+interface ConnectSuggestion {
 	mark: Mark;
 	direction: 'uses' | 'usedBy';
 	description: string;
@@ -121,12 +121,12 @@ export function markToDescription(mark: Mark): string {
 	return `${mark.symbol} (${mark.file})`;
 }
 
-export function getLinkSuggestions(
+export function getConnectSuggestions(
 	marks: Mark[],
 	outgoing: Set<string>,
 	incoming: Set<string>,
-): LinkSuggestion[] {
-	const suggestions: LinkSuggestion[] = [];
+): ConnectSuggestion[] {
+	const suggestions: ConnectSuggestion[] = [];
 
 	for (const mark of marks) {
 		const keys = markToKeys(mark);
@@ -134,7 +134,7 @@ export function getLinkSuggestions(
 		const isOutgoing = keys.some((k) => outgoing.has(k));
 		const isIncoming = keys.some((k) => incoming.has(k));
 		log(
-			`getLinkSuggestions: checking mark ${mark.id} keys=[${keys.join(', ')}]`,
+			`getConnectSuggestions: checking mark ${mark.id} keys=[${keys.join(', ')}]`,
 		);
 		if (isOutgoing) {
 			suggestions.push({
@@ -164,7 +164,7 @@ export function getLinkSuggestions(
 
 	const suggestedCount = suggestions.filter((s) => s.suggested).length;
 	log(
-		`getLinkSuggestions: ${suggestions.length} items (${suggestedCount} suggested)`,
+		`getConnectSuggestions: ${suggestions.length} items (${suggestedCount} suggested)`,
 	);
 	return suggestions;
 }
@@ -175,8 +175,8 @@ interface QuickPickLinkItem extends vscode.QuickPickItem {
 	suggested: boolean;
 }
 
-export function linkSuggestionsToQuickPickItems(
-	suggestions: LinkSuggestion[],
+export function connectSuggestionsToQuickPickItems(
+	suggestions: ConnectSuggestion[],
 ): QuickPickLinkItem[] {
 	const items: QuickPickLinkItem[] = [];
 	const suggested = suggestions.filter((s) => s.suggested);
@@ -213,17 +213,17 @@ export function linkSuggestionsToQuickPickItems(
 	return items;
 }
 
-export async function promptAndLink(mark: Mark): Promise<void> {
+export async function promptAndConnect(mark: Mark): Promise<void> {
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri;
 	if (!workspaceFolder) {
-		log(`promptAndLink: no workspace folder found`);
+		log(`promptAndConnect: no workspace folder found`);
 		return;
 	}
 
 	const currentMarkId = mark.id;
 	const marks = (await Mark.getAll()).filter((m) => m.id !== currentMarkId);
 	if (marks.length === 0) {
-		log('promptAndLink: no other marks found');
+		log('promptAndConnect: no other marks found');
 		return;
 	}
 
@@ -231,8 +231,8 @@ export async function promptAndLink(mark: Mark): Promise<void> {
 		mark,
 		workspaceFolder,
 	);
-	const linkSuggestions = getLinkSuggestions(marks, outgoing, incoming);
-	const items = linkSuggestionsToQuickPickItems(linkSuggestions);
+	const linkSuggestions = getConnectSuggestions(marks, outgoing, incoming);
+	const items = connectSuggestionsToQuickPickItems(linkSuggestions);
 	if (items.length === 0) {
 		return;
 	}
@@ -274,10 +274,10 @@ export async function promptAndLink(mark: Mark): Promise<void> {
 	}
 	const reverse = direction === 'uses' ? 'usedBy' : 'uses';
 
-	await mark.addLink(direction, selected.mark.id);
-	await selectedMark.addLink(reverse, currentMarkId);
+	await mark.connect(direction, selected.mark.id);
+	await selectedMark.connect(reverse, currentMarkId);
 	log(
-		`promptAndLink: linked ${currentMarkId} ${direction} ${selected.mark.id}`,
+		`promptAndConnect: linked ${currentMarkId} ${direction} ${selected.mark.id}`,
 	);
 
 	vscode.window.showInformationMessage(

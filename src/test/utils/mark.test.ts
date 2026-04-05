@@ -204,7 +204,7 @@ suite('mark', () => {
 		});
 	});
 
-	suite('Mark.addLink', () => {
+	suite('Mark.connect', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, OUTPUT_DIR);
 
@@ -217,9 +217,9 @@ suite('mark', () => {
 		setup(cleanup);
 		teardown(cleanup);
 
-		test('should create field and add link when field does not exist', async () => {
+		test('should create field and add connection when field does not exist', async () => {
 			const mark = new Mark(markArgs);
-			await mark.addLink('uses', 'target.md');
+			await mark.connect('uses', 'target.md');
 			assert.deepStrictEqual(mark.uses, ['code-trail:code-trail/target.md']);
 		});
 
@@ -228,7 +228,7 @@ suite('mark', () => {
 				...markArgs,
 				uses: ['code-trail:code-trail/existing.md'],
 			});
-			await mark.addLink('uses', 'target.md');
+			await mark.connect('uses', 'target.md');
 			assert.deepStrictEqual(mark.uses, [
 				'code-trail:code-trail/existing.md',
 				'code-trail:code-trail/target.md',
@@ -237,7 +237,7 @@ suite('mark', () => {
 
 		test('should work with usedBy field', async () => {
 			const mark = new Mark(markArgs);
-			await mark.addLink('usedBy', 'caller.md');
+			await mark.connect('usedBy', 'caller.md');
 			assert.deepStrictEqual(mark.usedBy, ['code-trail:code-trail/caller.md']);
 		});
 	});

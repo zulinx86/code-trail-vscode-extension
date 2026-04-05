@@ -226,8 +226,8 @@ export async function buildGraphData(): Promise<GraphData> {
 
 	const edges: GraphEdge[] = [];
 	for (const mark of marks) {
-		for (const link of mark.uses ?? []) {
-			const target = link.replace(`code-trail:${OUTPUT_DIR}/`, '');
+		for (const conn of mark.uses ?? []) {
+			const target = conn.replace(`code-trail:${OUTPUT_DIR}/`, '');
 			edges.push({ from: mark.id, to: target });
 		}
 	}

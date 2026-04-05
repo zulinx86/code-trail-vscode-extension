@@ -2,7 +2,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Mark, MarkArgs } from '../../utils/mark';
 
-suite('linkMark command', () => {
+suite('connectMark command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
@@ -42,7 +42,7 @@ suite('linkMark command', () => {
 		});
 		await vscode.window.showTextDocument(doc);
 
-		await vscode.commands.executeCommand('codeTrail.linkMark');
+		await vscode.commands.executeCommand('codeTrail.connectMark');
 
 		// No crash; command exits gracefully (warning shown)
 	});
@@ -53,12 +53,12 @@ suite('linkMark command', () => {
 		const doc = await vscode.workspace.openTextDocument(markUri);
 		await vscode.window.showTextDocument(doc);
 
-		await vscode.commands.executeCommand('codeTrail.linkMark');
+		await vscode.commands.executeCommand('codeTrail.connectMark');
 
 		// No crash; command exits gracefully (warning shown)
 	});
 
-	test('should add bidirectional links when a mark is selected', async () => {
+	test('should add bidirectional connections when a mark is selected', async () => {
 		const markAUri = await new Mark(markArgsA).save();
 		const markBUri = await new Mark(markArgsB).save();
 		const markIdB = markBUri.fsPath.split('/').pop()!;
@@ -80,14 +80,14 @@ suite('linkMark command', () => {
 		};
 
 		try {
-			await vscode.commands.executeCommand('codeTrail.linkMark');
+			await vscode.commands.executeCommand('codeTrail.connectMark');
 
 			const textA = Buffer.from(
 				await vscode.workspace.fs.readFile(markAUri),
 			).toString('utf-8');
 			assert.ok(
 				textA.includes(`uses:\n  - code-trail:code-trail/${markIdB}`),
-				'mark A should have uses link to mark B',
+				'mark A should have uses connection to mark B',
 			);
 
 			const textB = Buffer.from(
@@ -96,14 +96,14 @@ suite('linkMark command', () => {
 			const markIdA = markAUri.fsPath.split('/').pop()!;
 			assert.ok(
 				textB.includes(`usedBy:\n  - code-trail:code-trail/${markIdA}`),
-				'mark B should have usedBy link to mark A',
+				'mark B should have usedBy conection to mark A',
 			);
 		} finally {
 			(vscode.window as any).showQuickPick = origShowQuickPick;
 		}
 	});
 
-	test('should not duplicate links when linking the same marks again', async () => {
+	test('should not duplicate connections when connecting the same marks again', async () => {
 		const markA = new Mark(markArgsA);
 		const markAUri = await markA.save();
 		const markAId = markA.id;
@@ -111,9 +111,9 @@ suite('linkMark command', () => {
 		const markBUri = await markB.save();
 		const markBId = markB.id;
 
-		// Pre-add links
-		await markA.addLink('uses', markB.id);
-		await markB.addLink('usedBy', markA.id);
+		// Pre-add connections
+		await markA.connect('uses', markB.id);
+		await markB.connect('usedBy', markA.id);
 
 		const doc = await vscode.workspace.openTextDocument(markAUri);
 		await vscode.window.showTextDocument(doc);
@@ -132,7 +132,7 @@ suite('linkMark command', () => {
 		};
 
 		try {
-			await vscode.commands.executeCommand('codeTrail.linkMark');
+			await vscode.commands.executeCommand('codeTrail.connectMark');
 
 			const textA = Buffer.from(
 				await vscode.workspace.fs.readFile(markAUri),
@@ -142,7 +142,7 @@ suite('linkMark command', () => {
 			assert.strictEqual(
 				matchesA.length,
 				1,
-				'mark A should not have duplicate link',
+				'mark A should not have duplicate connection',
 			);
 
 			const textB = Buffer.from(
@@ -153,7 +153,7 @@ suite('linkMark command', () => {
 			assert.strictEqual(
 				matchesB.length,
 				1,
-				'mark B should not have duplicate link',
+				'mark B should not have duplicate connection',
 			);
 		} finally {
 			(vscode.window as any).showQuickPick = origShowQuickPick;
@@ -175,7 +175,7 @@ suite('linkMark command', () => {
 		(vscode.window as any).showQuickPick = async () => undefined;
 
 		try {
-			await vscode.commands.executeCommand('codeTrail.linkMark');
+			await vscode.commands.executeCommand('codeTrail.connectMark');
 
 			const contentAfter = Buffer.from(
 				await vscode.workspace.fs.readFile(markAUri),
