@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.6]
+
+### Fixed
+
+- Fix click detection on leftmost graph node
+
 ## [0.1.5]
 
 ### Fixed

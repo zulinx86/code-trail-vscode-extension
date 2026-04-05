@@ -223,6 +223,8 @@
 
 			// Expand bounding boxes after each draw so that vis-network
 			// does not cull nodes that are only partially outside the viewport.
+			// Click handling uses its own hit test (findNodeAt) so the
+			// inflated boxes do not affect click detection.
 			network.on('afterDrawing', function() {
 				var nodes = network.body.nodes;
 				for (var id in nodes) {
@@ -261,10 +263,28 @@
 				});
 			});
 
+			// Find the node at canvas coordinates using actual node dimensions.
+			// vis-network's built-in hit test uses bounding boxes which we
+			// inflate for culling prevention, so we do our own check here.
+			function findNodeAt(canvasX, canvasY) {
+				var bodyNodes = network.body.nodes;
+				for (var id in bodyNodes) {
+					var node = bodyNodes[id];
+					var size = measureNode(id);
+					var hw = size.w / 2, hh = size.h / 2;
+					if (canvasX >= node.x - hw && canvasX <= node.x + hw &&
+						canvasY >= node.y - hh && canvasY <= node.y + hh) {
+						return id;
+					}
+				}
+				return null;
+			}
+
 			// Click to toggle code expansion, Ctrl/Cmd+Click to open mark
 			network.on('click', function(params) {
-				if (params.nodes.length === 0) return;
-				var id = params.nodes[0];
+				var canvasPos = params.pointer.canvas;
+				var id = findNodeAt(canvasPos.x, canvasPos.y);
+				if (!id) return;
 				var e = params.event.srcEvent;
 				if (e.ctrlKey || e.metaKey) {
 					vscodeApi.postMessage({ type: 'openMark', markId: id });
