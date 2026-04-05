@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { addLink } from './frontmatter';
 import { Symbol } from './symbol';
 import { Mark, type MarkInfo, getMarks } from './mark';
-import { OUTPUT_DIR } from '../config';
 import { log } from './logger';
 
 export function callItemToNameKey(
@@ -214,16 +212,14 @@ export function linkSuggestionsToQuickPickItems(
 	return items;
 }
 
-export async function promptAndLink(
-	markUri: vscode.Uri,
-	mark: Mark,
-): Promise<void> {
+export async function promptAndLink(mark: Mark): Promise<void> {
 	const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri;
 	if (!workspaceFolder) {
+		log(`promptAndLink: no workspace folder found`);
 		return;
 	}
 
-	const currentMarkId = path.basename(markUri.fsPath);
+	const currentMarkId = mark.id;
 	const marks = (await getMarks()).filter((m) => m.markId !== currentMarkId);
 	if (marks.length === 0) {
 		log('promptAndLink: no other marks found');
@@ -271,9 +267,14 @@ export async function promptAndLink(
 		direction = dirChoice.value;
 	}
 
+	const selectedMark = await Mark.fromUri(selected.mark.uri);
+	if (!selectedMark) {
+		return;
+	}
 	const reverse = direction === 'uses' ? 'usedBy' : 'uses';
-	await addLink(markUri, direction, `${OUTPUT_DIR}/${selected.mark.markId}`);
-	await addLink(selected.mark.uri, reverse, `${OUTPUT_DIR}/${currentMarkId}`);
+
+	await mark.addLink(direction, selected.mark.markId);
+	await selectedMark.addLink(reverse, currentMarkId);
 	log(
 		`promptAndLink: linked ${currentMarkId} ${direction} ${selected.mark.markId}`,
 	);

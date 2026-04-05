@@ -87,7 +87,7 @@ suite('link (Rust)', () => {
 			const sel = await Selection.fromEditor(editor);
 			assert.ok(sel, 'selection should be created');
 			const mark = Mark.fromSelection(sel, new Date());
-			mark.save();
+			await mark.save();
 			return mark;
 		}
 
@@ -115,7 +115,7 @@ suite('link (Rust)', () => {
 			const suggestions = getLinkSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 
-			const calleeMarkId = calleeMark.toFilename();
+			const calleeMarkId = calleeMark.id;
 			assert.ok(
 				suggested.some(
 					(s) => s.mark.markId === calleeMarkId && s.direction === 'uses',
@@ -148,7 +148,7 @@ suite('link (Rust)', () => {
 			const suggestions = getLinkSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 
-			const callerMarkId = callerMark.toFilename();
+			const callerMarkId = callerMark.id;
 			assert.ok(
 				suggested.some(
 					(s) => s.mark.markId === callerMarkId && s.direction === 'usedBy',

@@ -416,7 +416,7 @@ suite('link', () => {
 			};
 
 			try {
-				await promptAndLink(uriA, markA);
+				await promptAndLink(markA);
 				// Now the link where mark A uses mark B should be established.
 
 				const textA = Buffer.from(
@@ -446,7 +446,7 @@ suite('link', () => {
 			(vscode.window as any).showQuickPick = async () => undefined; // Do nothing
 
 			try {
-				await promptAndLink(uriA, markA);
+				await promptAndLink(markA);
 				// No links should be established.
 
 				const textA = Buffer.from(
@@ -471,7 +471,7 @@ suite('link', () => {
 				await vscode.workspace.fs.readFile(uriA),
 			).toString('utf-8');
 
-			await promptAndLink(uriA, markA);
+			await promptAndLink(markA);
 
 			const content = Buffer.from(
 				await vscode.workspace.fs.readFile(uriA),

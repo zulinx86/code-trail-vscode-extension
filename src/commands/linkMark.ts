@@ -23,5 +23,5 @@ export async function linkMark(): Promise<void> {
 	const currentMarkId = path.basename(editor.document.uri.fsPath);
 	log(`linkMark: current mark ${currentMarkId}`);
 
-	await promptAndLink(editor.document.uri, mark);
+	await promptAndLink(mark);
 }

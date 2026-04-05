@@ -44,11 +44,8 @@ export async function markCode(): Promise<void> {
 	);
 
 	try {
-		const fileUri = await Mark.fromSelection(
-			selection,
-			new Date(),
-			githubUrl,
-		).save();
+		const mark = Mark.fromSelection(selection, new Date(), githubUrl);
+		const fileUri = await mark.save();
 		log(`markCode: saved ${fileUri.fsPath}`);
 		const doc = await vscode.workspace.openTextDocument(fileUri);
 		await vscode.window.showTextDocument(doc);
@@ -57,11 +54,7 @@ export async function markCode(): Promise<void> {
 		);
 
 		// Suggest links based on call hierarchy
-		const content = (await vscode.workspace.fs.readFile(fileUri)).toString();
-		const mark = Mark.fromText(content);
-		if (mark) {
-			await promptAndLink(fileUri, mark);
-		}
+		await promptAndLink(mark);
 	} catch (e) {
 		log(`markCode: failed to save mark: ${e}`);
 		vscode.window.showErrorMessage(`Failed to save mark: ${e}`);

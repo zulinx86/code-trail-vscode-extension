@@ -117,6 +117,13 @@ export class Mark {
 		});
 	}
 
+	static async fromUri(uri: vscode.Uri): Promise<Mark | undefined> {
+		const text = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString(
+			'utf-8',
+		);
+		return Mark.fromText(text);
+	}
+
 	static fromSelection(
 		sel: Selection,
 		exportedAt: Date = new Date(),
@@ -153,6 +160,18 @@ export class Mark {
 		if (this.github) {
 			frontmatter.push(`github: ${this.github}`);
 		}
+		if (this.uses && this.uses.length > 0) {
+			frontmatter.push('uses:');
+			for (const item of this.uses) {
+				frontmatter.push(`  - ${item}`);
+			}
+		}
+		if (this.usedBy && this.usedBy.length > 0) {
+			frontmatter.push('usedBy:');
+			for (const item of this.usedBy) {
+				frontmatter.push(`  - ${item}`);
+			}
+		}
 		frontmatter.push('---');
 
 		const ext = this.file.split('.').pop() ?? '';
@@ -171,7 +190,7 @@ ${this.code}
 `;
 	}
 
-	toFilename(): string {
+	get id(): string {
 		const exportedAt = this.exportedAt.replace(
 			/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).*$/,
 			'$1$2$3-$4$5$6',
@@ -194,7 +213,7 @@ ${this.code}
 		}
 
 		const content = this.toString();
-		const filename = this.toFilename();
+		const filename = this.id;
 
 		const dirUri = vscode.Uri.joinPath(workspaceFolder.uri, OUTPUT_DIR);
 		await vscode.workspace.fs.createDirectory(dirUri);
@@ -202,6 +221,19 @@ ${this.code}
 		const fileUri = vscode.Uri.joinPath(dirUri, filename);
 		await vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, 'utf-8'));
 		return fileUri;
+	}
+
+	async addLink(field: 'uses' | 'usedBy', markId: string) {
+		if (!this[field]) {
+			this[field] = [];
+		}
+
+		const item = `code-trail:${OUTPUT_DIR}/${markId}`;
+		if (!this[field]?.includes(item)) {
+			this[field]?.push(item);
+		}
+
+		await this.save();
 	}
 }
 

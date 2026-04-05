@@ -1,8 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Mark, MarkArgs } from '../../utils/mark';
-import { addLink } from '../../utils/frontmatter';
-import { Selection } from '../../utils/selection';
 
 suite('linkMark command', () => {
 	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
@@ -106,14 +104,16 @@ suite('linkMark command', () => {
 	});
 
 	test('should not duplicate links when linking the same marks again', async () => {
-		const markAUri = await new Mark(markArgsA).save();
-		const markBUri = await new Mark(markArgsB).save();
-		const markIdA = markAUri.fsPath.split('/').pop()!;
-		const markIdB = markBUri.fsPath.split('/').pop()!;
+		const markA = new Mark(markArgsA);
+		const markAUri = await markA.save();
+		const markAId = markA.id;
+		const markB = new Mark(markArgsB);
+		const markBUri = await markB.save();
+		const markBId = markB.id;
 
 		// Pre-add links
-		await addLink(markAUri, 'uses', `code-trail/${markIdB}`);
-		await addLink(markBUri, 'usedBy', `code-trail/${markIdA}`);
+		await markA.addLink('uses', markB.id);
+		await markB.addLink('usedBy', markA.id);
 
 		const doc = await vscode.workspace.openTextDocument(markAUri);
 		await vscode.window.showTextDocument(doc);
@@ -126,7 +126,7 @@ suite('linkMark command', () => {
 		) => {
 			callCount++;
 			if (callCount === 1) {
-				return items.find((i: any) => i.description === markIdB);
+				return items.find((i: any) => i.description === markBId);
 			}
 			return items.find((i: any) => i.value === 'uses');
 		};
@@ -138,7 +138,7 @@ suite('linkMark command', () => {
 				await vscode.workspace.fs.readFile(markAUri),
 			).toString('utf-8');
 			const matchesA =
-				textA.match(new RegExp(`code-trail:code-trail/${markIdB}`, 'g')) ?? [];
+				textA.match(new RegExp(`code-trail:code-trail/${markBId}`, 'g')) ?? [];
 			assert.strictEqual(
 				matchesA.length,
 				1,
@@ -149,7 +149,7 @@ suite('linkMark command', () => {
 				await vscode.workspace.fs.readFile(markBUri),
 			).toString('utf-8');
 			const matchesB =
-				textB.match(new RegExp(`code-trail:code-trail/${markIdA}`, 'g')) ?? [];
+				textB.match(new RegExp(`code-trail:code-trail/${markAId}`, 'g')) ?? [];
 			assert.strictEqual(
 				matchesB.length,
 				1,

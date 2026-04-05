@@ -2,7 +2,6 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { nodeLabel, nodeColor, buildGraphData } from '../../utils/graph';
 import { Mark, MarkArgs } from '../../utils/mark';
-import { addLink } from '../../utils/frontmatter';
 
 suite('graph', () => {
 	const markArgs: MarkArgs = {
@@ -181,10 +180,12 @@ suite('graph', () => {
 		teardown(cleanup);
 
 		test('should return nodes and edges from marks', async () => {
-			const uriA = await new Mark(markArgsA).save();
-			const uriB = await new Mark(markArgsB).save();
+			const markA = new Mark(markArgsA);
+			const uriA = await markA.save();
+			const markB = new Mark(markArgsB);
+			const uriB = await markB.save();
 
-			await addLink(uriA, 'uses', `code-trail/${uriB.fsPath.split('/').pop()}`);
+			await markA.addLink('uses', markB.id);
 
 			const data = await buildGraphData();
 			assert.strictEqual(data.nodes.length, 2);

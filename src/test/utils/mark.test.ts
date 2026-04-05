@@ -2,6 +2,7 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { Mark, type MarkArgs, findExistingMark } from '../../utils/mark';
 import { Selection } from '../../utils/selection';
+import { OUTPUT_DIR } from '../../config';
 
 suite('mark', () => {
 	suite('Mark.fromText', () => {
@@ -146,14 +147,14 @@ suite('mark', () => {
 		});
 	});
 
-	suite('Mark.toFilename', () => {
+	suite('Mark.id', () => {
 		test('should format as YYYYMMDD-HHmmss_filename.md', () => {
-			const result = new Mark(markArgs).toFilename();
+			const result = new Mark(markArgs).id;
 			assert.strictEqual(result, '20260322-123456_example-ts.md');
 		});
 
 		test('should include symbol name when provided', () => {
-			const result = new Mark({ symbol: 'Foo.bar', ...markArgs }).toFilename();
+			const result = new Mark({ symbol: 'Foo.bar', ...markArgs }).id;
 			assert.strictEqual(result, '20260322-123456_example-ts_Foo-bar.md');
 		});
 
@@ -161,14 +162,14 @@ suite('mark', () => {
 			const result = new Mark({
 				symbol: 'impl Test',
 				...markArgs,
-			}).toFilename();
+			}).id;
 			assert.strictEqual(result, '20260322-123456_example-ts_impl-Test.md');
 		});
 	});
 
 	suite('Mark.save', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
-		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
+		const outputDir = vscode.Uri.joinPath(workspaceUri, OUTPUT_DIR);
 
 		async function cleanup() {
 			try {
@@ -200,6 +201,44 @@ suite('mark', () => {
 
 			const stat = await vscode.workspace.fs.stat(outputDir);
 			assert.strictEqual(stat.type, vscode.FileType.Directory);
+		});
+	});
+
+	suite('Mark.addLink', () => {
+		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+		const outputDir = vscode.Uri.joinPath(workspaceUri, OUTPUT_DIR);
+
+		async function cleanup() {
+			try {
+				await vscode.workspace.fs.delete(outputDir, { recursive: true });
+			} catch {}
+		}
+
+		setup(cleanup);
+		teardown(cleanup);
+
+		test('should create field and add link when field does not exist', async () => {
+			const mark = new Mark(markArgs);
+			await mark.addLink('uses', 'target.md');
+			assert.deepStrictEqual(mark.uses, ['code-trail:code-trail/target.md']);
+		});
+
+		test('should append to existing field', async () => {
+			const mark = new Mark({
+				...markArgs,
+				uses: ['code-trail:code-trail/existing.md'],
+			});
+			await mark.addLink('uses', 'target.md');
+			assert.deepStrictEqual(mark.uses, [
+				'code-trail:code-trail/existing.md',
+				'code-trail:code-trail/target.md',
+			]);
+		});
+
+		test('should work with usedBy field', async () => {
+			const mark = new Mark(markArgs);
+			await mark.addLink('usedBy', 'caller.md');
+			assert.deepStrictEqual(mark.usedBy, ['code-trail:code-trail/caller.md']);
 		});
 	});
 
