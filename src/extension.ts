@@ -6,10 +6,17 @@ import { connectMark } from './commands/connectMark';
 import { CodeTrailLinkProvider } from './providers/linkProvider';
 import { showGraph } from './commands/showGraph';
 import { initLogger, log } from './utils/logger';
+import { workspaceFolder } from './config';
 
 export function activate(context: vscode.ExtensionContext) {
 	const channel = initLogger();
 	context.subscriptions.push(channel);
+
+	if (!workspaceFolder) {
+		log('Code Trail: no workspace folder found, skipping activation');
+		return;
+	}
+
 	log('Code Trail activated');
 	context.subscriptions.push(
 		vscode.commands.registerCommand('codeTrail.markCode', markCode),

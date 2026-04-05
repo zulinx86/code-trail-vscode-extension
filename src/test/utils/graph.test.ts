@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import { workspaceFolder } from '../../config';
 import { nodeLabel, nodeColor, buildGraphData } from '../../utils/graph';
 import { Mark, MarkArgs } from '../../utils/mark';
 
@@ -145,7 +146,7 @@ suite('graph', () => {
 	});
 
 	suite('buildGraphData', () => {
-		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+		const workspaceUri = workspaceFolder!.uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
 		const markArgsA: MarkArgs = {

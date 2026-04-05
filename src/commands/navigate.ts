@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { log } from '../utils/logger';
+import { workspaceFolder } from '../config';
 
 interface LinkArgs {
 	file: string;
@@ -9,14 +10,7 @@ interface LinkArgs {
 
 export async function navigate(args: LinkArgs): Promise<void> {
 	log(`navigate: ${JSON.stringify(args)}`);
-	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-	if (!workspaceFolder) {
-		log('navigate: no workspace folder found');
-		vscode.window.showWarningMessage('No workspace folder found.');
-		return;
-	}
-
-	const fileUri = vscode.Uri.joinPath(workspaceFolder.uri, args.file);
+	const fileUri = vscode.Uri.joinPath(workspaceFolder!.uri, args.file);
 	const doc = await vscode.workspace.openTextDocument(fileUri);
 	const editor = await vscode.window.showTextDocument(doc);
 

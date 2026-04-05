@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { Symbol } from './symbol';
 import { Mark } from './mark';
-import { OUTPUT_DIR } from '../config';
+import { OUTPUT_DIR, workspaceFolder } from '../config';
 import { log } from './logger';
 
 export function callItemToNameKey(
@@ -214,12 +214,6 @@ export function connectSuggestionsToQuickPickItems(
 }
 
 export async function promptAndConnect(mark: Mark): Promise<void> {
-	const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri;
-	if (!workspaceFolder) {
-		log(`promptAndConnect: no workspace folder found`);
-		return;
-	}
-
 	const currentMarkId = mark.id;
 	const marks = (await Mark.getAll()).filter((m) => m.id !== currentMarkId);
 	if (marks.length === 0) {
@@ -229,7 +223,7 @@ export async function promptAndConnect(mark: Mark): Promise<void> {
 
 	const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
 		mark,
-		workspaceFolder,
+		workspaceFolder!.uri,
 	);
 	const linkSuggestions = getConnectSuggestions(marks, outgoing, incoming);
 	const items = connectSuggestionsToQuickPickItems(linkSuggestions);

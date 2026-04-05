@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import { workspaceFolder } from '../../config';
 import { Mark, type MarkArgs } from '../../utils/mark';
 import { Selection } from '../../utils/selection';
 import { OUTPUT_DIR } from '../../config';
@@ -168,7 +169,7 @@ suite('mark', () => {
 	});
 
 	suite('Mark.save', () => {
-		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+		const workspaceUri = workspaceFolder!.uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, OUTPUT_DIR);
 
 		async function cleanup() {
@@ -205,7 +206,7 @@ suite('mark', () => {
 	});
 
 	suite('Mark.connect', () => {
-		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+		const workspaceUri = workspaceFolder!.uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, OUTPUT_DIR);
 
 		async function cleanup() {
@@ -243,7 +244,7 @@ suite('mark', () => {
 	});
 
 	suite('Mark.find', () => {
-		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+		const workspaceUri = workspaceFolder!.uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
 		async function cleanup() {

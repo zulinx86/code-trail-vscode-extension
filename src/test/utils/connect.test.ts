@@ -1,5 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import { workspaceFolder } from '../../config';
 import {
 	markToKeys,
 	markToDescription,
@@ -59,7 +60,7 @@ suite('connect', () => {
 	});
 
 	suite('getOutgoingAndIncomingCalls', () => {
-		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+		const workspaceUri = workspaceFolder!.uri;
 
 		test('should detect outgoing calls', async function () {
 			this.timeout(10000);
@@ -332,7 +333,7 @@ suite('connect', () => {
 	});
 
 	suite('promptAndConnect', () => {
-		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+		const workspaceUri = workspaceFolder!.uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
 		const markArgsA: MarkArgs = {

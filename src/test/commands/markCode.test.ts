@@ -1,9 +1,10 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import { workspaceFolder } from '../../config';
 import { openFixture, waitForSymbols } from '../helpers';
 
 suite('markCode command', () => {
-	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+	const workspaceUri = workspaceFolder!.uri;
 	const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
 	async function cleanup() {

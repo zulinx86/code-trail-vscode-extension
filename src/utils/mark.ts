@@ -1,6 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { OUTPUT_DIR } from '../config';
+import { OUTPUT_DIR, workspaceFolder } from '../config';
 import { Selection } from './selection';
 import { log } from './logger';
 
@@ -129,11 +129,9 @@ export class Mark {
 	}
 
 	static async fromFile(relativePath: string): Promise<Mark | undefined> {
-		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-		if (!workspaceFolder) {
-			return undefined;
-		}
-		return Mark.fromUri(vscode.Uri.joinPath(workspaceFolder.uri, relativePath));
+		return Mark.fromUri(
+			vscode.Uri.joinPath(workspaceFolder!.uri, relativePath),
+		);
 	}
 
 	static fromSelection(
@@ -219,15 +217,10 @@ ${this.code}
 	}
 
 	async save() {
-		const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-		if (!workspaceFolder) {
-			throw new Error('No workspace folder found.');
-		}
-
 		const content = this.toString();
 		const filename = this.id;
 
-		const dirUri = vscode.Uri.joinPath(workspaceFolder.uri, OUTPUT_DIR);
+		const dirUri = vscode.Uri.joinPath(workspaceFolder!.uri, OUTPUT_DIR);
 		await vscode.workspace.fs.createDirectory(dirUri);
 
 		const fileUri = vscode.Uri.joinPath(dirUri, filename);

@@ -1,10 +1,11 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import { workspaceFolder } from '../../config';
 import { Symbol } from '../../utils/symbol';
 import { openFixture, waitForSymbols } from '../helpers';
 
 suite('symbol', () => {
-	const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
+	const workspaceUri = workspaceFolder!.uri;
 
 	suite('findSymbolAtPosition', () => {
 		test('should return innermost function at position', async () => {

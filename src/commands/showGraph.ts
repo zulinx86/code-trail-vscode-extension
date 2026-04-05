@@ -15,7 +15,7 @@ import {
 	EXT_LABEL_FONT_SIZE,
 	EXT_LABEL_GAP,
 } from '../utils/graph';
-import { OUTPUT_DIR } from '../config';
+import { OUTPUT_DIR, workspaceFolder } from '../config';
 import { log } from '../utils/logger';
 
 export async function showGraph(
@@ -45,10 +45,7 @@ export async function showGraph(
 
 	// Watch for mark file changes to auto-refresh the graph.
 	const watcher = vscode.workspace.createFileSystemWatcher(
-		new vscode.RelativePattern(
-			vscode.workspace.workspaceFolders![0],
-			`${OUTPUT_DIR}/*.md`,
-		),
+		new vscode.RelativePattern(workspaceFolder!, `${OUTPUT_DIR}/*.md`),
 	);
 	watcher.onDidCreate(() => refreshGraph(panel));
 	watcher.onDidChange(() => refreshGraph(panel));

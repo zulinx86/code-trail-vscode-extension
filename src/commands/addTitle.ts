@@ -1,14 +1,9 @@
 import * as vscode from 'vscode';
-import { OUTPUT_DIR } from '../config';
+import { OUTPUT_DIR, workspaceFolder } from '../config';
 import { log } from '../utils/logger';
 
 export async function addTitle(): Promise<void> {
 	log('addTitle: started');
-	const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-	if (!workspaceFolder) {
-		vscode.window.showWarningMessage('No workspace folder found.');
-		return;
-	}
 
 	const title = await vscode.window.showInputBox({
 		prompt: 'Enter title text',
@@ -41,7 +36,7 @@ export async function addTitle(): Promise<void> {
 		'',
 	].join('\n');
 
-	const dirUri = vscode.Uri.joinPath(workspaceFolder.uri, OUTPUT_DIR);
+	const dirUri = vscode.Uri.joinPath(workspaceFolder!.uri, OUTPUT_DIR);
 	await vscode.workspace.fs.createDirectory(dirUri);
 	const fileUri = vscode.Uri.joinPath(dirUri, fileName);
 	await vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, 'utf-8'));
