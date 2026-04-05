@@ -1,280 +1,286 @@
-import * as vscode from 'vscode';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { Symbol } from './symbol';
 import { Mark } from './mark';
-import { OUTPUT_DIR, workspaceFolder } from '../config';
 import { log } from './logger';
+import { workspaceFolder } from '../config';
 
-export function callItemToNameKey(
-	wsRoot: string,
-	item: vscode.CallHierarchyItem,
-): string {
-	const file = path.relative(wsRoot, item.uri.fsPath);
-	return `${file}#${item.name}`;
-}
+export class Connect {
+	constructor(readonly mark: Mark) {}
 
-export function callItemToRangeKey(
-	wsRoot: string,
-	item: vscode.CallHierarchyItem,
-): string {
-	const file = path.relative(wsRoot, item.uri.fsPath);
-	const start = item.range.start.line + 1;
-	const end = item.range.end.line + 1;
-	return `${file}#L${start}-L${end}`;
-}
+	async prompt(): Promise<void> {
+		const currentMarkId = this.mark.id;
+		const marks = (await Mark.getAll()).filter((m) => m.id !== currentMarkId);
+		if (marks.length === 0) {
+			log(`Connect.prompt: no other marks found`);
+			return;
+		}
 
-export async function getOutgoingAndIncomingCalls(
-	mark: Mark,
-	workspaceFolder: vscode.Uri,
-): Promise<{
-	outgoing: Set<string>;
-	incoming: Set<string>;
-}> {
-	const outgoing = new Set<string>();
-	const incoming = new Set<string>();
+		const { incoming, outgoing } = await this.getCalls();
+		const suggestions = this.getSuggestions(marks, incoming, outgoing);
+		const quickPickItems = new ConnectSuggestions(
+			suggestions,
+		).toQuickPickItems();
+		const selected = await vscode.window.showQuickPick(quickPickItems, {
+			placeHolder: 'Select a mark to connect',
+		});
+		if (!selected) {
+			log(`Connect.prompt: no mark selected`);
+			return;
+		}
 
-	const fileUri = vscode.Uri.joinPath(workspaceFolder, mark.file);
-
-	try {
-		let pos: vscode.Position;
-		if (mark.symbol) {
-			const symbol = await Symbol.findSymbolByName(fileUri, mark.symbol);
-			if (!symbol) {
-				log(`getOutgoingAndIncomingCalls: symbol '${mark.symbol}' not found`);
-				return { outgoing, incoming };
+		let direction = selected.direction;
+		// For non-suggested item, ask direction
+		if (!selected.suggested) {
+			const dirChoice = await vscode.window.showQuickPick(
+				[
+					{
+						label: '$(arrow-right)',
+						description: 'uses',
+						value: 'uses' as const,
+					},
+					{
+						label: '$(arrow-left)',
+						description: 'usedBy',
+						value: 'usedBy' as const,
+					},
+				],
+				{ placeHolder: 'Select connection direction' },
+			);
+			if (!dirChoice) {
+				log(`Connect.prompt: no direction selected`);
+				return;
 			}
-			pos = symbol.selectionRange.start;
-		} else {
-			pos = new vscode.Position(mark.startLine - 1, 0);
+			direction = dirChoice.value;
 		}
-
+		const reverse = direction === 'uses' ? 'usedBy' : 'uses';
+		await this.mark.connect(direction, selected.mark.id);
+		await selected.mark.connect(reverse, this.mark.id);
 		log(
-			`getOutgoingAndIncomingCalls: preparing call hierarchy for ${fileUri.fsPath} L${pos.line + 1}`,
+			`Connect.prompt: linked ${currentMarkId} ${direction} ${selected.mark.id}`,
 		);
-		const items = await vscode.commands.executeCommand<
-			vscode.CallHierarchyItem[]
-		>('vscode.prepareCallHierarchy', fileUri, pos);
-		if (!items?.length) {
-			log('getOutgoingAndIncomingCalls: prepareCallHierarchy returned empty');
-			return { outgoing, incoming };
-		}
-		const item = items[0];
-		log(
-			`getOutgoingAndIncomingCalls: prepared call hierarchy for name=${item.name} detail=${item.detail} kind=${item.kind}`,
+		vscode.window.showInformationMessage(
+			`Linked: ${currentMarkId} ${direction === 'uses' ? '→' : '←'} ${selected.mark.id}`,
 		);
-
-		const wsRoot = workspaceFolder.fsPath;
-
-		log(`getOutgoingAndIncomingCalls: getting outgoing calls`);
-		const outgoingCalls = await vscode.commands.executeCommand<
-			vscode.CallHierarchyOutgoingCall[]
-		>('vscode.provideOutgoingCalls', item);
-		for (const call of outgoingCalls ?? []) {
-			log(
-				`getOutgoingAndIncomingCalls: outgoing item (name=${call.to.name} detail=${call.to.detail} kind=${call.to.kind})`,
-			);
-			outgoing.add(callItemToNameKey(wsRoot, call.to));
-			outgoing.add(callItemToRangeKey(wsRoot, call.to));
-		}
-
-		log(`getOutgoingAndIncomingCalls: getting incoming calls`);
-		const incomingCalls = await vscode.commands.executeCommand<
-			vscode.CallHierarchyIncomingCall[]
-		>('vscode.provideIncomingCalls', item);
-		for (const call of incomingCalls ?? []) {
-			log(
-				`getOutgoingAndIncomingCalls: incoming item (name=${call.from.name} detail=${call.from.detail} kind=${call.from.kind})`,
-			);
-			incoming.add(callItemToNameKey(wsRoot, call.from));
-			incoming.add(callItemToRangeKey(wsRoot, call.from));
-		}
-		log(
-			`getOutgoingAndIncomingCalls: ${outgoing.size} outgoing items, ${incoming.size} incoming items`,
-		);
-	} catch (e) {
-		log(`getOutgoingAndIncomingCalls: error ${e}`);
 	}
 
-	return { outgoing, incoming };
+	async getCalls(): Promise<{
+		outgoing: Set<string>;
+		incoming: Set<string>;
+	}> {
+		const outgoing = new Set<string>();
+		const incoming = new Set<string>();
+
+		const uri = vscode.Uri.joinPath(workspaceFolder!.uri, this.mark.file);
+
+		try {
+			// Get position
+			let pos: vscode.Position;
+			if (this.mark.symbol) {
+				const symbol = await Symbol.findSymbolByName(uri, this.mark.symbol);
+				if (!symbol) {
+					log(`Connect.getCalls: symbol '${this.mark.symbol}' not found`);
+					return { outgoing, incoming };
+				}
+				pos = symbol.selectionRange.start;
+			} else {
+				pos = new vscode.Position(this.mark.startLine - 1, 0);
+			}
+
+			// Prepare call hierarchy for provideIncomingCalls and provideOutgoingCalls
+			log(
+				`Connect.getCalls: preparing call hierarchy for ${uri.fsPath}#L${pos.line + 1}`,
+			);
+			const items = await vscode.commands.executeCommand<
+				vscode.CallHierarchyItem[]
+			>('vscode.prepareCallHierarchy', uri, pos);
+			if (!items?.length) {
+				log('Connect.getCalls: prepareCallHierarchy returned empty');
+				return { outgoing, incoming };
+			}
+			const query = items[0];
+			log(`Connect.getCalls: prepared call hierarchy for ${query.name}`);
+
+			// Get outgoing calls
+			const outgoingCalls = await vscode.commands.executeCommand<
+				vscode.CallHierarchyOutgoingCall[]
+			>('vscode.provideOutgoingCalls', query);
+			for (const call of outgoingCalls ?? []) {
+				log(`Connect.getCalls: outgoing item ${call.to.name}`);
+				const item = new CallItem(call.to);
+				outgoing.add(item.nameKey);
+				outgoing.add(item.rangeKey);
+			}
+
+			// Get incoming calls
+			log(`Connect.getCalls: getting incoming calls`);
+			const incomingCalls = await vscode.commands.executeCommand<
+				vscode.CallHierarchyIncomingCall[]
+			>('vscode.provideIncomingCalls', query);
+			for (const call of incomingCalls ?? []) {
+				log(`Connect.getCalls: incoming item ${call.from.name}`);
+				const item = new CallItem(call.from);
+				incoming.add(item.nameKey);
+				incoming.add(item.rangeKey);
+			}
+		} catch (e) {
+			log(`Connect.getCalls: error ${e}`);
+		}
+
+		log(
+			`Connect.getCalls: ${incoming.size} incoming items, ${outgoing.size} outgoing items`,
+		);
+		return { outgoing, incoming };
+	}
+
+	getSuggestions(
+		marks: Mark[],
+		outgoing: Set<string>,
+		incoming: Set<string>,
+	): ConnectSuggestion[] {
+		const suggestions: ConnectSuggestion[] = [];
+
+		for (const mark of marks) {
+			const helper = new MarkHelper(mark);
+			const keys = helper.keys;
+			const desc = helper.description;
+			log(`getSuggestions: checking mark ${mark.id} keys=[${keys.join(', ')}]`);
+
+			const isIncoming = keys.some((k) => incoming.has(k));
+			if (isIncoming) {
+				suggestions.push(
+					new ConnectSuggestion({
+						mark,
+						direction: 'usedBy',
+						description: desc,
+						suggested: true,
+					}),
+				);
+			}
+
+			const isOutgoing = keys.some((k) => outgoing.has(k));
+			if (isOutgoing) {
+				suggestions.push(
+					new ConnectSuggestion({
+						mark,
+						direction: 'uses',
+						description: desc,
+						suggested: true,
+					}),
+				);
+			}
+
+			if (!isIncoming && !isOutgoing) {
+				suggestions.push(
+					new ConnectSuggestion({
+						mark,
+						direction: 'uses',
+						description: desc,
+						suggested: false,
+					}),
+				);
+			}
+		}
+
+		const suggestedCount = suggestions.filter((s) => s.suggested).length;
+		log(
+			`Connect.getSuggestions: ${suggestions.length} items (${suggestedCount} suggested)`,
+		);
+		return suggestions;
+	}
 }
 
-interface ConnectSuggestion {
+export class CallItem {
+	constructor(readonly item: vscode.CallHierarchyItem) {}
+
+	get nameKey() {
+		const file = path.relative(
+			workspaceFolder!.uri.fsPath,
+			this.item.uri.fsPath,
+		);
+		return `${file}#${this.item.name}`;
+	}
+
+	get rangeKey() {
+		const file = path.relative(
+			workspaceFolder!.uri.fsPath,
+			this.item.uri.fsPath,
+		);
+		const start = this.item.range.start.line + 1;
+		const end = this.item.range.end.line + 1;
+		return `${file}#L${start}-L${end}`;
+	}
+}
+
+export class MarkHelper {
+	constructor(private mark: Mark) {}
+
+	get keys(): string[] {
+		const rangeKey = `${this.mark.file}#L${this.mark.startLine}-L${this.mark.endLine}`;
+		if (!this.mark.symbol) {
+			return [rangeKey];
+		}
+		const lastSegment = this.mark.symbol.split('.').pop()!;
+		return [`${this.mark.file}#${lastSegment}`, rangeKey];
+	}
+
+	get description(): string {
+		if (!this.mark.symbol) {
+			return `${this.mark.file}#L${this.mark.startLine}-L${this.mark.endLine}`;
+		}
+		return `${this.mark.symbol} (${this.mark.file})`;
+	}
+}
+
+interface ConnectSuggestionArgs {
 	mark: Mark;
 	direction: 'uses' | 'usedBy';
 	description: string;
 	suggested: boolean;
 }
 
-export function markToKeys(mark: Mark): string[] {
-	const rangeKey = `${mark.file}#L${mark.startLine}-L${mark.endLine}`;
-	if (!mark.symbol) {
-		return [rangeKey];
+export class ConnectSuggestion {
+	readonly mark: Mark;
+	readonly direction: 'uses' | 'usedBy';
+	readonly description: string;
+	readonly suggested: boolean;
+
+	constructor(args: ConnectSuggestionArgs) {
+		this.mark = args.mark;
+		this.direction = args.direction;
+		this.description = args.description;
+		this.suggested = args.suggested;
 	}
-	const lastSegment = mark.symbol.split('.').pop()!;
-	return [`${mark.file}#${lastSegment}`, rangeKey];
+
+	toQuickPickItem(): ConnectQuickPickItem {
+		return {
+			label: `${this.direction === 'uses' ? '$(arrow-right)' : '$(arrow-left)'} ${this.description}`,
+			description: this.mark.id,
+			detail: this.suggested ? 'Suggested' : undefined,
+			mark: this.mark,
+			direction: this.direction,
+			suggested: this.suggested,
+		};
+	}
 }
 
-export function markToDescription(mark: Mark): string {
-	if (!mark.symbol) {
-		return `${mark.file}#L${mark.startLine}-L${mark.endLine}`;
+export class ConnectSuggestions {
+	constructor(private suggestions: ConnectSuggestion[]) {}
+
+	toQuickPickItems(): ConnectQuickPickItem[] {
+		return [
+			...this.suggestions
+				.filter((s) => s.suggested)
+				.map((s) => s.toQuickPickItem()),
+			...this.suggestions
+				.filter((s) => !s.suggested)
+				.map((s) => s.toQuickPickItem()),
+		];
 	}
-	return `${mark.symbol} (${mark.file})`;
 }
 
-export function getConnectSuggestions(
-	marks: Mark[],
-	outgoing: Set<string>,
-	incoming: Set<string>,
-): ConnectSuggestion[] {
-	const suggestions: ConnectSuggestion[] = [];
-
-	for (const mark of marks) {
-		const keys = markToKeys(mark);
-		const desc = markToDescription(mark);
-		const isOutgoing = keys.some((k) => outgoing.has(k));
-		const isIncoming = keys.some((k) => incoming.has(k));
-		log(
-			`getConnectSuggestions: checking mark ${mark.id} keys=[${keys.join(', ')}]`,
-		);
-		if (isOutgoing) {
-			suggestions.push({
-				mark,
-				direction: 'uses',
-				description: desc,
-				suggested: true,
-			});
-		}
-		if (isIncoming) {
-			suggestions.push({
-				mark,
-				direction: 'usedBy',
-				description: desc,
-				suggested: true,
-			});
-		}
-		if (!isOutgoing && !isIncoming) {
-			suggestions.push({
-				mark,
-				direction: 'uses',
-				description: desc,
-				suggested: false,
-			});
-		}
-	}
-
-	const suggestedCount = suggestions.filter((s) => s.suggested).length;
-	log(
-		`getConnectSuggestions: ${suggestions.length} items (${suggestedCount} suggested)`,
-	);
-	return suggestions;
-}
-
-interface QuickPickLinkItem extends vscode.QuickPickItem {
-	mark: Mark;
-	direction: 'uses' | 'usedBy';
-	suggested: boolean;
-}
-
-export function connectSuggestionsToQuickPickItems(
-	suggestions: ConnectSuggestion[],
-): QuickPickLinkItem[] {
-	const items: QuickPickLinkItem[] = [];
-	const suggested = suggestions.filter((s) => s.suggested);
-	const others = suggestions.filter((s) => !s.suggested);
-
-	for (const s of suggested) {
-		items.push({
-			label: `${s.direction === 'uses' ? '$(arrow-right)' : '$(arrow-left)'} ${s.description}`,
-			description: s.mark.id,
-			detail: 'Suggested',
-			mark: s.mark,
-			direction: s.direction,
-			suggested: true,
-		});
-	}
-
-	if (others.length > 0) {
-		items.push({
-			label: '',
-			kind: vscode.QuickPickItemKind.Separator,
-		} as any);
-
-		for (const o of others) {
-			items.push({
-				label: o.description,
-				description: o.mark.id,
-				mark: o.mark,
-				direction: o.direction,
-				suggested: false,
-			});
-		}
-	}
-
-	return items;
-}
-
-export async function promptAndConnect(mark: Mark): Promise<void> {
-	const currentMarkId = mark.id;
-	const marks = (await Mark.getAll()).filter((m) => m.id !== currentMarkId);
-	if (marks.length === 0) {
-		log('promptAndConnect: no other marks found');
-		return;
-	}
-
-	const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
-		mark,
-		workspaceFolder!.uri,
-	);
-	const linkSuggestions = getConnectSuggestions(marks, outgoing, incoming);
-	const items = connectSuggestionsToQuickPickItems(linkSuggestions);
-	if (items.length === 0) {
-		return;
-	}
-
-	const selected = await vscode.window.showQuickPick(items, {
-		placeHolder: 'Select a mark to link',
-	});
-	if (!selected) {
-		return;
-	}
-
-	// For non-suggested items, ask direction
-	let direction = selected.direction;
-	if (!selected.suggested) {
-		const dirChoice = await vscode.window.showQuickPick(
-			[
-				{
-					label: '$(arrow-right)',
-					description: 'uses',
-					value: 'uses' as const,
-				},
-				{
-					label: '$(arrow-left)',
-					description: 'usedBy',
-					value: 'usedBy' as const,
-				},
-			],
-			{ placeHolder: 'Select link direction' },
-		);
-		if (!dirChoice) {
-			return;
-		}
-		direction = dirChoice.value;
-	}
-
-	const selectedMark = await Mark.fromFile(`${OUTPUT_DIR}/${selected.mark.id}`);
-	if (!selectedMark) {
-		return;
-	}
-	const reverse = direction === 'uses' ? 'usedBy' : 'uses';
-
-	await mark.connect(direction, selected.mark.id);
-	await selectedMark.connect(reverse, currentMarkId);
-	log(
-		`promptAndConnect: linked ${currentMarkId} ${direction} ${selected.mark.id}`,
-	);
-
-	vscode.window.showInformationMessage(
-		`Linked: ${currentMarkId} ${direction === 'uses' ? '→' : '←'} ${selected.mark.id}`,
-	);
+interface ConnectQuickPickItem extends vscode.QuickPickItem {
+	readonly mark: Mark;
+	readonly direction: 'uses' | 'usedBy';
+	readonly suggested: boolean;
 }

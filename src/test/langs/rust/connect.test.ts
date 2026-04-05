@@ -1,10 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { workspaceFolder } from '../../../config';
-import {
-	getOutgoingAndIncomingCalls,
-	getConnectSuggestions,
-} from '../../../utils/connect';
+import { Connect } from '../../../utils/connect';
 import { Selection } from '../../../utils/selection';
 import { Mark } from '../../../utils/mark';
 import {
@@ -26,7 +23,7 @@ suite('connect (Rust)', () => {
 	setup(cleanup);
 	teardown(cleanup);
 
-	suite('getOutgoingAndIncomingCalls', () => {
+	suite('Connect.getCalls', () => {
 		test('should detect outgoing calls', async function () {
 			const doc = await openFixture('rust/src/lib.rs');
 			await waitForSymbols(doc.uri);
@@ -41,10 +38,7 @@ suite('connect (Rust)', () => {
 				link: 'code-trail:src/test/fixtures/rust/src/lib.rs#L34-L36',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { outgoing } = await getOutgoingAndIncomingCalls(
-				mark,
-				workspaceUri,
-			);
+			const { outgoing } = await new Connect(mark).getCalls();
 			const keys = [...outgoing];
 			assert.ok(
 				keys.some((k) => k.includes('my_callee')),
@@ -66,10 +60,7 @@ suite('connect (Rust)', () => {
 				link: 'code-trail:src/test/fixtures/rust/src/lib.rs#L30-L32',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { incoming } = await getOutgoingAndIncomingCalls(
-				mark,
-				workspaceUri,
-			);
+			const { incoming } = await new Connect(mark).getCalls();
 			const keys = [...incoming];
 			assert.ok(
 				keys.some((k) => k.includes('my_caller')),
@@ -78,7 +69,7 @@ suite('connect (Rust)', () => {
 		});
 	});
 
-	suite('getConnectSuggestions', () => {
+	suite('Connect.getSuggestions', () => {
 		async function saveMarkAtPosition(
 			doc: vscode.TextDocument,
 			position: vscode.Position,
@@ -108,12 +99,10 @@ suite('connect (Rust)', () => {
 				new vscode.Position(41, 8),
 			);
 
-			const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
-				callerMark,
-				workspaceUri,
-			);
+			const connect = new Connect(callerMark);
+			const { outgoing, incoming } = await connect.getCalls();
 			const marks = await Mark.getAll();
-			const suggestions = getConnectSuggestions(marks, outgoing, incoming);
+			const suggestions = connect.getSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 
 			const calleeMarkId = calleeMark.id;
@@ -141,12 +130,10 @@ suite('connect (Rust)', () => {
 				new vscode.Position(45, 8),
 			);
 
-			const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
-				calleeMark,
-				workspaceUri,
-			);
+			const connect = new Connect(calleeMark);
+			const { outgoing, incoming } = await connect.getCalls();
 			const marks = await Mark.getAll();
-			const suggestions = getConnectSuggestions(marks, outgoing, incoming);
+			const suggestions = connect.getSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 
 			const callerMarkId = callerMark.id;

@@ -2,31 +2,29 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { workspaceFolder } from '../../config';
 import {
-	markToKeys,
-	markToDescription,
-	getConnectSuggestions,
-	getOutgoingAndIncomingCalls,
-	callItemToNameKey,
-	callItemToRangeKey,
-	connectSuggestionsToQuickPickItems,
-	promptAndConnect,
+	CallItem,
+	MarkHelper,
+	Connect,
+	ConnectSuggestion,
+	ConnectSuggestions,
 } from '../../utils/connect';
 import { Mark } from '../../utils/mark';
 import type { MarkArgs } from '../../utils/mark';
 import { openFixture, waitForSymbols } from '../helpers';
+import path from 'path';
 
 suite('connect', () => {
-	suite('callItemToNameKey', () => {
+	suite('CallItem.nameKey', () => {
 		test('should return file#name for item without detail', () => {
 			const item = new vscode.CallHierarchyItem(
 				vscode.SymbolKind.Function,
 				'foo',
 				'',
-				vscode.Uri.file('/workspace/src/a.ts'),
+				vscode.Uri.file(path.join(workspaceFolder!.uri.fsPath, 'src/a.ts')),
 				new vscode.Range(0, 0, 2, 0),
 				new vscode.Range(0, 0, 0, 3),
 			);
-			assert.strictEqual(callItemToNameKey('/workspace', item), 'src/a.ts#foo');
+			assert.strictEqual(new CallItem(item).nameKey, 'src/a.ts#foo');
 		});
 
 		test('should return file#name for item with detail', () => {
@@ -34,36 +32,77 @@ suite('connect', () => {
 				vscode.SymbolKind.Method,
 				'bar',
 				'Foo',
-				vscode.Uri.file('/workspace/src/a.ts'),
+				vscode.Uri.file(path.join(workspaceFolder!.uri.fsPath, 'src/a.ts')),
 				new vscode.Range(1, 0, 3, 0),
 				new vscode.Range(1, 0, 1, 3),
 			);
-			assert.strictEqual(callItemToNameKey('/workspace', item), 'src/a.ts#bar');
+			assert.strictEqual(new CallItem(item).nameKey, 'src/a.ts#bar');
 		});
 	});
 
-	suite('callItemToRangeKey', () => {
+	suite('CallItem.rangeKey', () => {
 		test('should return file#L<start>-L<end> with 1-based line numbers', () => {
 			const item = new vscode.CallHierarchyItem(
 				vscode.SymbolKind.Function,
 				'foo',
 				'',
-				vscode.Uri.file('/workspace/src/a.ts'),
+				vscode.Uri.file(path.join(workspaceFolder!.uri.fsPath, 'src/a.ts')),
 				new vscode.Range(4, 0, 9, 0),
 				new vscode.Range(4, 0, 4, 3),
 			);
-			assert.strictEqual(
-				callItemToRangeKey('/workspace', item),
-				'src/a.ts#L5-L10',
-			);
+			assert.strictEqual(new CallItem(item).rangeKey, 'src/a.ts#L5-L10');
 		});
 	});
 
-	suite('getOutgoingAndIncomingCalls', () => {
-		const workspaceUri = workspaceFolder!.uri;
+	const markArgs: MarkArgs = {
+		file: 'src/a.ts',
+		startLine: 10,
+		endLine: 24,
+		link: 'code-trail:src/a.ts#L10-L24',
+		exportedAt: new Date('2026-03-22T12:34:56Z'),
+	};
 
+	suite('MarkHelper.keys', () => {
+		test('should include name key and range key when symbol exists', () => {
+			const mark = new Mark({ ...markArgs, symbol: 'foo' });
+			const keys = new MarkHelper(mark).keys;
+			assert.ok(keys.includes('src/a.ts#foo'));
+			assert.ok(keys.includes('src/a.ts#L10-L24'));
+			assert.strictEqual(keys.length, 2);
+		});
+
+		test('should use last segment for qualified symbol', () => {
+			const mark = new Mark({ ...markArgs, symbol: 'impl Foo.bar' });
+			const keys = new MarkHelper(mark).keys;
+			assert.ok(keys.includes('src/a.ts#bar'));
+			assert.ok(keys.includes('src/a.ts#L10-L24'));
+			assert.strictEqual(keys.length, 2);
+		});
+
+		test('should return only range key when no symbol', () => {
+			const mark = new Mark(markArgs);
+			const keys = new MarkHelper(mark).keys;
+			assert.deepStrictEqual(keys, ['src/a.ts#L10-L24']);
+		});
+	});
+
+	suite('MarkHelper.description', () => {
+		test('should show symbol (file) when symbol exists', () => {
+			const mark = new Mark({ ...markArgs, symbol: 'handleRequest' });
+			assert.strictEqual(
+				new MarkHelper(mark).description,
+				'handleRequest (src/a.ts)',
+			);
+		});
+
+		test('should show file#range when no symbol', () => {
+			const mark = new Mark(markArgs);
+			assert.strictEqual(new MarkHelper(mark).description, 'src/a.ts#L10-L24');
+		});
+	});
+
+	suite('Connect.getCalls', () => {
 		test('should detect outgoing calls', async function () {
-			this.timeout(10000);
 			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
 			const mark = new Mark({
@@ -74,14 +113,11 @@ suite('connect', () => {
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L30-L32',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { outgoing } = await getOutgoingAndIncomingCalls(
-				mark,
-				workspaceUri,
-			);
+			const { outgoing } = await new Connect(mark).getCalls();
 			const keys = [...outgoing];
 			assert.ok(
 				keys.some((k) => k.includes('myCallee')),
-				`outgoing should contain myCallee, got: ${keys.join(', ')}`,
+				`outgoing should contain myCallee, got: [${keys.join(', ')}]`,
 			);
 		});
 
@@ -97,14 +133,11 @@ suite('connect', () => {
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L26-L28',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { incoming } = await getOutgoingAndIncomingCalls(
-				mark,
-				workspaceUri,
-			);
+			const { incoming } = await new Connect(mark).getCalls();
 			const keys = [...incoming];
 			assert.ok(
 				keys.some((k) => k.includes('myCaller')),
-				`incoming should contain myCaller, got: ${keys.join(', ')}`,
+				`incoming should contain myCaller, got: [${keys.join(', ')}]`,
 			);
 		});
 
@@ -119,60 +152,13 @@ suite('connect', () => {
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L1-L1',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { outgoing, incoming } = await getOutgoingAndIncomingCalls(
-				mark,
-				workspaceUri,
-			);
+			const { outgoing, incoming } = await new Connect(mark).getCalls();
 			assert.strictEqual(outgoing.size, 0);
 			assert.strictEqual(incoming.size, 0);
 		});
 	});
 
-	const markArgs: MarkArgs = {
-		file: 'src/a.ts',
-		startLine: 10,
-		endLine: 24,
-		link: 'code-trail:src/a.ts#L10-L24',
-		exportedAt: new Date('2026-03-22T12:34:56Z'),
-	};
-
-	suite('markToKeys', () => {
-		test('should include name key and range key when symbol exists', () => {
-			const mark = new Mark({ ...markArgs, symbol: 'foo' });
-			const keys = markToKeys(mark);
-			assert.ok(keys.includes('src/a.ts#foo'));
-			assert.ok(keys.includes('src/a.ts#L10-L24'));
-			assert.strictEqual(keys.length, 2);
-		});
-
-		test('should use last segment for qualified symbol', () => {
-			const mark = new Mark({ ...markArgs, symbol: 'impl Foo.bar' });
-			const keys = markToKeys(mark);
-			assert.ok(keys.includes('src/a.ts#bar'));
-			assert.ok(keys.includes('src/a.ts#L10-L24'));
-			assert.strictEqual(keys.length, 2);
-		});
-
-		test('should return only range key when no symbol', () => {
-			const mark = new Mark(markArgs);
-			const keys = markToKeys(mark);
-			assert.deepStrictEqual(keys, ['src/a.ts#L10-L24']);
-		});
-	});
-
-	suite('markToDescription', () => {
-		test('should show symbol (file) when symbol exists', () => {
-			const mark = new Mark({ ...markArgs, symbol: 'handleRequest' });
-			assert.strictEqual(markToDescription(mark), 'handleRequest (src/a.ts)');
-		});
-
-		test('should show file#range when no symbol', () => {
-			const mark = new Mark(markArgs);
-			assert.strictEqual(markToDescription(mark), 'src/a.ts#L10-L24');
-		});
-	});
-
-	suite('getConnectSuggestions', () => {
+	suite('Connect.getSuggestions', () => {
 		const markA = new Mark({ ...markArgs, symbol: 'foo' });
 		const markB = new Mark({
 			...markArgs,
@@ -188,19 +174,21 @@ suite('connect', () => {
 		});
 
 		test('should mark outgoing matches as suggested uses', () => {
-			const outgoing = new Set(['src/a.ts#foo']);
+			const connect = new Connect(markA);
+			const outgoing = new Set(['src/b.ts#bar']);
 			const incoming = new Set<string>();
-			const suggestions = getConnectSuggestions([markA], outgoing, incoming);
+			const suggestions = connect.getSuggestions([markB], outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 			assert.strictEqual(suggested.length, 1);
 			assert.strictEqual(suggested[0].direction, 'uses');
-			assert.strictEqual(suggested[0].mark.id, markA.id);
+			assert.strictEqual(suggested[0].mark.id, markB.id);
 		});
 
 		test('should mark incoming matches as suggested usedBy', () => {
+			const connect = new Connect(markA);
 			const outgoing = new Set<string>();
 			const incoming = new Set(['src/b.ts#bar']);
-			const suggestions = getConnectSuggestions([markB], outgoing, incoming);
+			const suggestions = connect.getSuggestions([markB], outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 			assert.strictEqual(suggested.length, 1);
 			assert.strictEqual(suggested[0].direction, 'usedBy');
@@ -208,17 +196,19 @@ suite('connect', () => {
 		});
 
 		test('should mark non-matching as not suggested', () => {
+			const connect = new Connect(markA);
 			const outgoing = new Set<string>();
 			const incoming = new Set<string>();
-			const suggestions = getConnectSuggestions([markA], outgoing, incoming);
+			const suggestions = connect.getSuggestions([markB], outgoing, incoming);
 			assert.strictEqual(suggestions.length, 1);
 			assert.strictEqual(suggestions[0].suggested, false);
 		});
 
 		test('should handle both outgoing and incoming for same mark', () => {
-			const outgoing = new Set(['src/a.ts#foo']);
-			const incoming = new Set(['src/a.ts#foo']);
-			const suggestions = getConnectSuggestions([markA], outgoing, incoming);
+			const connect = new Connect(markA);
+			const outgoing = new Set(['src/b.ts#bar']);
+			const incoming = new Set(['src/b.ts#bar']);
+			const suggestions = connect.getSuggestions([markB], outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 			assert.strictEqual(suggested.length, 2);
 			assert.ok(suggested.some((s) => s.direction === 'uses'));
@@ -226,20 +216,21 @@ suite('connect', () => {
 		});
 
 		test('should include all marks with correct suggested flags', () => {
-			const outgoing = new Set(['src/a.ts#foo']);
+			const connect = new Connect(markA);
+			const outgoing = new Set(['src/b.ts#bar']);
 			const incoming = new Set<string>();
-			const suggestions = getConnectSuggestions(
-				[markA, markB, markC],
+			const suggestions = connect.getSuggestions(
+				[markB, markC],
 				outgoing,
 				incoming,
 			);
-			assert.strictEqual(suggestions.length, 3);
+			assert.strictEqual(suggestions.length, 2);
 			assert.strictEqual(suggestions.filter((s) => s.suggested).length, 1);
-			assert.strictEqual(suggestions.filter((s) => !s.suggested).length, 2);
+			assert.strictEqual(suggestions.filter((s) => !s.suggested).length, 1);
 		});
 	});
 
-	suite('connectSuggestionsToQuickPickItems', () => {
+	suite('ConnectionSuggestions.toQuickPickItems', () => {
 		const markA = new Mark({ ...markArgs, symbol: 'foo' });
 		const markB = new Mark({
 			...markArgs,
@@ -248,91 +239,52 @@ suite('connect', () => {
 		});
 
 		test('should place suggested items before others', () => {
-			const suggestions = [
-				{
+			const suggestions = new ConnectSuggestions([
+				new ConnectSuggestion({
 					mark: markB,
 					direction: 'uses' as const,
 					description: 'src/b.ts#L10-L24',
 					suggested: false,
-				},
-				{
+				}),
+				new ConnectSuggestion({
 					mark: markA,
 					direction: 'uses' as const,
 					description: 'foo (src/example.ts)',
 					suggested: true,
-				},
-			];
-			const items = connectSuggestionsToQuickPickItems(suggestions);
-			const nonSeparator = items.filter(
-				(i) => i.kind !== vscode.QuickPickItemKind.Separator,
-			);
-			assert.ok(nonSeparator[0].detail === 'Suggested');
-			assert.ok(!nonSeparator[1].detail);
-		});
-
-		test('should add separator between suggested and others', () => {
-			const suggestions = [
-				{
-					mark: markA,
-					direction: 'uses' as const,
-					description: 'foo (src/example.ts)',
-					suggested: true,
-				},
-				{
-					mark: markB,
-					direction: 'uses' as const,
-					description: 'src/b.ts#L10-L24',
-					suggested: false,
-				},
-			];
-			const items = connectSuggestionsToQuickPickItems(suggestions);
-			assert.strictEqual(items.length, 3);
+				}),
+			]);
+			const items = suggestions.toQuickPickItems();
 			assert.ok(items[0].detail === 'Suggested');
-			assert.strictEqual(items[1].kind, vscode.QuickPickItemKind.Separator);
-			assert.ok(!items[2].detail);
-		});
-
-		test('should not add separator when no others', () => {
-			const suggestions = [
-				{
-					mark: markA,
-					direction: 'uses' as const,
-					description: 'foo (src/example.ts)',
-					suggested: true,
-				},
-			];
-			const items = connectSuggestionsToQuickPickItems(suggestions);
-			assert.strictEqual(items.length, 1);
-			assert.ok(items[0].detail === 'Suggested');
+			assert.ok(!items[1].detail);
 		});
 
 		test('should use arrow-right for uses and arrow-left for usedBy', () => {
-			const suggestions = [
-				{
+			const suggestions = new ConnectSuggestions([
+				new ConnectSuggestion({
 					mark: markA,
 					direction: 'uses' as const,
 					description: 'foo',
 					suggested: true,
-				},
-				{
+				}),
+				new ConnectSuggestion({
 					mark: markB,
 					direction: 'usedBy' as const,
 					description: 'bar',
 					suggested: true,
-				},
-			];
-			const items = connectSuggestionsToQuickPickItems(suggestions);
+				}),
+			]);
+			const items = suggestions.toQuickPickItems();
 			assert.ok(items[0].label.includes('$(arrow-right)'));
 			assert.ok(items[1].label.includes('$(arrow-left)'));
 		});
 
 		test('should return empty array for empty suggestions', () => {
-			const items = connectSuggestionsToQuickPickItems([]);
+			const items = new ConnectSuggestions([]).toQuickPickItems();
 			assert.strictEqual(items.length, 0);
 		});
 	});
 
-	suite('promptAndConnect', () => {
+	suite('Connect.prompt', () => {
 		const workspaceUri = workspaceFolder!.uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
@@ -387,7 +339,7 @@ suite('connect', () => {
 			};
 
 			try {
-				await promptAndConnect(markA);
+				await new Connect(markA).prompt();
 				// Now the connection where mark A uses mark B should be established.
 
 				const textA = Buffer.from(
@@ -417,7 +369,7 @@ suite('connect', () => {
 			(vscode.window as any).showQuickPick = async () => undefined; // Do nothing
 
 			try {
-				await promptAndConnect(markA);
+				await new Connect(markA).prompt();
 				// No connections should be established.
 
 				const textA = Buffer.from(
@@ -442,7 +394,7 @@ suite('connect', () => {
 				await vscode.workspace.fs.readFile(uriA),
 			).toString('utf-8');
 
-			await promptAndConnect(markA);
+			await new Connect(markA).prompt();
 
 			const content = Buffer.from(
 				await vscode.workspace.fs.readFile(uriA),

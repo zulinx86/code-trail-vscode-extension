@@ -3,7 +3,7 @@ import { Selection } from '../utils/selection';
 import { Mark } from '../utils/mark';
 import { getGitHubUrl } from '../utils/git';
 import { log } from '../utils/logger';
-import { promptAndConnect } from '../utils/connect';
+import { Connect } from '../utils/connect';
 
 export async function markCode(): Promise<void> {
 	log('markCode: started');
@@ -52,7 +52,7 @@ export async function markCode(): Promise<void> {
 		);
 
 		// Suggest connections based on call hierarchy
-		await promptAndConnect(mark);
+		await new Connect(mark).prompt();
 	} catch (e) {
 		log(`markCode: failed to save mark: ${e}`);
 		vscode.window.showErrorMessage(`Failed to save mark: ${e}`);

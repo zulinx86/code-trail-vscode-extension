@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { log } from '../utils/logger';
-import { promptAndConnect } from '../utils/connect';
+import { Connect } from '../utils/connect';
 import { Mark } from '../utils/mark';
 
 export async function connectMark(): Promise<void> {
@@ -20,5 +20,5 @@ export async function connectMark(): Promise<void> {
 	}
 	log(`connectMark: current mark ${mark.id}`);
 
-	await promptAndConnect(mark);
+	await new Connect(mark).prompt();
 }
