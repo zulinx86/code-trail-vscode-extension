@@ -1,22 +1,10 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import {
-	buildGraphData,
-	type GraphData,
-	PADDING,
-	CODE_FONT_SIZE,
-	CODE_LINE_HEIGHT,
-	CODE_CHAR_WIDTH,
-	HEADER_FONT_SIZE,
-	HEADER_HEIGHT,
-	HEADER_CHAR_WIDTH,
-	TITLE_FONT_SIZE,
-	EXT_LABEL_FONT_SIZE,
-	EXT_LABEL_GAP,
-} from '../utils/graph';
+import { Graph } from '../utils/graph';
 import { OUTPUT_DIR, workspaceFolder } from '../config';
 import { log } from '../utils/logger';
+import { Mark } from '../utils/mark';
 
 export async function showGraph(
 	context: vscode.ExtensionContext,
@@ -40,8 +28,9 @@ export async function showGraph(
 		),
 	);
 
-	const graphData = await buildGraphData();
-	panel.webview.html = getWebviewContent(context, visNetworkUri, graphData);
+	const marks = await Mark.getAll();
+	const graph = Graph.fromMarks(marks);
+	panel.webview.html = getWebviewContent(context, visNetworkUri, graph);
 
 	// Watch for mark file changes to auto-refresh the graph.
 	const watcher = vscode.workspace.createFileSystemWatcher(
@@ -70,29 +59,9 @@ function escapeForScriptTag(s: string): string {
 function getWebviewContent(
 	context: vscode.ExtensionContext,
 	visNetworkUri: vscode.Uri,
-	graphData: GraphData,
+	graph: Graph,
 ): string {
-	// * 1st JSON.stringify: convert graphData object to a JSON string.
-	// * escapeForScript: replace '<' and '>' with Unicode for safe HTML
-	//   embedding.
-	// * 2nd JSON.stringify: wrap the result as a quoted JS string literal
-	//   so it can be embedded in the HTML template as JSON.parse(...).
-	const jsonData = JSON.stringify(
-		escapeForScriptTag(JSON.stringify(graphData)),
-	);
-
-	const constants: Record<string, number> = {
-		PADDING,
-		CODE_FONT_SIZE,
-		CODE_LINE_HEIGHT,
-		CODE_CHAR_WIDTH,
-		HEADER_FONT_SIZE,
-		HEADER_HEIGHT,
-		HEADER_CHAR_WIDTH,
-		TITLE_FONT_SIZE,
-		EXT_LABEL_FONT_SIZE,
-		EXT_LABEL_GAP,
-	};
+	const jsonData = graph.stringify();
 
 	const templatePath = path.join(
 		context.extensionPath,
@@ -105,21 +74,27 @@ function getWebviewContent(
 	let result = template
 		.replace('{{VIS_NETWORK_URI}}', String(visNetworkUri))
 		.replace('{{GRAPH_DATA}}', jsonData);
-	for (const [key, value] of Object.entries(constants)) {
+
+	const fonts = graph.config.fonts.dump();
+	for (const [key, value] of Object.entries(fonts)) {
 		result = result.replace(`{{${key}}}`, String(value));
 	}
+
 	return result;
 }
 
 // Hook function to refresh the graph
 export async function refreshGraph(panel: vscode.WebviewPanel): Promise<void> {
-	const data = await buildGraphData();
-	log(`refreshGraph: ${data.nodes.length} nodes, ${data.edges.length} edges`);
+	const marks = await Mark.getAll();
+	const graph = Graph.fromMarks(marks);
+	log(
+		`refreshGraph: ${graph.data.nodes.length} nodes, ${graph.data.edges.length} edges`,
+	);
 	try {
 		panel.webview.postMessage({
 			type: 'updateGraph',
-			nodes: data.nodes,
-			edges: data.edges,
+			nodes: graph.data.nodes,
+			edges: graph.data.edges,
 		});
 	} catch {
 		// Panel may have been disposed

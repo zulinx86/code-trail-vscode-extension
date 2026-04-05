@@ -4,42 +4,9 @@ import { Mark } from './mark';
 import { log } from './logger';
 import dagre from '@dagrejs/dagre';
 
-// Node layout constants (shared with src/webview/graph.html via template
-// placeholders). Font sizes are loaded from config; others are derived.
-export const PADDING = 12;
-export let CODE_FONT_SIZE = 18;
-export let CODE_LINE_HEIGHT = CODE_FONT_SIZE * 1.4;
-export let CODE_CHAR_WIDTH = CODE_FONT_SIZE * 0.62;
-export let HEADER_FONT_SIZE = 20;
-export let HEADER_HEIGHT = HEADER_FONT_SIZE + PADDING * 2;
-export let HEADER_CHAR_WIDTH = HEADER_FONT_SIZE * 0.62;
-export let TITLE_FONT_SIZE = 32;
-export let TITLE_CHAR_WIDTH = TITLE_FONT_SIZE * 0.62;
-export let TITLE_HEIGHT = TITLE_FONT_SIZE + PADDING * 2;
-export let EXT_LABEL_FONT_SIZE = 14;
-export const EXT_LABEL_GAP = 4;
-
-function applyFontSizes(
-	fontSize: number,
-	headerFontSize: number,
-	labelFontSize: number,
-	titleFontSize: number,
-): void {
-	CODE_FONT_SIZE = fontSize;
-	CODE_LINE_HEIGHT = CODE_FONT_SIZE * 1.4;
-	CODE_CHAR_WIDTH = CODE_FONT_SIZE * 0.62;
-	HEADER_FONT_SIZE = headerFontSize;
-	HEADER_HEIGHT = HEADER_FONT_SIZE + PADDING * 2;
-	HEADER_CHAR_WIDTH = HEADER_FONT_SIZE * 0.62;
-	TITLE_FONT_SIZE = titleFontSize;
-	TITLE_CHAR_WIDTH = TITLE_FONT_SIZE * 0.62;
-	TITLE_HEIGHT = TITLE_FONT_SIZE + PADDING * 2;
-	EXT_LABEL_FONT_SIZE = labelFontSize;
-}
-
 export interface GraphNode {
 	id: string;
-	label: string;
+	header: string;
 	code: string;
 	file: string;
 	color: string;
@@ -60,180 +27,268 @@ export interface GraphData {
 	edges: GraphEdge[];
 }
 
-const DEFAULT_SYMBOL_COLORS: Record<string, string> = {
-	function: '#A8D8F0',
-	method: '#A8D8F0',
-	constructor: '#A8D8F0',
-	class: '#A8E6CF',
-	struct: '#A8E6CF',
-	enum: '#FFE0B2',
-	interface: '#D7BDE2',
-	const: '#F5B7B1',
-	title: '#FFFFFF',
-};
-const DEFAULT_COLOR = '#DBDBDB';
+export class GraphFonts {
+	readonly PADDING: number = 12;
+	readonly CODE_FONT_SIZE: number;
+	readonly CODE_LINE_HEIGHT: number;
+	readonly CODE_CHAR_WIDTH: number;
+	readonly HEADER_FONT_SIZE: number;
+	readonly HEADER_HEIGHT: number;
+	readonly HEADER_CHAR_WIDTH: number;
+	readonly TITLE_FONT_SIZE: number;
+	readonly TITLE_HEIGHT: number;
+	readonly TITLE_CHAR_WIDTH: number;
+	readonly LABEL_FONT_SIZE: number;
+	readonly LABEL_GAP: number = 4;
 
-interface GraphConfig {
-	tabSize: number;
-	tabSizeByLanguage: Record<string, number>;
-	symbolColors: Record<string, string>;
+	constructor(
+		codeFrontSize: number,
+		headerFontSize: number,
+		titleFontSize: number,
+		labelFontSize: number,
+	) {
+		this.CODE_FONT_SIZE = codeFrontSize ?? 18;
+		this.CODE_LINE_HEIGHT = this.CODE_FONT_SIZE * 1.4;
+		this.CODE_CHAR_WIDTH = this.CODE_FONT_SIZE * 0.62;
+		this.HEADER_FONT_SIZE = headerFontSize ?? 20;
+		this.HEADER_HEIGHT = this.HEADER_FONT_SIZE + this.PADDING * 2;
+		this.HEADER_CHAR_WIDTH = this.HEADER_FONT_SIZE * 0.62;
+		this.TITLE_FONT_SIZE = titleFontSize ?? 32;
+		this.TITLE_HEIGHT = this.TITLE_FONT_SIZE + this.PADDING * 2;
+		this.TITLE_CHAR_WIDTH = this.TITLE_FONT_SIZE * 0.62;
+		this.LABEL_FONT_SIZE = labelFontSize ?? 14;
+	}
+
+	dump(): Record<string, number> {
+		return {
+			PADDING: this.PADDING,
+			CODE_FONT_SIZE: this.CODE_FONT_SIZE,
+			CODE_LINE_HEIGHT: this.CODE_LINE_HEIGHT,
+			CODE_CHAR_WIDTH: this.CODE_CHAR_WIDTH,
+			HEADER_FONT_SIZE: this.HEADER_FONT_SIZE,
+			HEADER_HEIGHT: this.HEADER_HEIGHT,
+			HEADER_CHAR_WIDTH: this.HEADER_CHAR_WIDTH,
+			TITLE_FONT_SIZE: this.TITLE_FONT_SIZE,
+			TITLE_HEIGHT: this.TITLE_HEIGHT,
+			TITLE_CHAR_WIDTH: this.TITLE_CHAR_WIDTH,
+			LABEL_FONT_SIZE: this.LABEL_FONT_SIZE,
+			LABEL_GAP: this.LABEL_GAP,
+		};
+	}
 }
 
-function loadConfig(): GraphConfig {
-	const config = vscode.workspace.getConfiguration('codeTrail');
-	applyFontSizes(
-		config.get<number>('graphCodeFontSize', 18),
-		config.get<number>('graphHeaderFontSize', 20),
-		config.get<number>('graphLabelFontSize', 14),
-		config.get<number>('graphTitleFontSize', 32),
-	);
-	return {
-		tabSize: config.get<number>('tabSize', 4),
-		tabSizeByLanguage: config.get<Record<string, number>>(
+export class GraphConfig {
+	constructor(
+		readonly fonts: GraphFonts,
+		readonly tabSize: number,
+		readonly tabSizeByLanguage: Record<string, number>,
+		readonly symbolColors: Record<string, string>,
+	) {}
+
+	static fromConfig() {
+		const config = vscode.workspace.getConfiguration('codeTrail');
+		const fonts = new GraphFonts(
+			config.get<number>('graphCodeFontSize', 18),
+			config.get<number>('graphHeaderFontSize', 20),
+			config.get<number>('graphTitleFontSize', 32),
+			config.get<number>('graphLabelFontSize', 14),
+		);
+		const tabSize = config.get<number>('tabSize', 4);
+		const tabSizeByLanguage = config.get<Record<string, number>>(
 			'tabSizeByLanguage',
 			{},
-		),
-		symbolColors: config.get<Record<string, string>>('symbolColors', {}),
-	};
-}
+		);
+		const symbolColors = config.get<Record<string, string>>('symbolColors', {});
+		return new GraphConfig(fonts, tabSize, tabSizeByLanguage, symbolColors);
+	}
 
-export function nodeLabel(mark: Mark): string {
-	if (mark.symbolKind === 'title') {
-		return mark.symbol ?? '';
+	tabSizeForLanguage(ext: string): number {
+		return Object.hasOwn(this.tabSizeByLanguage, ext)
+			? this.tabSizeByLanguage[ext]
+			: this.tabSize;
 	}
-	if (!mark.symbol) {
-		return `${mark.file}#L${mark.startLine}-L${mark.endLine}`;
-	}
-	if (
-		mark.symbolKind === 'function' ||
-		mark.symbolKind === 'method' ||
-		mark.symbolKind === 'constructor'
-	) {
-		return `${mark.symbol}()`;
-	}
-	if (
-		mark.symbolKind === 'enum' ||
-		mark.symbolKind === 'struct' ||
-		mark.symbolKind === 'class' ||
-		mark.symbolKind === 'interface' ||
-		mark.symbolKind === 'const'
-	) {
-		return `${mark.symbolKind} ${mark.symbol}`;
-	}
-	return mark.symbol;
-}
 
-export function nodeColor(cfg: GraphConfig, symbolKind?: string): string {
-	const kind = symbolKind ?? '';
-	if (Object.hasOwn(cfg.symbolColors, kind)) return cfg.symbolColors[kind];
-	return DEFAULT_SYMBOL_COLORS[kind] ?? DEFAULT_COLOR;
-}
-
-export function measureNodeSize(
-	label: string,
-	code: string,
-	isTitle?: boolean,
-): { width: number; height: number } {
-	if (isTitle) {
-		const w = label.length * TITLE_CHAR_WIDTH + PADDING * 2;
-		return { width: Math.max(w, 60), height: TITLE_HEIGHT };
-	}
-	const headerWidth = label.length * HEADER_CHAR_WIDTH + PADDING * 2;
-	if (!code) {
-		return { width: Math.max(headerWidth, 60), height: HEADER_HEIGHT };
-	}
-	const lines = code.split('\n');
-	let maxLineLen = 0;
-	for (const line of lines) {
-		if (line.length > maxLineLen) {
-			maxLineLen = line.length;
+	colorForSymbolKind(symbolKind?: string): string {
+		const kind = symbolKind ?? '';
+		if (Object.hasOwn(this.symbolColors, kind)) return this.symbolColors[kind];
+		switch (kind) {
+			case 'function':
+			case 'method':
+			case 'constructor':
+				return '#A8D8F0';
+			case 'class':
+			case 'struct':
+				return '#A8E6CF';
+			case 'enum':
+				return '#FFE0B2';
+			case 'interface':
+				return '#D7BDE2';
+			case 'const':
+				return '#F5B7B1';
+			case 'title':
+				return '#FFFFFF';
 		}
+		return '#DBDBDB';
 	}
-	const minCodeWidth = 80 * CODE_CHAR_WIDTH + PADDING * 2;
-	const codeWidth = maxLineLen * CODE_CHAR_WIDTH + PADDING * 2;
-	const codeHeight = lines.length * CODE_LINE_HEIGHT + PADDING * 2;
-	return {
-		width: Math.max(headerWidth, codeWidth, minCodeWidth),
-		height: HEADER_HEIGHT + codeHeight,
-	};
 }
 
-function layoutWithDagre(
-	nodes: Omit<GraphNode, 'x' | 'y'>[],
-	edges: GraphEdge[],
-): GraphNode[] {
-	const g = new dagre.graphlib.Graph();
-	g.setGraph({
-		rankdir: 'LR', // Left to Right
-		nodesep: 50, // Minimum vertical gap between nodes in the same column
-		ranksep: 100, // Minimum horizontal gap between columns
-	});
-	g.setDefaultEdgeLabel(() => ({}));
+export class Graph {
+	private constructor(
+		readonly data: GraphData,
+		readonly config: GraphConfig,
+	) {}
 
-	for (const node of nodes) {
-		g.setNode(node.id, {
-			width: node.width,
-			height: node.height,
+	static fromMarks(marks: Mark[]) {
+		const cfg = GraphConfig.fromConfig();
+
+		const rawNodes = marks.map((mark) => {
+			const header = Graph.getHeader(mark);
+			const isTitle = mark.symbolKind === 'title';
+			const code = isTitle ? '' : Graph.formatCode(mark.code, mark.file, cfg);
+			const size = Graph.calcNodeSize(header, code, isTitle, cfg);
+			return {
+				id: mark.id,
+				header,
+				code,
+				file: isTitle ? '' : `${mark.file}#L${mark.startLine}-L${mark.endLine}`,
+				color: cfg.colorForSymbolKind(mark.symbolKind),
+				isTitle,
+				width: size.width,
+				height: size.height,
+			};
+		});
+
+		const edges: GraphEdge[] = [];
+		for (const mark of marks) {
+			for (const conn of mark.uses ?? []) {
+				const target = conn.replace(`code-trail:${OUTPUT_DIR}/`, '');
+				edges.push({ from: mark.id, to: target });
+			}
+		}
+
+		const nodes = Graph.layoutWithDagre(rawNodes, edges);
+
+		log(`Graph.fromMarks: ${nodes.length} nodes, ${edges.length} edges}`);
+		return new Graph({ nodes, edges }, cfg);
+	}
+
+	static getHeader(mark: Mark): string {
+		if (mark.symbolKind === 'title') {
+			return mark.symbol ?? '';
+		}
+		if (!mark.symbol) {
+			return `${mark.file}#L${mark.startLine}-L${mark.endLine}`;
+		}
+		if (
+			mark.symbolKind === 'function' ||
+			mark.symbolKind === 'method' ||
+			mark.symbolKind === 'constructor'
+		) {
+			return `${mark.symbol}()`;
+		}
+		if (
+			mark.symbolKind === 'enum' ||
+			mark.symbolKind === 'struct' ||
+			mark.symbolKind === 'class' ||
+			mark.symbolKind === 'interface' ||
+			mark.symbolKind === 'const'
+		) {
+			return `${mark.symbolKind} ${mark.symbol}`;
+		}
+		return mark.symbol;
+	}
+
+	private static formatCode(
+		code: string | undefined,
+		file: string,
+		cfg: GraphConfig,
+	): string {
+		if (!code) return '';
+		const ext = file.split('.').pop() ?? '';
+		const tabSize = cfg.tabSizeForLanguage(ext);
+		return code.replace(/\t/g, ' '.repeat(tabSize));
+	}
+
+	private static calcNodeSize(
+		header: string,
+		code: string,
+		isTitle: boolean,
+		cfg: GraphConfig,
+	): { width: number; height: number } {
+		if (isTitle) {
+			const width =
+				cfg.fonts.TITLE_CHAR_WIDTH * header.length + cfg.fonts.PADDING * 2;
+			return { width: Math.max(width, 60), height: cfg.fonts.TITLE_HEIGHT };
+		}
+
+		const headerWidth =
+			cfg.fonts.HEADER_CHAR_WIDTH * header.length + cfg.fonts.PADDING * 2;
+		if (!code) {
+			return {
+				width: Math.max(headerWidth, 60),
+				height: cfg.fonts.HEADER_HEIGHT,
+			};
+		}
+
+		const lines = code.split('\n');
+		let maxLineLen = 0;
+		for (const line of lines) {
+			if (line.length > maxLineLen) {
+				maxLineLen = line.length;
+			}
+		}
+		const codeWidth =
+			cfg.fonts.CODE_CHAR_WIDTH * maxLineLen + cfg.fonts.PADDING * 2;
+		const codeHeight =
+			cfg.fonts.CODE_LINE_HEIGHT * lines.length + cfg.fonts.PADDING * 2;
+		const minCodeWidth = cfg.fonts.CODE_CHAR_WIDTH * 80 + cfg.fonts.PADDING * 2;
+		return {
+			width: Math.max(headerWidth, codeWidth, minCodeWidth),
+			height: cfg.fonts.HEADER_HEIGHT + codeHeight,
+		};
+	}
+
+	private static layoutWithDagre(
+		nodes: Omit<GraphNode, 'x' | 'y'>[],
+		edges: GraphEdge[],
+	): GraphNode[] {
+		const g = new dagre.graphlib.Graph();
+		g.setGraph({
+			rankdir: 'LR', // Left to Right
+			nodesep: 50, // Minimum vertical gap between nodes in the same column
+			ranksep: 100, // Minimum horizontal gap between columns
+		});
+		g.setDefaultEdgeLabel(() => ({}));
+
+		for (const node of nodes) {
+			g.setNode(node.id, {
+				width: node.width,
+				height: node.height,
+			});
+		}
+		for (const edge of edges) {
+			if (g.hasNode(edge.from) && g.hasNode(edge.to)) {
+				g.setEdge(edge.from, edge.to);
+			}
+		}
+
+		dagre.layout(g);
+
+		return nodes.map((node) => {
+			const pos = g.node(node.id);
+			return { ...node, x: pos.x, y: pos.y };
 		});
 	}
-	for (const edge of edges) {
-		if (g.hasNode(edge.from) && g.hasNode(edge.to)) {
-			g.setEdge(edge.from, edge.to);
-		}
+
+	stringify(): string {
+		// Convert GraphData to JSON string.
+		const stage1 = JSON.stringify(this.data);
+		// Escape '<' and '>' to Unicode so that strings like "</script>" in
+		// code snippets don't break the HTML <script> tag.
+		const stage2 = stage1.replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+		// Wrap the result as a quoted string literal, so it can be embedded in
+		// the HTML template as JSON.parse(...).
+		const stage3 = JSON.stringify(stage2);
+		return stage3;
 	}
-
-	dagre.layout(g);
-
-	return nodes.map((node) => {
-		const pos = g.node(node.id);
-		return { ...node, x: pos.x, y: pos.y };
-	});
-}
-
-function expandTabs(
-	code: string | undefined,
-	file: string,
-	cfg: GraphConfig,
-): string {
-	if (!code) return '';
-	const ext = file.split('.').pop() ?? '';
-	const tabSize = Object.hasOwn(cfg.tabSizeByLanguage, ext)
-		? cfg.tabSizeByLanguage[ext]
-		: cfg.tabSize;
-	return code.replace(/\t/g, ' '.repeat(tabSize));
-}
-
-export async function buildGraphData(): Promise<GraphData> {
-	const marks = await Mark.getAll();
-	log(`buildGraphData: ${marks.length} marks`);
-	const cfg = loadConfig();
-	const rawNodes = marks.map((mark) => {
-		const label = nodeLabel(mark);
-		const isTitle = mark.symbolKind === 'title';
-		const code = isTitle ? '' : expandTabs(mark.code, mark.file, cfg);
-		const size = measureNodeSize(label, code, isTitle);
-		return {
-			id: mark.id,
-			label,
-			code,
-			file: isTitle ? '' : `${mark.file}#L${mark.startLine}-L${mark.endLine}`,
-			color: nodeColor(cfg, mark.symbolKind),
-			isTitle,
-			width: size.width,
-			height: size.height,
-		};
-	});
-
-	const edges: GraphEdge[] = [];
-	for (const mark of marks) {
-		for (const conn of mark.uses ?? []) {
-			const target = conn.replace(`code-trail:${OUTPUT_DIR}/`, '');
-			edges.push({ from: mark.id, to: target });
-		}
-	}
-
-	const nodes = layoutWithDagre(rawNodes, edges);
-
-	log(`buildGraphData: ${nodes.length} nodes, ${edges.length} edges`);
-	return { nodes, edges };
 }

@@ -24,7 +24,7 @@
 			var nodeMap = {};
 			graphData.nodes.forEach(function(node) {
 				nodeMap[node.id] = {
-					label: node.label,
+					header: node.header,
 					code: node.code,
 					color: node.color,
 					file: node.file,
@@ -44,8 +44,8 @@
 			var HEADER_HEIGHT = {{HEADER_HEIGHT}};
 			var HEADER_CHAR_WIDTH = {{HEADER_CHAR_WIDTH}};
 			var TITLE_FONT_SIZE = {{TITLE_FONT_SIZE}};
-			var EXT_LABEL_FONT_SIZE = {{EXT_LABEL_FONT_SIZE}};
-			var EXT_LABEL_GAP = {{EXT_LABEL_GAP}};
+			var LABEL_FONT_SIZE = {{LABEL_FONT_SIZE}};
+			var LABEL_GAP = {{LABEL_GAP}};
 
 			// Other constants (e.g. colors)
 			var NEWLINE = String.fromCharCode(10);
@@ -54,14 +54,14 @@
 			var BORDER_COLOR = '#454545';
 			var CODE_BG_COLOR = '#1e1e1e';
 			var CODE_FG_COLOR = '#d4d4d4';
-			var EXT_LABEL_COLOR = '#888888';
+			var LABEL_COLOR = '#888888';
 
 			function measureNode(id) {
 				var node = nodeMap[id];
 				if (node.expanded) {
 					return { w: node.width, h: node.height };
 				}
-				var headerWidth = node.label.length * HEADER_CHAR_WIDTH + PADDING * 2;
+				var headerWidth = HEADER_CHAR_WIDTH * node.header.length + PADDING * 2;
 				return { w: Math.max(headerWidth, 60), h: HEADER_HEIGHT };
 			}
 
@@ -84,7 +84,7 @@
 					ctx.font = 'bold ' + TITLE_FONT_SIZE + 'px monospace';
 					ctx.textBaseline = 'middle';
 					ctx.textAlign = 'center';
-					ctx.fillText(node.label, x, y);
+					ctx.fillText(node.header, x, y);
 					return;
 				}
 
@@ -102,7 +102,7 @@
 				ctx.font = HEADER_FONT_SIZE + 'px monospace';
 				ctx.textBaseline = 'middle';
 				ctx.textAlign = 'left';
-				ctx.fillText(node.label, left + PADDING, top + HEADER_HEIGHT / 2);
+				ctx.fillText(node.header, left + PADDING, top + HEADER_HEIGHT / 2);
 
 				if (node.expanded && node.code) {
 					var codeTop = top + HEADER_HEIGHT;
@@ -156,13 +156,13 @@
 			function drawExternalLabel(ctx, id, x, y, size) {
 				var node = nodeMap[id];
 				if (!node.file) return;
-				ctx.fillStyle = EXT_LABEL_COLOR;
-				ctx.font = EXT_LABEL_FONT_SIZE + 'px monospace';
+				ctx.fillStyle = LABEL_COLOR;
+				ctx.font = LABEL_FONT_SIZE + 'px monospace';
 				ctx.textBaseline = 'bottom';
 				ctx.textAlign = 'left';
 				var lines = wrapText(ctx, node.file, size.w);
-				var lineH = EXT_LABEL_FONT_SIZE * 1.2;
-				var baseY = y - size.h / 2 - EXT_LABEL_GAP;
+				var lineH = LABEL_FONT_SIZE * 1.2;
+				var baseY = y - size.h / 2 - LABEL_GAP;
 				var leftX = x - size.w / 2;
 				for (var i = lines.length - 1; i >= 0; i--) {
 					ctx.fillText(lines[i], leftX, baseY - (lines.length - 1 - i) * lineH);
@@ -294,7 +294,10 @@
 				if (msg.type === 'updateGraph') {
 					msg.nodes.forEach(function(n) {
 						nodeMap[n.id] = {
-							label: n.label, code: n.code, color: n.color, file: n.file,
+							header: n.header,
+							code: n.code,
+							color: n.color,
+							file: n.file,
 							isTitle: n.isTitle,
 							width: n.width, height: n.height,
 							expanded: true
