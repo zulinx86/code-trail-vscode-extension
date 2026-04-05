@@ -16,8 +16,8 @@ export class Connect {
 			return;
 		}
 
-		const { incoming, outgoing } = await this.getCalls();
-		const suggestions = this.getSuggestions(marks, incoming, outgoing);
+		const { outgoing, incoming } = await this.getCalls();
+		const suggestions = this.getSuggestions(marks, outgoing, incoming);
 		const quickPickItems = new ConnectSuggestions(
 			suggestions,
 		).toQuickPickItems();

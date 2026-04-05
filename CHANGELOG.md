@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.5]
+
+### Fixed
+
+- Fix swapped connect suggestions
+
 ## [0.1.4]
 
 ### Changed
