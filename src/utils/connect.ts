@@ -29,9 +29,8 @@ export class Connect {
 			return;
 		}
 
-		let direction = selected.direction;
 		// For non-suggested item, ask direction
-		if (!selected.suggested) {
+		if (!selected.direction) {
 			const dirChoice = await vscode.window.showQuickPick(
 				[
 					{
@@ -51,16 +50,16 @@ export class Connect {
 				log(`Connect.prompt: no direction selected`);
 				return;
 			}
-			direction = dirChoice.value;
+			selected.direction = dirChoice.value;
 		}
-		const reverse = direction === 'uses' ? 'usedBy' : 'uses';
-		await this.mark.connect(direction, selected.mark.id);
+		const reverse = selected.direction === 'uses' ? 'usedBy' : 'uses';
+		await this.mark.connect(selected.direction, selected.mark.id);
 		await selected.mark.connect(reverse, this.mark.id);
 		log(
-			`Connect.prompt: linked ${currentMarkId} ${direction} ${selected.mark.id}`,
+			`Connect.prompt: linked ${currentMarkId} ${selected.direction} ${selected.mark.id}`,
 		);
 		vscode.window.showInformationMessage(
-			`Linked: ${currentMarkId} ${direction === 'uses' ? '→' : '←'} ${selected.mark.id}`,
+			`Linked: ${currentMarkId} ${selected.direction === 'uses' ? '->' : '<-'} ${selected.mark.id}`,
 		);
 	}
 
@@ -174,7 +173,7 @@ export class Connect {
 				suggestions.push(
 					new ConnectSuggestion({
 						mark,
-						direction: 'uses',
+						direction: undefined,
 						description: desc,
 						suggested: false,
 					}),
@@ -234,14 +233,14 @@ export class MarkHelper {
 
 interface ConnectSuggestionArgs {
 	mark: Mark;
-	direction: 'uses' | 'usedBy';
+	direction?: 'uses' | 'usedBy';
 	description: string;
 	suggested: boolean;
 }
 
 export class ConnectSuggestion {
 	readonly mark: Mark;
-	readonly direction: 'uses' | 'usedBy';
+	readonly direction?: 'uses' | 'usedBy';
 	readonly description: string;
 	readonly suggested: boolean;
 
@@ -253,8 +252,13 @@ export class ConnectSuggestion {
 	}
 
 	toQuickPickItem(): ConnectQuickPickItem {
+		const icon = this.suggested
+			? this.direction === 'uses'
+				? '$(arrow-right)'
+				: '$(arrow-left)'
+			: '$(circle-filled)';
 		return {
-			label: `${this.direction === 'uses' ? '$(arrow-right)' : '$(arrow-left)'} ${this.description}`,
+			label: `${icon} ${this.description}`,
 			description: this.mark.id,
 			detail: this.suggested ? 'Suggested' : undefined,
 			mark: this.mark,
@@ -281,6 +285,6 @@ export class ConnectSuggestions {
 
 interface ConnectQuickPickItem extends vscode.QuickPickItem {
 	readonly mark: Mark;
-	readonly direction: 'uses' | 'usedBy';
+	direction?: 'uses' | 'usedBy';
 	readonly suggested: boolean;
 }
