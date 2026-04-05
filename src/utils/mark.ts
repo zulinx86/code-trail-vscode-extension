@@ -259,17 +259,14 @@ ${this.code}
 		);
 		return marks.filter((mark): mark is Mark => mark !== undefined);
 	}
-}
 
-export async function findExistingMark(
-	file: string,
-	symbol: string,
-): Promise<Mark | undefined> {
-	log(`findExistingMark: file=${file} symbol=${symbol}`);
-	const marks = await Mark.getAll();
-	const found = marks.find(
-		(mark) => mark.file === file && mark.symbol === symbol,
-	);
-	log(`findExistingMark: ${found ? `found ${found.id}` : 'not found'}`);
-	return found;
+	static async find(file: string, symbol: string): Promise<Mark | undefined> {
+		log(`Mark.findMark: file=${file} symbol=${symbol}`);
+		const marks = await Mark.getAll();
+		const found = marks.find(
+			(mark) => mark.file === file && mark.symbol === symbol,
+		);
+		log(`Mark.findMark: ${found ? `found ${found.id}` : 'not found'}`);
+		return found;
+	}
 }

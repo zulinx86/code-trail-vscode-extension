@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { Mark, type MarkArgs, findExistingMark } from '../../utils/mark';
+import { Mark, type MarkArgs } from '../../utils/mark';
 import { Selection } from '../../utils/selection';
 import { OUTPUT_DIR } from '../../config';
 
@@ -242,7 +242,7 @@ suite('mark', () => {
 		});
 	});
 
-	suite('findExistingMark', () => {
+	suite('Mark.find', () => {
 		const workspaceUri = vscode.workspace.workspaceFolders![0].uri;
 		const outputDir = vscode.Uri.joinPath(workspaceUri, 'code-trail');
 
@@ -261,14 +261,14 @@ suite('mark', () => {
 				symbolKind: 'function',
 				...markArgs,
 			}).save();
-			const existing = await findExistingMark('src/example.ts', 'foo');
+			const existing = await Mark.find('src/example.ts', 'foo');
 			assert.ok(existing);
 			assert.strictEqual(existing.file, 'src/example.ts');
 			assert.strictEqual(existing.symbol, 'foo');
 		});
 
 		test('should return undefined when no matching mark exists', async () => {
-			const existing = await findExistingMark('src/example.ts', 'foo');
+			const existing = await Mark.find('src/example.ts', 'foo');
 			assert.strictEqual(existing, undefined);
 		});
 	});

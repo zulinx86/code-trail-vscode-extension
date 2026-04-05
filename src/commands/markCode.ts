@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { Selection } from '../utils/selection';
-import { Mark, findExistingMark } from '../utils/mark';
-import { OUTPUT_DIR } from '../config';
+import { Mark } from '../utils/mark';
 import { getGitHubUrl } from '../utils/git';
 import { log } from '../utils/logger';
 import { promptAndLink } from '../utils/link';
@@ -26,7 +25,7 @@ export async function markCode(): Promise<void> {
 	log(`markCode: selection=${JSON.stringify(logSelection)}`);
 
 	if (selection.symbol) {
-		const existing = await findExistingMark(selection.file, selection.symbol);
+		const existing = await Mark.find(selection.file, selection.symbol);
 		if (existing) {
 			log(`markCode: duplicate mark found ${existing.id}`);
 			vscode.window.showWarningMessage(`Mark already exists: ${existing.id}`);
