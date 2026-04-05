@@ -232,6 +232,7 @@ ${this.code}
 
 		const fileUri = vscode.Uri.joinPath(dirUri, filename);
 		await vscode.workspace.fs.writeFile(fileUri, Buffer.from(content, 'utf-8'));
+		this.uri = fileUri;
 		return fileUri;
 	}
 

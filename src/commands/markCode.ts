@@ -36,20 +36,20 @@ export async function markCode(): Promise<void> {
 		}
 	}
 
-	const githubUrl = getGitHubUrl(
+	const github = getGitHubUrl(
 		selection.file,
 		selection.startLine,
 		selection.endLine,
 	);
 
 	try {
-		const mark = Mark.fromSelection(selection, new Date(), githubUrl);
-		const fileUri = await mark.save();
-		log(`markCode: saved ${fileUri.fsPath}`);
-		const doc = await vscode.workspace.openTextDocument(fileUri);
+		const mark = Mark.fromSelection(selection, new Date(), github);
+		const uri = await mark.save();
+		log(`markCode: saved ${uri.fsPath}`);
+		const doc = await vscode.workspace.openTextDocument(uri);
 		await vscode.window.showTextDocument(doc);
 		vscode.window.showInformationMessage(
-			`Saved: ${fileUri.fsPath.split('/').pop()}`,
+			`Saved: ${uri.fsPath.split('/').pop()}`,
 		);
 
 		// Suggest links based on call hierarchy
