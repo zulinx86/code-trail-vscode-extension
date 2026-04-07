@@ -127,7 +127,7 @@ export class Connect {
 		}
 
 		log(
-			`Connect.getCalls: ${incoming.size} incoming items, ${outgoing.size} outgoing items`,
+			`Connect.getCalls: outgoing=[${[...outgoing].join(', ')}] incoming=[${[...incoming].join(', ')}]`,
 		);
 		return { outgoing, incoming };
 	}
