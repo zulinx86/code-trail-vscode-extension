@@ -2,7 +2,6 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { workspaceFolder } from '../../config';
 import {
-	CallItem,
 	MarkHelper,
 	Connect,
 	ConnectSuggestion,
@@ -11,48 +10,8 @@ import {
 import { Mark } from '../../utils/mark';
 import type { MarkArgs } from '../../utils/mark';
 import { openFixture, waitForSymbols } from '../helpers';
-import path from 'path';
 
 suite('connect', () => {
-	suite('CallItem.nameKey', () => {
-		test('should return file#name for item without detail', () => {
-			const item = new vscode.CallHierarchyItem(
-				vscode.SymbolKind.Function,
-				'foo',
-				'',
-				vscode.Uri.file(path.join(workspaceFolder!.uri.fsPath, 'src/a.ts')),
-				new vscode.Range(0, 0, 2, 0),
-				new vscode.Range(0, 0, 0, 3),
-			);
-			assert.strictEqual(new CallItem(item).nameKey, 'src/a.ts#foo');
-		});
-
-		test('should return file#name for item with detail', () => {
-			const item = new vscode.CallHierarchyItem(
-				vscode.SymbolKind.Method,
-				'bar',
-				'Foo',
-				vscode.Uri.file(path.join(workspaceFolder!.uri.fsPath, 'src/a.ts')),
-				new vscode.Range(1, 0, 3, 0),
-				new vscode.Range(1, 0, 1, 3),
-			);
-			assert.strictEqual(new CallItem(item).nameKey, 'src/a.ts#bar');
-		});
-	});
-
-	suite('CallItem.rangeKey', () => {
-		test('should return file#L<start>-L<end> with 1-based line numbers', () => {
-			const item = new vscode.CallHierarchyItem(
-				vscode.SymbolKind.Function,
-				'foo',
-				'',
-				vscode.Uri.file(path.join(workspaceFolder!.uri.fsPath, 'src/a.ts')),
-				new vscode.Range(4, 0, 9, 0),
-				new vscode.Range(4, 0, 4, 3),
-			);
-			assert.strictEqual(new CallItem(item).rangeKey, 'src/a.ts#L5-L10');
-		});
-	});
 
 	const markArgs: MarkArgs = {
 		file: 'src/a.ts',

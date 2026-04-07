@@ -1,9 +1,6 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
-import { Symbol } from './symbol';
 import { Mark } from './mark';
 import { log } from './logger';
-import { workspaceFolder } from '../config';
 
 export class Connect {
 	constructor(readonly mark: Mark) {}
@@ -70,61 +67,8 @@ export class Connect {
 		const outgoing = new Set<string>();
 		const incoming = new Set<string>();
 
-		const uri = vscode.Uri.joinPath(workspaceFolder!.uri, this.mark.file);
-
-		try {
-			// Get position
-			let pos: vscode.Position;
-			if (this.mark.symbol) {
-				const symbol = await Symbol.findSymbolByName(uri, this.mark.symbol);
-				if (!symbol) {
-					log(`Connect.getCalls: symbol '${this.mark.symbol}' not found`);
-					return { outgoing, incoming };
-				}
-				pos = symbol.selectionRange.start;
-			} else {
-				pos = new vscode.Position(this.mark.startLine - 1, 0);
-			}
-
-			// Prepare call hierarchy for provideIncomingCalls and provideOutgoingCalls
-			log(
-				`Connect.getCalls: preparing call hierarchy for ${uri.fsPath}#L${pos.line + 1}`,
-			);
-			const items = await vscode.commands.executeCommand<
-				vscode.CallHierarchyItem[]
-			>('vscode.prepareCallHierarchy', uri, pos);
-			if (!items?.length) {
-				log('Connect.getCalls: prepareCallHierarchy returned empty');
-				return { outgoing, incoming };
-			}
-			const query = items[0];
-			log(`Connect.getCalls: prepared call hierarchy for ${query.name}`);
-
-			// Get outgoing calls
-			const outgoingCalls = await vscode.commands.executeCommand<
-				vscode.CallHierarchyOutgoingCall[]
-			>('vscode.provideOutgoingCalls', query);
-			for (const call of outgoingCalls ?? []) {
-				log(`Connect.getCalls: outgoing item ${call.to.name}`);
-				const item = new CallItem(call.to);
-				outgoing.add(item.nameKey);
-				outgoing.add(item.rangeKey);
-			}
-
-			// Get incoming calls
-			log(`Connect.getCalls: getting incoming calls`);
-			const incomingCalls = await vscode.commands.executeCommand<
-				vscode.CallHierarchyIncomingCall[]
-			>('vscode.provideIncomingCalls', query);
-			for (const call of incomingCalls ?? []) {
-				log(`Connect.getCalls: incoming item ${call.from.name}`);
-				const item = new CallItem(call.from);
-				incoming.add(item.nameKey);
-				incoming.add(item.rangeKey);
-			}
-		} catch (e) {
-			log(`Connect.getCalls: error ${e}`);
-		}
+		// TODO: Task 2 - text-based outgoing detection
+		// TODO: Task 3 - Reference Provider incoming detection
 
 		log(
 			`Connect.getCalls: outgoing=[${[...outgoing].join(', ')}] incoming=[${[...incoming].join(', ')}]`,
@@ -189,27 +133,7 @@ export class Connect {
 	}
 }
 
-export class CallItem {
-	constructor(readonly item: vscode.CallHierarchyItem) {}
 
-	get nameKey() {
-		const file = path.relative(
-			workspaceFolder!.uri.fsPath,
-			this.item.uri.fsPath,
-		);
-		return `${file}#${this.item.name}`;
-	}
-
-	get rangeKey() {
-		const file = path.relative(
-			workspaceFolder!.uri.fsPath,
-			this.item.uri.fsPath,
-		);
-		const start = this.item.range.start.line + 1;
-		const end = this.item.range.end.line + 1;
-		return `${file}#L${start}-L${end}`;
-	}
-}
 
 export class MarkHelper {
 	constructor(private mark: Mark) {}
