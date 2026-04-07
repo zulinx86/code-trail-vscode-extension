@@ -2,6 +2,28 @@ import * as vscode from 'vscode';
 import { Mark } from './mark';
 import { log } from './logger';
 
+/**
+ * Scans code text for word-boundary matches of candidate symbol names.
+ * Returns a map from symbol name to the 0-based character offset of the first occurrence.
+ */
+export function scanForSymbols(
+	code: string,
+	candidateSymbols: string[],
+): Map<string, number> {
+	const result = new Map<string, number>();
+	for (const symbol of candidateSymbols) {
+		// Use \b (word boundary) to match whole symbols only.
+		// \b matches the boundary between a word char [a-zA-Z0-9_] and a non-word char.
+		// e.g. \bread\b matches "read(buf)" but not "readFile" or "__kvm_read".
+		const regex = new RegExp(`\\b${symbol}\\b`);
+		const match = regex.exec(code);
+		if (match) {
+			result.set(symbol, match.index);
+		}
+	}
+	return result;
+}
+
 export class Connect {
 	constructor(readonly mark: Mark) {}
 
@@ -132,8 +154,6 @@ export class Connect {
 		return suggestions;
 	}
 }
-
-
 
 export class MarkHelper {
 	constructor(private mark: Mark) {}

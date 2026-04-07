@@ -6,12 +6,52 @@ import {
 	Connect,
 	ConnectSuggestion,
 	ConnectSuggestions,
+	scanForSymbols,
 } from '../../utils/connect';
 import { Mark } from '../../utils/mark';
 import type { MarkArgs } from '../../utils/mark';
 import { openFixture, waitForSymbols } from '../helpers';
 
 suite('connect', () => {
+	suite('scanForSymbols', () => {
+		test('should match whole symbol names', () => {
+			const code = 'do_read(buf, len);';
+			const result = scanForSymbols(code, ['do_read']);
+			assert.strictEqual(result.size, 1);
+			assert.strictEqual(result.get('do_read'), 0);
+		});
+
+		test('should not match partial symbol names', () => {
+			const code = 'do_read_async(buf);';
+			const result = scanForSymbols(code, ['do_read']);
+			assert.strictEqual(result.size, 0);
+		});
+
+		test('should return first occurrence offset', () => {
+			const code = 'x = foo(); y = foo();';
+			const result = scanForSymbols(code, ['foo']);
+			assert.strictEqual(result.size, 1);
+			assert.strictEqual(result.get('foo'), 4);
+		});
+
+		test('should match multiple different symbols', () => {
+			const code = 'foo(); bar(); baz();';
+			const result = scanForSymbols(code, ['foo', 'bar']);
+			assert.strictEqual(result.size, 2);
+			assert.ok(result.has('foo'));
+			assert.ok(result.has('bar'));
+		});
+
+		test('should return empty map for empty code', () => {
+			const result = scanForSymbols('', ['foo']);
+			assert.strictEqual(result.size, 0);
+		});
+
+		test('should return empty map for empty candidates', () => {
+			const result = scanForSymbols('foo(); bar();', []);
+			assert.strictEqual(result.size, 0);
+		});
+	});
 
 	const markArgs: MarkArgs = {
 		file: 'src/a.ts',
