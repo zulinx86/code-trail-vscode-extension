@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.7]
+
+### Changed
+
+- Use Definition Provider and Reference Provider instead of Call Hierarchy API for connection suggestions, improving reliability across language servers
+
 ## [0.1.6]
 
 ### Fixed
