@@ -133,6 +133,7 @@
 		"test": "vscode-test --coverage --coverage-reporter html",
 		"install-local": "npx vsce package && code --install-extension zulinx86-code-trail-0.1.7.vsix",
 		"publish": "npx vsce publish",
+		"publish:openvsx": "npx ovsx publish",
 		"watch": "npm-run-all -p watch:*",
 		"watch:esbuild": "node esbuild.js --watch",
 		"watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
