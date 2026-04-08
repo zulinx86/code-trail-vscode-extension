@@ -4,11 +4,7 @@ import { workspaceFolder } from '../../../config';
 import { Connect } from '../../../utils/connect';
 import { Selection } from '../../../utils/selection';
 import { Mark } from '../../../utils/mark';
-import {
-	openFixture,
-	waitForSymbols,
-	waitForCallHierarchy,
-} from '../../helpers';
+import { openFixture, waitForSymbols, waitForDefinitions } from '../../helpers';
 
 suite('connect (Rust)', () => {
 	const workspaceUri = workspaceFolder!.uri;
@@ -27,18 +23,27 @@ suite('connect (Rust)', () => {
 		test('should detect outgoing calls', async function () {
 			const doc = await openFixture('rust/src/lib.rs');
 			await waitForSymbols(doc.uri);
-			// L34: fn my_caller
-			await waitForCallHierarchy(doc.uri, new vscode.Position(33, 0));
+			// Wait for rust-analyzer to be fully ready by polling the definition provider
+			await waitForDefinitions(doc.uri, new vscode.Position(34, 4));
 
-			const mark = new Mark({
+			const callerMark = new Mark({
 				file: 'src/test/fixtures/rust/src/lib.rs',
 				startLine: 34,
 				endLine: 36,
 				symbol: 'my_caller',
+				code: 'fn my_caller() -> i32 {\n    my_callee()\n}',
 				link: 'code-trail:src/test/fixtures/rust/src/lib.rs#L34-L36',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { outgoing } = await new Connect(mark).getCalls([]);
+			const calleeMark = new Mark({
+				file: 'src/test/fixtures/rust/src/lib.rs',
+				startLine: 30,
+				endLine: 32,
+				symbol: 'my_callee',
+				link: 'code-trail:src/test/fixtures/rust/src/lib.rs#L30-L32',
+				exportedAt: new Date('2026-01-01T00:00:00Z'),
+			});
+			const { outgoing } = await new Connect(callerMark).getCalls([calleeMark]);
 			const keys = [...outgoing];
 			assert.ok(
 				keys.some((k) => k.includes('my_callee')),
@@ -49,10 +54,9 @@ suite('connect (Rust)', () => {
 		test('should detect incoming calls', async function () {
 			const doc = await openFixture('rust/src/lib.rs');
 			await waitForSymbols(doc.uri);
-			// L30: fn my_callee
-			await waitForCallHierarchy(doc.uri, new vscode.Position(29, 0));
+			await waitForDefinitions(doc.uri, new vscode.Position(34, 4));
 
-			const mark = new Mark({
+			const calleeMark = new Mark({
 				file: 'src/test/fixtures/rust/src/lib.rs',
 				startLine: 30,
 				endLine: 32,
@@ -60,7 +64,15 @@ suite('connect (Rust)', () => {
 				link: 'code-trail:src/test/fixtures/rust/src/lib.rs#L30-L32',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { incoming } = await new Connect(mark).getCalls([]);
+			const callerMark = new Mark({
+				file: 'src/test/fixtures/rust/src/lib.rs',
+				startLine: 34,
+				endLine: 36,
+				symbol: 'my_caller',
+				link: 'code-trail:src/test/fixtures/rust/src/lib.rs#L34-L36',
+				exportedAt: new Date('2026-01-01T00:00:00Z'),
+			});
+			const { incoming } = await new Connect(calleeMark).getCalls([callerMark]);
 			const keys = [...incoming];
 			assert.ok(
 				keys.some((k) => k.includes('my_caller')),
@@ -86,7 +98,7 @@ suite('connect (Rust)', () => {
 		test('should suggest impl method callee as outgoing', async function () {
 			const doc = await openFixture('rust/src/lib.rs');
 			await waitForSymbols(doc.uri);
-			await waitForCallHierarchy(doc.uri, new vscode.Position(44, 7));
+			await waitForDefinitions(doc.uri, new vscode.Position(45, 8));
 
 			// L45: fn my_impl_caller of impl MyImplCall
 			const callerMark = await saveMarkAtPosition(
@@ -100,8 +112,9 @@ suite('connect (Rust)', () => {
 			);
 
 			const connect = new Connect(callerMark);
-			const { outgoing, incoming } = await connect.getCalls([]);
 			const marks = await Mark.getAll();
+			const candidates = marks.filter((m) => m.id !== callerMark.id);
+			const { outgoing, incoming } = await connect.getCalls(candidates);
 			const suggestions = connect.getSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 
@@ -117,7 +130,7 @@ suite('connect (Rust)', () => {
 		test('should suggest impl method caller as incoming', async function () {
 			const doc = await openFixture('rust/src/lib.rs');
 			await waitForSymbols(doc.uri);
-			await waitForCallHierarchy(doc.uri, new vscode.Position(40, 7));
+			await waitForDefinitions(doc.uri, new vscode.Position(45, 8));
 
 			// L41: fn my_impl_callee of impl MyImplCall
 			const calleeMark = await saveMarkAtPosition(
@@ -131,8 +144,9 @@ suite('connect (Rust)', () => {
 			);
 
 			const connect = new Connect(calleeMark);
-			const { outgoing, incoming } = await connect.getCalls([]);
 			const marks = await Mark.getAll();
+			const candidates = marks.filter((m) => m.id !== calleeMark.id);
+			const { outgoing, incoming } = await connect.getCalls(candidates);
 			const suggestions = connect.getSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
 

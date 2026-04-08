@@ -37,18 +37,18 @@ export async function waitForSymbols(
 	}
 }
 
-export async function waitForCallHierarchy(
+export async function waitForDefinitions(
 	uri: vscode.Uri,
 	position: vscode.Position,
 	timeout = 3000,
-): Promise<vscode.CallHierarchyItem[]> {
+): Promise<(vscode.Location | vscode.LocationLink)[]> {
 	const start = Date.now();
 	while (Date.now() - start < timeout) {
-		const items = await vscode.commands.executeCommand<
-			vscode.CallHierarchyItem[]
-		>('vscode.prepareCallHierarchy', uri, position);
-		if (items && items.length > 0) {
-			return items;
+		const defs = await vscode.commands.executeCommand<
+			(vscode.Location | vscode.LocationLink)[]
+		>('vscode.executeDefinitionProvider', uri, position);
+		if (defs && defs.length > 0) {
+			return defs;
 		}
 		await new Promise((r) => setTimeout(r, 100));
 	}

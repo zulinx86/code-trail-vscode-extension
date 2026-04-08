@@ -103,15 +103,24 @@ suite('connect', () => {
 		test('should detect outgoing calls', async function () {
 			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
-			const mark = new Mark({
+			const callerMark = new Mark({
 				file: 'src/test/fixtures/typescript/index.ts',
 				startLine: 30,
 				endLine: 32,
 				symbol: 'myCaller',
+				code: 'function myCaller() {\n  myCallee();\n}',
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L30-L32',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { outgoing } = await new Connect(mark).getCalls([]);
+			const calleeMark = new Mark({
+				file: 'src/test/fixtures/typescript/index.ts',
+				startLine: 26,
+				endLine: 28,
+				symbol: 'myCallee',
+				link: 'code-trail:src/test/fixtures/typescript/index.ts#L26-L28',
+				exportedAt: new Date('2026-01-01T00:00:00Z'),
+			});
+			const { outgoing } = await new Connect(callerMark).getCalls([calleeMark]);
 			const keys = [...outgoing];
 			assert.ok(
 				keys.some((k) => k.includes('myCallee')),
@@ -123,7 +132,7 @@ suite('connect', () => {
 			this.timeout(10000);
 			const doc = await openFixture('typescript/index.ts');
 			await waitForSymbols(doc.uri);
-			const mark = new Mark({
+			const calleeMark = new Mark({
 				file: 'src/test/fixtures/typescript/index.ts',
 				startLine: 26,
 				endLine: 28,
@@ -131,7 +140,15 @@ suite('connect', () => {
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L26-L28',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { incoming } = await new Connect(mark).getCalls([]);
+			const callerMark = new Mark({
+				file: 'src/test/fixtures/typescript/index.ts',
+				startLine: 30,
+				endLine: 32,
+				symbol: 'myCaller',
+				link: 'code-trail:src/test/fixtures/typescript/index.ts#L30-L32',
+				exportedAt: new Date('2026-01-01T00:00:00Z'),
+			});
+			const { incoming } = await new Connect(calleeMark).getCalls([callerMark]);
 			const keys = [...incoming];
 			assert.ok(
 				keys.some((k) => k.includes('myCaller')),
