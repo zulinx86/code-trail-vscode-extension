@@ -197,9 +197,7 @@ export class Connect {
 			if (this.mark.symbol) {
 				const symbol = await Symbol.findSymbolByName(uri, this.mark.symbol);
 				if (!symbol) {
-					log(
-						`Connect.getIncoming: symbol '${this.mark.symbol}' not found`,
-					);
+					log(`Connect.getIncoming: symbol '${this.mark.symbol}' not found`);
 					return incoming;
 				}
 				pos = symbol.selectionRange.start;
@@ -219,10 +217,7 @@ export class Connect {
 			// Group candidate marks by file path for efficient lookup
 			const fileToMarks = new Map<string, Mark[]>();
 			for (const m of candidateMarks) {
-				const absPath = path.resolve(
-					workspaceFolder!.uri.fsPath,
-					m.file,
-				);
+				const absPath = path.resolve(workspaceFolder!.uri.fsPath, m.file);
 				const existing = fileToMarks.get(absPath) ?? [];
 				existing.push(m);
 				fileToMarks.set(absPath, existing);
@@ -241,9 +236,7 @@ export class Connect {
 						for (const key of helper.keys) {
 							incoming.add(key);
 						}
-						log(
-							`Connect.getIncoming: reference at L${refLine} in ${m.id}`,
-						);
+						log(`Connect.getIncoming: reference at L${refLine} in ${m.id}`);
 					}
 				}
 			}
