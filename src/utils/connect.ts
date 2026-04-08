@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { Mark } from './mark';
+import { Symbol } from './symbol';
 import { log } from './logger';
 import { workspaceFolder } from '../config';
 
@@ -67,9 +68,7 @@ export class Connect {
 		incoming: Set<string>;
 	}> {
 		const outgoing = await this.getOutgoing(candidateMarks);
-		const incoming = new Set<string>();
-
-		// TODO: Task 3 - Reference Provider incoming detection
+		const incoming = await this.getIncoming(candidateMarks);
 
 		log(
 			`Connect.getCalls: outgoing=[${[...outgoing].join(', ')}] incoming=[${[...incoming].join(', ')}]`,
@@ -179,6 +178,78 @@ export class Connect {
 		await Promise.all(verifications);
 
 		return outgoing;
+	}
+
+	/**
+	 * Detects incoming calls by using the Reference Provider on the current
+	 * mark's symbol, then checking if any references fall within other marks' ranges.
+	 */
+	private async getIncoming(candidateMarks: Mark[]): Promise<Set<string>> {
+		const incoming = new Set<string>();
+
+		const uri = vscode.Uri.joinPath(workspaceFolder!.uri, this.mark.file);
+
+		try {
+			// Resolve position for Reference Provider
+			let pos: vscode.Position;
+			if (this.mark.symbol) {
+				const symbol = await Symbol.findSymbolByName(uri, this.mark.symbol);
+				if (!symbol) {
+					log(
+						`Connect.getIncoming: symbol '${this.mark.symbol}' not found`,
+					);
+					return incoming;
+				}
+				pos = symbol.selectionRange.start;
+			} else {
+				pos = new vscode.Position(this.mark.startLine - 1, 0);
+			}
+
+			const references = await vscode.commands.executeCommand<
+				vscode.Location[]
+			>('vscode.executeReferenceProvider', uri, pos);
+			if (!references?.length) {
+				log('Connect.getIncoming: no references found');
+				return incoming;
+			}
+			log(`Connect.getIncoming: ${references.length} references found`);
+
+			// Group candidate marks by file path for efficient lookup
+			const fileToMarks = new Map<string, Mark[]>();
+			for (const m of candidateMarks) {
+				const absPath = path.resolve(
+					workspaceFolder!.uri.fsPath,
+					m.file,
+				);
+				const existing = fileToMarks.get(absPath) ?? [];
+				existing.push(m);
+				fileToMarks.set(absPath, existing);
+			}
+
+			// Check each reference against candidate marks
+			for (const ref of references) {
+				const marksInFile = fileToMarks.get(ref.uri.fsPath);
+				if (!marksInFile) continue;
+
+				// 1-based line number for comparison with mark's startLine/endLine
+				const refLine = ref.range.start.line + 1;
+				for (const m of marksInFile) {
+					if (refLine >= m.startLine && refLine <= m.endLine) {
+						const helper = new MarkHelper(m);
+						for (const key of helper.keys) {
+							incoming.add(key);
+						}
+						log(
+							`Connect.getIncoming: reference at L${refLine} in ${m.id}`,
+						);
+					}
+				}
+			}
+		} catch (e) {
+			log(`Connect.getIncoming: error ${e}`);
+		}
+
+		return incoming;
 	}
 
 	getSuggestions(
