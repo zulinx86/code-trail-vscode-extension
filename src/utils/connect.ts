@@ -118,7 +118,9 @@ export class Connect {
 			symbolToMarks.set(lastSegment, existing);
 		}
 
-		const matches = Connect.scanForSymbols(codeString, [...symbolToMarks.keys()]);
+		const matches = Connect.scanForSymbols(codeString, [
+			...symbolToMarks.keys(),
+		]);
 		log(
 			`Connect.getOutgoing: text scan found [${[...matches.keys()].join(', ')}]`,
 		);
@@ -132,15 +134,14 @@ export class Connect {
 					const codeBeforeMatch = codeString.substring(0, charOffset);
 					const linesBeforeMatch = codeBeforeMatch.split('\n');
 					const lineOffset = linesBeforeMatch.length - 1;
-					const charPos =
-						linesBeforeMatch[linesBeforeMatch.length - 1].length;
+					const charPos = linesBeforeMatch[linesBeforeMatch.length - 1].length;
 					const pos = new vscode.Position(
 						this.mark.startLine - 1 + lineOffset,
 						charPos,
 					);
 
 					const definitions = await vscode.commands.executeCommand<
-						vscode.Location[]
+						(vscode.Location | vscode.LocationLink)[]
 					>('vscode.executeDefinitionProvider', uri, pos);
 					if (!definitions?.length) {
 						log(
@@ -155,9 +156,10 @@ export class Connect {
 							workspaceFolder!.uri.fsPath,
 							candidateMark.file,
 						);
-						const match = definitions.some(
-							(def) => def.uri.fsPath === candidateFile,
-						);
+						const match = definitions.some((def) => {
+							const defUri = 'targetUri' in def ? def.targetUri : def.uri;
+							return defUri.fsPath === candidateFile;
+						});
 						if (match) {
 							const helper = new MarkHelper(candidateMark);
 							for (const key of helper.keys) {
