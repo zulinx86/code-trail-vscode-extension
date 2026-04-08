@@ -6,49 +6,48 @@ import {
 	Connect,
 	ConnectSuggestion,
 	ConnectSuggestions,
-	scanForSymbols,
 } from '../../utils/connect';
 import { Mark } from '../../utils/mark';
 import type { MarkArgs } from '../../utils/mark';
 import { openFixture, waitForSymbols } from '../helpers';
 
 suite('connect', () => {
-	suite('scanForSymbols', () => {
+	suite('Connect.scanForSymbols', () => {
 		test('should match whole symbol names', () => {
 			const code = 'do_read(buf, len);';
-			const result = scanForSymbols(code, ['do_read']);
+			const result = Connect.scanForSymbols(code, ['do_read']);
 			assert.strictEqual(result.size, 1);
 			assert.strictEqual(result.get('do_read'), 0);
 		});
 
 		test('should not match partial symbol names', () => {
 			const code = 'do_read_async(buf);';
-			const result = scanForSymbols(code, ['do_read']);
+			const result = Connect.scanForSymbols(code, ['do_read']);
 			assert.strictEqual(result.size, 0);
 		});
 
 		test('should return first occurrence offset', () => {
 			const code = 'x = foo(); y = foo();';
-			const result = scanForSymbols(code, ['foo']);
+			const result = Connect.scanForSymbols(code, ['foo']);
 			assert.strictEqual(result.size, 1);
 			assert.strictEqual(result.get('foo'), 4);
 		});
 
 		test('should match multiple different symbols', () => {
 			const code = 'foo(); bar(); baz();';
-			const result = scanForSymbols(code, ['foo', 'bar']);
+			const result = Connect.scanForSymbols(code, ['foo', 'bar']);
 			assert.strictEqual(result.size, 2);
 			assert.ok(result.has('foo'));
 			assert.ok(result.has('bar'));
 		});
 
 		test('should return empty map for empty code', () => {
-			const result = scanForSymbols('', ['foo']);
+			const result = Connect.scanForSymbols('', ['foo']);
 			assert.strictEqual(result.size, 0);
 		});
 
 		test('should return empty map for empty candidates', () => {
-			const result = scanForSymbols('foo(); bar();', []);
+			const result = Connect.scanForSymbols('foo(); bar();', []);
 			assert.strictEqual(result.size, 0);
 		});
 	});
@@ -112,7 +111,7 @@ suite('connect', () => {
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L30-L32',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { outgoing } = await new Connect(mark).getCalls();
+			const { outgoing } = await new Connect(mark).getCalls([]);
 			const keys = [...outgoing];
 			assert.ok(
 				keys.some((k) => k.includes('myCallee')),
@@ -132,7 +131,7 @@ suite('connect', () => {
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L26-L28',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { incoming } = await new Connect(mark).getCalls();
+			const { incoming } = await new Connect(mark).getCalls([]);
 			const keys = [...incoming];
 			assert.ok(
 				keys.some((k) => k.includes('myCaller')),
@@ -151,7 +150,7 @@ suite('connect', () => {
 				link: 'code-trail:src/test/fixtures/typescript/index.ts#L1-L1',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { outgoing, incoming } = await new Connect(mark).getCalls();
+			const { outgoing, incoming } = await new Connect(mark).getCalls([]);
 			assert.strictEqual(outgoing.size, 0);
 			assert.strictEqual(incoming.size, 0);
 		});

@@ -38,7 +38,7 @@ suite('connect (Rust)', () => {
 				link: 'code-trail:src/test/fixtures/rust/src/lib.rs#L34-L36',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { outgoing } = await new Connect(mark).getCalls();
+			const { outgoing } = await new Connect(mark).getCalls([]);
 			const keys = [...outgoing];
 			assert.ok(
 				keys.some((k) => k.includes('my_callee')),
@@ -60,7 +60,7 @@ suite('connect (Rust)', () => {
 				link: 'code-trail:src/test/fixtures/rust/src/lib.rs#L30-L32',
 				exportedAt: new Date('2026-01-01T00:00:00Z'),
 			});
-			const { incoming } = await new Connect(mark).getCalls();
+			const { incoming } = await new Connect(mark).getCalls([]);
 			const keys = [...incoming];
 			assert.ok(
 				keys.some((k) => k.includes('my_caller')),
@@ -100,7 +100,7 @@ suite('connect (Rust)', () => {
 			);
 
 			const connect = new Connect(callerMark);
-			const { outgoing, incoming } = await connect.getCalls();
+			const { outgoing, incoming } = await connect.getCalls([]);
 			const marks = await Mark.getAll();
 			const suggestions = connect.getSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);
@@ -131,7 +131,7 @@ suite('connect (Rust)', () => {
 			);
 
 			const connect = new Connect(calleeMark);
-			const { outgoing, incoming } = await connect.getCalls();
+			const { outgoing, incoming } = await connect.getCalls([]);
 			const marks = await Mark.getAll();
 			const suggestions = connect.getSuggestions(marks, outgoing, incoming);
 			const suggested = suggestions.filter((s) => s.suggested);

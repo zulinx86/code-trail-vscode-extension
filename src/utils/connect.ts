@@ -1,28 +1,8 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { Mark } from './mark';
 import { log } from './logger';
-
-/**
- * Scans code text for word-boundary matches of candidate symbol names.
- * Returns a map from symbol name to the 0-based character offset of the first occurrence.
- */
-export function scanForSymbols(
-	code: string,
-	candidateSymbols: string[],
-): Map<string, number> {
-	const result = new Map<string, number>();
-	for (const symbol of candidateSymbols) {
-		// Use \b (word boundary) to match whole symbols only.
-		// \b matches the boundary between a word char [a-zA-Z0-9_] and a non-word char.
-		// e.g. \bread\b matches "read(buf)" but not "readFile" or "__kvm_read".
-		const regex = new RegExp(`\\b${symbol}\\b`);
-		const match = regex.exec(code);
-		if (match) {
-			result.set(symbol, match.index);
-		}
-	}
-	return result;
-}
+import { workspaceFolder } from '../config';
 
 export class Connect {
 	constructor(readonly mark: Mark) {}
@@ -35,7 +15,7 @@ export class Connect {
 			return;
 		}
 
-		const { outgoing, incoming } = await this.getCalls();
+		const { outgoing, incoming } = await this.getCalls(marks);
 		const suggestions = this.getSuggestions(marks, outgoing, incoming);
 		const quickPickItems = new ConnectSuggestions(
 			suggestions,
@@ -82,20 +62,123 @@ export class Connect {
 		);
 	}
 
-	async getCalls(): Promise<{
+	async getCalls(candidateMarks: Mark[]): Promise<{
 		outgoing: Set<string>;
 		incoming: Set<string>;
 	}> {
-		const outgoing = new Set<string>();
+		const outgoing = await this.getOutgoing(candidateMarks);
 		const incoming = new Set<string>();
 
-		// TODO: Task 2 - text-based outgoing detection
 		// TODO: Task 3 - Reference Provider incoming detection
 
 		log(
 			`Connect.getCalls: outgoing=[${[...outgoing].join(', ')}] incoming=[${[...incoming].join(', ')}]`,
 		);
 		return { outgoing, incoming };
+	}
+
+	/**
+	 * Scans code text for word-boundary matches of candidate symbol names.
+	 * Returns a map from symbol name to the 0-based character offset of the first occurrence.
+	 */
+	static scanForSymbols(
+		codeString: string,
+		candidateSymbols: string[],
+	): Map<string, number> {
+		const result = new Map<string, number>();
+		for (const symbol of candidateSymbols) {
+			// Use \b (word boundary) to match whole symbols only.
+			// \b matches the boundary between a word char [a-zA-Z0-9_] and a non-word char.
+			// e.g. \bread\b matches "read(buf)" but not "readFile" or "__kvm_read".
+			const regex = new RegExp(`\\b${symbol}\\b`);
+			const match = regex.exec(codeString);
+			if (match) {
+				result.set(symbol, match.index);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Detects outgoing calls by scanning the current mark's code for other marks'
+	 * symbol names, then verifying each match with the Definition Provider.
+	 */
+	private async getOutgoing(candidateMarks: Mark[]): Promise<Set<string>> {
+		const outgoing = new Set<string>();
+		const codeString = this.mark.code;
+		if (!codeString) return outgoing;
+
+		// Build a map from last segment of symbol name to candidate marks.
+		// Multiple marks can share the same symbol name (e.g. init() in different files).
+		const symbolToMarks = new Map<string, Mark[]>();
+		for (const m of candidateMarks) {
+			if (!m.symbol) continue;
+			const lastSegment = m.symbol.split('.').pop()!;
+			const existing = symbolToMarks.get(lastSegment) ?? [];
+			existing.push(m);
+			symbolToMarks.set(lastSegment, existing);
+		}
+
+		const matches = Connect.scanForSymbols(codeString, [...symbolToMarks.keys()]);
+		log(
+			`Connect.getOutgoing: text scan found [${[...matches.keys()].join(', ')}]`,
+		);
+
+		// Verify each match with Definition Provider in parallel
+		const uri = vscode.Uri.joinPath(workspaceFolder!.uri, this.mark.file);
+		const verifications = [...matches.entries()].map(
+			async ([symbolName, charOffset]) => {
+				try {
+					// Convert character offset in the code string to a position in the source file
+					const codeBeforeMatch = codeString.substring(0, charOffset);
+					const linesBeforeMatch = codeBeforeMatch.split('\n');
+					const lineOffset = linesBeforeMatch.length - 1;
+					const charPos =
+						linesBeforeMatch[linesBeforeMatch.length - 1].length;
+					const pos = new vscode.Position(
+						this.mark.startLine - 1 + lineOffset,
+						charPos,
+					);
+
+					const definitions = await vscode.commands.executeCommand<
+						vscode.Location[]
+					>('vscode.executeDefinitionProvider', uri, pos);
+					if (!definitions?.length) {
+						log(
+							`Connect.getOutgoing: no definition for ${symbolName} at L${pos.line + 1}`,
+						);
+						return;
+					}
+
+					// Check each candidate mark with the same symbol name
+					for (const candidateMark of symbolToMarks.get(symbolName)!) {
+						const candidateFile = path.resolve(
+							workspaceFolder!.uri.fsPath,
+							candidateMark.file,
+						);
+						const match = definitions.some(
+							(def) => def.uri.fsPath === candidateFile,
+						);
+						if (match) {
+							const helper = new MarkHelper(candidateMark);
+							for (const key of helper.keys) {
+								outgoing.add(key);
+							}
+							log(
+								`Connect.getOutgoing: verified ${symbolName} -> ${candidateMark.id}`,
+							);
+						}
+					}
+				} catch (e) {
+					log(
+						`Connect.getOutgoing: definition provider error for ${symbolName}: ${e}`,
+					);
+				}
+			},
+		);
+		await Promise.all(verifications);
+
+		return outgoing;
 	}
 
 	getSuggestions(
