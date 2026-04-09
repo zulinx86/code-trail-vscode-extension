@@ -36,14 +36,15 @@
 			});
 
 			// Constants injected from graph.ts via showGraph.ts
-			var PADDING = {{PADDING}};
 			var CODE_FONT_SIZE = {{CODE_FONT_SIZE}};
+			var CODE_PADDING = {{CODE_PADDING}};
 			var CODE_LINE_HEIGHT = {{CODE_LINE_HEIGHT}};
 			var CODE_CHAR_WIDTH = {{CODE_CHAR_WIDTH}};
 			var HEADER_FONT_SIZE = {{HEADER_FONT_SIZE}};
 			var HEADER_HEIGHT = {{HEADER_HEIGHT}};
 			var HEADER_CHAR_WIDTH = {{HEADER_CHAR_WIDTH}};
 			var TITLE_FONT_SIZE = {{TITLE_FONT_SIZE}};
+			var TITLE_PADDING = {{TITLE_PADDING}};
 			var LABEL_FONT_SIZE = {{LABEL_FONT_SIZE}};
 			var LABEL_GAP = {{LABEL_GAP}};
 
@@ -61,7 +62,7 @@
 				if (node.expanded) {
 					return { w: node.width, h: node.height };
 				}
-				var headerWidth = HEADER_CHAR_WIDTH * node.header.length + PADDING * 2;
+				var headerWidth = HEADER_CHAR_WIDTH * node.header.length + CODE_PADDING * 2;
 				return { w: Math.max(headerWidth, 60), h: HEADER_HEIGHT };
 			}
 
@@ -102,7 +103,7 @@
 				ctx.font = HEADER_FONT_SIZE + 'px monospace';
 				ctx.textBaseline = 'middle';
 				ctx.textAlign = 'left';
-				ctx.fillText(node.header, left + PADDING, top + HEADER_HEIGHT / 2);
+				ctx.fillText(node.header, left + CODE_PADDING, top + HEADER_HEIGHT / 2);
 
 				if (node.expanded && node.code) {
 					var codeTop = top + HEADER_HEIGHT;
@@ -132,7 +133,7 @@
 					ctx.font = CODE_FONT_SIZE + 'px monospace';
 					var lines = node.code.split(NEWLINE);
 					for (var i = 0; i < lines.length; i++) {
-						ctx.fillText(lines[i], left + PADDING, codeTop + PADDING + i * CODE_LINE_HEIGHT + CODE_FONT_SIZE / 2);
+						ctx.fillText(lines[i], left + CODE_PADDING, codeTop + CODE_PADDING + i * CODE_LINE_HEIGHT + CODE_FONT_SIZE / 2);
 					}
 				}
 			}

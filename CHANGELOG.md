@@ -6,6 +6,10 @@
 
 - Graph now displays target nodes in the same order as the `uses` list (top to bottom)
 
+### Changed
+
+- Graph node padding now scales with font size instead of using a fixed value
+
 ## [0.1.7]
 
 ### Changed

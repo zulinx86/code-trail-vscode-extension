@@ -28,14 +28,15 @@ export interface GraphData {
 }
 
 export class GraphFonts {
-	readonly PADDING: number = 12;
 	readonly CODE_FONT_SIZE: number;
+	readonly CODE_PADDING: number;
 	readonly CODE_LINE_HEIGHT: number;
 	readonly CODE_CHAR_WIDTH: number;
 	readonly HEADER_FONT_SIZE: number;
 	readonly HEADER_HEIGHT: number;
 	readonly HEADER_CHAR_WIDTH: number;
 	readonly TITLE_FONT_SIZE: number;
+	readonly TITLE_PADDING: number;
 	readonly TITLE_HEIGHT: number;
 	readonly TITLE_CHAR_WIDTH: number;
 	readonly LABEL_FONT_SIZE: number;
@@ -48,27 +49,30 @@ export class GraphFonts {
 		labelFontSize: number,
 	) {
 		this.CODE_FONT_SIZE = codeFrontSize ?? 18;
+		this.CODE_PADDING = Math.round(this.CODE_FONT_SIZE * 0.67);
 		this.CODE_LINE_HEIGHT = this.CODE_FONT_SIZE * 1.4;
 		this.CODE_CHAR_WIDTH = this.CODE_FONT_SIZE * 0.62;
 		this.HEADER_FONT_SIZE = headerFontSize ?? 20;
-		this.HEADER_HEIGHT = this.HEADER_FONT_SIZE + this.PADDING * 2;
+		this.HEADER_HEIGHT = this.HEADER_FONT_SIZE + this.CODE_PADDING * 2;
 		this.HEADER_CHAR_WIDTH = this.HEADER_FONT_SIZE * 0.62;
 		this.TITLE_FONT_SIZE = titleFontSize ?? 32;
-		this.TITLE_HEIGHT = this.TITLE_FONT_SIZE + this.PADDING * 2;
+		this.TITLE_PADDING = Math.round(this.TITLE_FONT_SIZE * 0.67);
+		this.TITLE_HEIGHT = this.TITLE_FONT_SIZE + this.TITLE_PADDING * 2;
 		this.TITLE_CHAR_WIDTH = this.TITLE_FONT_SIZE * 0.62;
 		this.LABEL_FONT_SIZE = labelFontSize ?? 14;
 	}
 
 	dump(): Record<string, number> {
 		return {
-			PADDING: this.PADDING,
 			CODE_FONT_SIZE: this.CODE_FONT_SIZE,
+			CODE_PADDING: this.CODE_PADDING,
 			CODE_LINE_HEIGHT: this.CODE_LINE_HEIGHT,
 			CODE_CHAR_WIDTH: this.CODE_CHAR_WIDTH,
 			HEADER_FONT_SIZE: this.HEADER_FONT_SIZE,
 			HEADER_HEIGHT: this.HEADER_HEIGHT,
 			HEADER_CHAR_WIDTH: this.HEADER_CHAR_WIDTH,
 			TITLE_FONT_SIZE: this.TITLE_FONT_SIZE,
+			TITLE_PADDING: this.TITLE_PADDING,
 			TITLE_HEIGHT: this.TITLE_HEIGHT,
 			TITLE_CHAR_WIDTH: this.TITLE_CHAR_WIDTH,
 			LABEL_FONT_SIZE: this.LABEL_FONT_SIZE,
@@ -217,12 +221,13 @@ export class Graph {
 	): { width: number; height: number } {
 		if (isTitle) {
 			const width =
-				cfg.fonts.TITLE_CHAR_WIDTH * header.length + cfg.fonts.PADDING * 2;
+				cfg.fonts.TITLE_CHAR_WIDTH * header.length +
+				cfg.fonts.TITLE_PADDING * 2;
 			return { width: Math.max(width, 60), height: cfg.fonts.TITLE_HEIGHT };
 		}
 
 		const headerWidth =
-			cfg.fonts.HEADER_CHAR_WIDTH * header.length + cfg.fonts.PADDING * 2;
+			cfg.fonts.HEADER_CHAR_WIDTH * header.length + cfg.fonts.CODE_PADDING * 2;
 		if (!code) {
 			return {
 				width: Math.max(headerWidth, 60),
@@ -238,10 +243,11 @@ export class Graph {
 			}
 		}
 		const codeWidth =
-			cfg.fonts.CODE_CHAR_WIDTH * maxLineLen + cfg.fonts.PADDING * 2;
+			cfg.fonts.CODE_CHAR_WIDTH * maxLineLen + cfg.fonts.CODE_PADDING * 2;
 		const codeHeight =
-			cfg.fonts.CODE_LINE_HEIGHT * lines.length + cfg.fonts.PADDING * 2;
-		const minCodeWidth = cfg.fonts.CODE_CHAR_WIDTH * 80 + cfg.fonts.PADDING * 2;
+			cfg.fonts.CODE_LINE_HEIGHT * lines.length + cfg.fonts.CODE_PADDING * 2;
+		const minCodeWidth =
+			cfg.fonts.CODE_CHAR_WIDTH * 80 + cfg.fonts.CODE_PADDING * 2;
 		return {
 			width: Math.max(headerWidth, codeWidth, minCodeWidth),
 			height: cfg.fonts.HEADER_HEIGHT + codeHeight,
