@@ -266,13 +266,30 @@ export class Graph {
 				height: node.height,
 			});
 		}
+
+		// Set order on target nodes so that dagre respects the uses
+		// declaration order (top to bottom = first to last).
+		const outgoing = new Map<string, string[]>();
 		for (const edge of edges) {
-			if (g.hasNode(edge.from) && g.hasNode(edge.to)) {
-				g.setEdge(edge.from, edge.to);
+			// Set edge
+			if (!g.hasNode(edge.from) || !g.hasNode(edge.to)) continue;
+			g.setEdge(edge.from, edge.to);
+
+			// Build outgoing
+			let targets = outgoing.get(edge.from);
+			if (!targets) {
+				targets = [];
+				outgoing.set(edge.from, targets);
+			}
+			targets.push(edge.to);
+		}
+		for (const targets of outgoing.values()) {
+			for (let i = 0; i < targets.length; i++) {
+				g.node(targets[i]).order = i;
 			}
 		}
 
-		dagre.layout(g);
+		dagre.layout(g, { disableOptimalOrderHeuristic: true });
 
 		return nodes.map((node) => {
 			const pos = g.node(node.id);

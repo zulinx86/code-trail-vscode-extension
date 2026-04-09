@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.8]
+
+### Fixed
+
+- Graph now displays target nodes in the same order as the `uses` list (top to bottom)
+
 ## [0.1.7]
 
 ### Changed

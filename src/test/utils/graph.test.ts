@@ -201,5 +201,39 @@ suite('graph', () => {
 			assert.strictEqual(graph.data.nodes.length, 0);
 			assert.strictEqual(graph.data.edges.length, 0);
 		});
+
+		test('should order target nodes by uses declaration order', async () => {
+			const markArgsC: MarkArgs = {
+				file: 'src/c.ts',
+				startLine: 1,
+				endLine: 3,
+				link: 'code-trail:src/c.ts#L1-L3',
+				exportedAt: new Date('2026-03-22T12:35:04Z'),
+				symbol: 'c',
+				symbolKind: 'function',
+				code: 'function c() {}',
+			};
+
+			const markA = new Mark(markArgsA);
+			const markB = new Mark(markArgsB);
+			const markC = new Mark(markArgsC);
+			await markA.save();
+			await markB.save();
+			await markC.save();
+
+			// A uses B then C — B should appear above C in the graph.
+			await markA.connect('uses', markB.id);
+			await markA.connect('uses', markC.id);
+
+			const marks = await Mark.getAll();
+			const graph = Graph.fromMarks(marks);
+
+			const nodeB = graph.data.nodes.find((n) => n.id === markB.id)!;
+			const nodeC = graph.data.nodes.find((n) => n.id === markC.id)!;
+			assert.ok(
+				nodeB.y < nodeC.y,
+				`B.y (${nodeB.y}) should be less than C.y (${nodeC.y})`,
+			);
+		});
 	});
 });
