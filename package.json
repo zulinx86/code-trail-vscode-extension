@@ -132,6 +132,7 @@
 		"pretest": "rm -rf out && npm run compile-tests && npm run compile",
 		"test": "vscode-test --coverage --coverage-reporter html",
 		"install-local": "npx @vscode/vsce package && code --install-extension zulinx86-code-trail-0.1.8.vsix",
+		"install-local:kiro": "npx @vscode/vsce package && kiro --install-extension zulinx86-code-trail-0.1.8.vsix",
 		"bump": "npm install --package-lock-only",
 		"publish": "npm run publish:vsce && npm run publish:ovsx",
 		"publish:vsce": "npx @vscode/vsce publish -p $VSCE_PAT",
