@@ -273,9 +273,8 @@ export class Graph {
 			});
 		}
 
-		// Set order on target nodes so that dagre respects the uses
-		// declaration order (top to bottom = first to last).
 		const outgoing = new Map<string, string[]>();
+		const incoming = new Map<string, string[]>();
 		for (const edge of edges) {
 			// Set edge
 			if (!g.hasNode(edge.from) || !g.hasNode(edge.to)) continue;
@@ -288,10 +287,32 @@ export class Graph {
 				outgoing.set(edge.from, targets);
 			}
 			targets.push(edge.to);
+
+			// Build incoming
+			let sources = incoming.get(edge.to);
+			if (!sources) {
+				sources = [];
+				incoming.set(edge.to, sources);
+			}
+			sources.push(edge.from);
 		}
+
+		// 1) Target-side order: nodes that share a source are ordered by
+		//    the uses list declaration order.
 		for (const targets of outgoing.values()) {
 			for (let i = 0; i < targets.length; i++) {
 				g.node(targets[i]).order = i;
+			}
+		}
+
+		// 2) Source-side order: nodes that share a target are grouped
+		//    together. Only set order on nodes that don't already have one
+		//    so we don't override the target-side order from step 1.
+		for (const sources of incoming.values()) {
+			for (let i = 0; i < sources.length; i++) {
+				if (g.node(sources[i]).order === undefined) {
+					g.node(sources[i]).order = i;
+				}
 			}
 		}
 

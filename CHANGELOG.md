@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.11]
+
+### Fixed
+
+- Group source nodes that share a common target together in graph layout
+
 ## [0.1.10]
 
 ### Fixed

@@ -180,6 +180,17 @@ suite('graph', () => {
 			code: 'function b() {}',
 		};
 
+		const markArgsC: MarkArgs = {
+			file: 'src/c.ts',
+			startLine: 1,
+			endLine: 3,
+			link: 'code-trail:src/c.ts#L1-L3',
+			exportedAt: new Date('2026-03-22T12:35:04Z'),
+			symbol: 'c',
+			symbolKind: 'function',
+			code: 'function c() {}',
+		};
+
 		test('should return nodes and edges from marks', async () => {
 			const markA = new Mark(markArgsA);
 			await markA.save();
@@ -203,17 +214,6 @@ suite('graph', () => {
 		});
 
 		test('should order target nodes by uses declaration order', async () => {
-			const markArgsC: MarkArgs = {
-				file: 'src/c.ts',
-				startLine: 1,
-				endLine: 3,
-				link: 'code-trail:src/c.ts#L1-L3',
-				exportedAt: new Date('2026-03-22T12:35:04Z'),
-				symbol: 'c',
-				symbolKind: 'function',
-				code: 'function c() {}',
-			};
-
 			const markA = new Mark(markArgsA);
 			const markB = new Mark(markArgsB);
 			const markC = new Mark(markArgsC);
@@ -233,6 +233,48 @@ suite('graph', () => {
 			assert.ok(
 				nodeB.y < nodeC.y,
 				`B.y (${nodeB.y}) should be less than C.y (${nodeC.y})`,
+			);
+		});
+
+		test('should group source nodes that share a common target', async () => {
+			// A -> X, B -> X, C is isolated.
+			// A and B should be adjacent (no C between them).
+			const markArgsX: MarkArgs = {
+				file: 'src/x.ts',
+				startLine: 1,
+				endLine: 3,
+				link: 'code-trail:src/x.ts#L1-L3',
+				exportedAt: new Date('2026-03-22T12:35:08Z'),
+				symbol: 'x',
+				symbolKind: 'function',
+				code: 'function x() {}',
+			};
+
+			const markA = new Mark(markArgsA);
+			const markB = new Mark(markArgsB);
+			const markC = new Mark(markArgsC);
+			const markX = new Mark(markArgsX);
+			await markA.save();
+			await markB.save();
+			await markC.save();
+			await markX.save();
+
+			await markA.connect('uses', markX.id);
+			await markB.connect('uses', markX.id);
+
+			const marks = await Mark.getAll();
+			const graph = Graph.fromMarks(marks);
+
+			const nodeA = graph.data.nodes.find((n) => n.id === markA.id)!;
+			const nodeB = graph.data.nodes.find((n) => n.id === markB.id)!;
+			const nodeC = graph.data.nodes.find((n) => n.id === markC.id)!;
+
+			// C should not be between A and B vertically.
+			const minAB = Math.min(nodeA.y, nodeB.y);
+			const maxAB = Math.max(nodeA.y, nodeB.y);
+			assert.ok(
+				nodeC.y <= minAB || nodeC.y >= maxAB,
+				`C.y (${nodeC.y}) should not be between A.y (${nodeA.y}) and B.y (${nodeB.y})`,
 			);
 		});
 	});
