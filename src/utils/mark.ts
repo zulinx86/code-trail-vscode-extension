@@ -125,7 +125,7 @@ export class Mark {
 		const text = Buffer.from(await vscode.workspace.fs.readFile(uri)).toString(
 			'utf-8',
 		);
-		return Mark.fromText(text);
+		return Mark.fromText(text, uri);
 	}
 
 	static async fromFile(relativePath: string): Promise<Mark | undefined> {

@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.9]
+
+### Fixed
+
+- Fix duplicate mark detection opening an Untitled tab instead of the existing mark file
+
 ## [0.1.8]
 
 ### Fixed
