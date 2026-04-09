@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.12]
+
+### Changed
+
+- Re-enable dagre's crossing-minimisation heuristic for graph layout, reducing edge crossings in large graphs. The `uses` declaration order is now provided as a best-effort hint rather than a strict constraint.
+
 ## [0.1.11]
 
 ### Fixed

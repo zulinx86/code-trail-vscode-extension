@@ -274,49 +274,27 @@ export class Graph {
 		}
 
 		const outgoing = new Map<string, string[]>();
-		const incoming = new Map<string, string[]>();
 		for (const edge of edges) {
-			// Set edge
 			if (!g.hasNode(edge.from) || !g.hasNode(edge.to)) continue;
 			g.setEdge(edge.from, edge.to);
 
-			// Build outgoing
 			let targets = outgoing.get(edge.from);
 			if (!targets) {
 				targets = [];
 				outgoing.set(edge.from, targets);
 			}
 			targets.push(edge.to);
-
-			// Build incoming
-			let sources = incoming.get(edge.to);
-			if (!sources) {
-				sources = [];
-				incoming.set(edge.to, sources);
-			}
-			sources.push(edge.from);
 		}
 
-		// 1) Target-side order: nodes that share a source are ordered by
-		//    the uses list declaration order.
+		// Hint dagre with the uses declaration order. The heuristic may
+		// override this if it reduces edge crossings.
 		for (const targets of outgoing.values()) {
 			for (let i = 0; i < targets.length; i++) {
 				g.node(targets[i]).order = i;
 			}
 		}
 
-		// 2) Source-side order: nodes that share a target are grouped
-		//    together. Only set order on nodes that don't already have one
-		//    so we don't override the target-side order from step 1.
-		for (const sources of incoming.values()) {
-			for (let i = 0; i < sources.length; i++) {
-				if (g.node(sources[i]).order === undefined) {
-					g.node(sources[i]).order = i;
-				}
-			}
-		}
-
-		dagre.layout(g, { disableOptimalOrderHeuristic: true });
+		dagre.layout(g);
 
 		return nodes.map((node) => {
 			const pos = g.node(node.id);
