@@ -5,6 +5,7 @@
 ### Fixed
 
 - Group source nodes that share a common target together in graph layout
+- Prevent graph panel from jumping back to main window when reopened after being dragged to a separate window
 
 ## [0.1.10]
 

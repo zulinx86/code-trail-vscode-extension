@@ -15,7 +15,7 @@ export async function showGraph(
 
 	// If an existing panel is still alive, reveal it and refresh its content.
 	if (existingPanel) {
-		existingPanel.reveal(vscode.ViewColumn.One);
+		existingPanel.reveal();
 		await refreshGraph(existingPanel);
 		return existingPanel;
 	}
