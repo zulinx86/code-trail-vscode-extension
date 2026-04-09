@@ -256,6 +256,8 @@ ${this.code}
 
 	static async getAll(): Promise<Mark[]> {
 		const uris = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
+		// Sort by file path so that the order is deterministic across reloads.
+		uris.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
 		log(`Mark.getAll: found ${uris.length} files in ${OUTPUT_DIR}/`);
 		const marks = await Promise.all(
 			uris.map(async (uri) => {

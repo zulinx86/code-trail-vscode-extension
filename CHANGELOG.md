@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.10]
+
+### Fixed
+
+- Sort mark files before building graph to produce deterministic layout across reloads
+
 ## [0.1.9]
 
 ### Fixed
