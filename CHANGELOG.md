@@ -9,6 +9,7 @@
 ### Changed
 
 - Prompt to open existing mark or create new one instead of unconditionally opening the existing mark
+- Reuse existing graph tab instead of opening a new one each time
 
 ## [0.1.8]
 
