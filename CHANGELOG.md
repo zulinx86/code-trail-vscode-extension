@@ -6,6 +6,10 @@
 
 - Fix duplicate mark detection opening an Untitled tab instead of the existing mark file
 
+### Changed
+
+- Prompt to open existing mark or create new one instead of unconditionally opening the existing mark
+
 ## [0.1.8]
 
 ### Fixed

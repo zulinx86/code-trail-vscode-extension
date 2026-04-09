@@ -84,10 +84,21 @@ suite('markCode command', () => {
 		const editor2 = await vscode.window.showTextDocument(doc2);
 		editor2.selection = new vscode.Selection(2, 0, 2, 0);
 
-		// Second mark of same symbol
-		await vscode.commands.executeCommand('codeTrail.markCode');
-		const entries2 = await vscode.workspace.fs.readDirectory(outputDir);
-		const files2 = entries2.filter(([, type]) => type === vscode.FileType.File);
-		assert.strictEqual(files2.length, 1, 'should not create duplicate mark');
+		// Stub showQuickPick to dismiss the duplicate prompt automatically.
+		const original = vscode.window.showQuickPick;
+		(vscode.window as any).showQuickPick = (..._args: any[]) =>
+			Promise.resolve(undefined);
+
+		try {
+			// Second mark of same symbol
+			await vscode.commands.executeCommand('codeTrail.markCode');
+			const entries2 = await vscode.workspace.fs.readDirectory(outputDir);
+			const files2 = entries2.filter(
+				([, type]) => type === vscode.FileType.File,
+			);
+			assert.strictEqual(files2.length, 1, 'should not create duplicate mark');
+		} finally {
+			(vscode.window as any).showQuickPick = original;
+		}
 	});
 });

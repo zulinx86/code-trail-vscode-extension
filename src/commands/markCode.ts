@@ -28,10 +28,34 @@ export async function markCode(): Promise<void> {
 		const existing = await Mark.find(selection.file, selection.symbol);
 		if (existing) {
 			log(`markCode: duplicate mark found ${existing.id}`);
-			vscode.window.showWarningMessage(`Mark already exists: ${existing.id}`);
-			const doc = await vscode.workspace.openTextDocument(existing.uri!);
-			await vscode.window.showTextDocument(doc);
-			return;
+			const choice = await vscode.window.showQuickPick(
+				[
+					{
+						label: '$(file) Open Existing',
+						description: existing.id,
+						value: 'open' as const,
+					},
+					{
+						label: '$(add) Create New',
+						description: 'Create a new mark for this symbol',
+						value: 'create' as const,
+					},
+				],
+				{ placeHolder: `Mark already exists: ${existing.id}` },
+			);
+			switch (choice?.value) {
+				case 'open': {
+					const doc = await vscode.workspace.openTextDocument(existing.uri!);
+					await vscode.window.showTextDocument(doc, { preview: true });
+					return;
+				}
+				case 'create':
+					log('markCode: user chose to create new mark');
+					break;
+				default:
+					log('markCode: duplicate prompt dismissed');
+					return;
+			}
 		}
 	}
 
