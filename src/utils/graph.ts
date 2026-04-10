@@ -145,12 +145,19 @@ export class Graph {
 	static fromMarks(marks: Mark[]) {
 		const cfg = GraphConfig.fromConfig();
 
-		const rawNodes = marks.map((mark) => {
+		const seen = new Set<string>();
+		const rawNodes: Omit<GraphNode, 'x' | 'y'>[] = [];
+		for (const mark of marks) {
+			if (seen.has(mark.id)) {
+				log(`Graph.fromMarks: skipping duplicate node ${mark.id}`);
+				continue;
+			}
+			seen.add(mark.id);
 			const header = Graph.getHeader(mark);
 			const isTitle = mark.symbolKind === 'title';
 			const code = isTitle ? '' : Graph.formatCode(mark.code, mark.file, cfg);
 			const size = Graph.calcNodeSize(header, code, isTitle, cfg);
-			return {
+			rawNodes.push({
 				id: mark.id,
 				header,
 				code,
@@ -159,13 +166,19 @@ export class Graph {
 				isTitle,
 				width: size.width,
 				height: size.height,
-			};
-		});
+			});
+		}
 
 		const edges: GraphEdge[] = [];
+		const nodeIds = new Set(rawNodes.map((n) => n.id));
 		for (const mark of marks) {
 			for (const conn of mark.uses ?? []) {
 				const target = conn.replace(`code-trail:${OUTPUT_DIR}/`, '');
+				if (!nodeIds.has(target)) {
+					log(
+						`Graph.fromMarks: broken edge ${mark.id} -> ${target} (target not found)`,
+					);
+				}
 				edges.push({ from: mark.id, to: target });
 			}
 		}

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.17]
+
+### Fixed
+
+- Skip duplicate node IDs in graph to prevent vis-network crash when multiple marks share the same ID
+- Log broken edges whose target node does not exist instead of silently adding them
+
 ## [0.1.16]
 
 ### Removed
