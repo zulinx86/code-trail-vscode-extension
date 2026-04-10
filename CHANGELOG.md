@@ -10,6 +10,7 @@
 
 - Open graph panel in the active editor column instead of always in the first column
 - Allow opening multiple graph panels side by side instead of reusing a single panel
+- Open mark file from graph Ctrl/Cmd+Click in the active column instead of always in column two
 
 ## [0.1.15]
 

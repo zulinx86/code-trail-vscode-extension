@@ -117,7 +117,6 @@ export async function handleWebviewMessage(msg: any): Promise<void> {
 		if (files.length > 0) {
 			const doc = await vscode.workspace.openTextDocument(files[0]);
 			await vscode.window.showTextDocument(doc, {
-				viewColumn: vscode.ViewColumn.Two,
 				preserveFocus: true,
 			});
 		}
