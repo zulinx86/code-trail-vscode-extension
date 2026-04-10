@@ -12,6 +12,10 @@
 - Allow opening multiple graph panels side by side instead of reusing a single panel
 - Open mark file from graph Ctrl/Cmd+Click in the active column instead of always in column two
 
+### Added
+
+- Prompt for a symbol name when no symbol is found at the cursor during mark creation
+
 ## [0.1.15]
 
 ### Fixed
