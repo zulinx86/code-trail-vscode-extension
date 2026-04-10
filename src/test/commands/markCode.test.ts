@@ -23,7 +23,16 @@ suite('markCode command', () => {
 		});
 		await vscode.window.showTextDocument(doc);
 
-		await vscode.commands.executeCommand('codeTrail.markCode');
+		// No symbol exists, so stub showInputBox to cancel (return undefined).
+		const original = vscode.window.showInputBox;
+		(vscode.window as any).showInputBox = (..._args: any[]) =>
+			Promise.resolve(undefined);
+
+		try {
+			await vscode.commands.executeCommand('codeTrail.markCode');
+		} finally {
+			(vscode.window as any).showInputBox = original;
+		}
 
 		try {
 			await vscode.workspace.fs.stat(outputDir);
@@ -38,7 +47,17 @@ suite('markCode command', () => {
 		const editor = await vscode.window.showTextDocument(doc);
 		editor.selection = new vscode.Selection(1, 0, 2, 5);
 
-		await vscode.commands.executeCommand('codeTrail.markCode');
+		// No symbol exists in plain-text.ts, so stub showInputBox to
+		// provide a symbol name instead of waiting for user input.
+		const original = vscode.window.showInputBox;
+		(vscode.window as any).showInputBox = (..._args: any[]) =>
+			Promise.resolve('testSymbol');
+
+		try {
+			await vscode.commands.executeCommand('codeTrail.markCode');
+		} finally {
+			(vscode.window as any).showInputBox = original;
+		}
 
 		const entries = await vscode.workspace.fs.readDirectory(outputDir);
 		const files = entries.filter(([, type]) => type === vscode.FileType.File);
