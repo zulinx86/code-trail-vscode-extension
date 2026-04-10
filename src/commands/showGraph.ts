@@ -23,7 +23,7 @@ export async function showGraph(
 	const panel = vscode.window.createWebviewPanel(
 		'codeTrailGraph',
 		'Code Trail: Graph',
-		vscode.ViewColumn.One,
+		vscode.ViewColumn.Active,
 		{ enableScripts: true, retainContextWhenHidden: true },
 	);
 

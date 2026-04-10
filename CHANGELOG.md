@@ -6,6 +6,10 @@
 
 - Remove click-to-expand/collapse on graph nodes; Ctrl/Cmd+Click still opens the mark file
 
+### Changed
+
+- Open graph panel in the active editor column instead of always in the first column
+
 ## [0.1.15]
 
 ### Fixed
