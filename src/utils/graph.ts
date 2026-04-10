@@ -259,11 +259,6 @@ export class Graph {
 		edges: GraphEdge[],
 	): GraphNode[] {
 		const g = new dagre.graphlib.Graph();
-		g.setGraph({
-			rankdir: 'LR', // Left to Right
-			nodesep: 50, // Minimum vertical gap between nodes in the same column
-			ranksep: 100, // Minimum horizontal gap between columns
-		});
 		g.setDefaultEdgeLabel(() => ({}));
 
 		for (const node of nodes) {
@@ -276,7 +271,6 @@ export class Graph {
 		const outgoing = new Map<string, string[]>();
 		for (const edge of edges) {
 			if (!g.hasNode(edge.from) || !g.hasNode(edge.to)) continue;
-			g.setEdge(edge.from, edge.to);
 
 			let targets = outgoing.get(edge.from);
 			if (!targets) {
@@ -285,6 +279,22 @@ export class Graph {
 			}
 			targets.push(edge.to);
 		}
+
+		// When a node fans out to many targets, dagre needs enough
+		// horizontal room for edges to leave from the right side of
+		// the source node.
+		for (const [from, targets] of outgoing) {
+			const minlen = Math.max(1, Math.ceil(targets.length / 2));
+			for (const to of targets) {
+				g.setEdge(from, to, { minlen });
+			}
+		}
+
+		g.setGraph({
+			rankdir: 'LR',
+			nodesep: 50,
+			ranksep: 100,
+		});
 
 		// Hint dagre with the uses declaration order. The heuristic may
 		// override this if it reduces edge crossings.
