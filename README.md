@@ -15,7 +15,6 @@ A VS Code extension for recording code reading notes.
 - Visualize marks as a directed graph
   - Nodes show code snippets with file path and line range
   - Title nodes display with a larger bold font
-  - Click a node to expand/collapse code
   - Ctrl/Cmd+Click a node to open mark file
 
 ## Commands

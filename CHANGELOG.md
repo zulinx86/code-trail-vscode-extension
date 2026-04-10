@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.16]
+
+### Removed
+
+- Remove click-to-expand/collapse on graph nodes; Ctrl/Cmd+Click still opens the mark file
+
 ## [0.1.15]
 
 ### Fixed

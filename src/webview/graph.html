@@ -30,8 +30,7 @@
 					file: node.file,
 					isTitle: node.isTitle,
 					width: node.width,
-					height: node.height,
-					expanded: true
+					height: node.height
 				};
 			});
 
@@ -59,11 +58,7 @@
 
 			function measureNode(id) {
 				var node = nodeMap[id];
-				if (node.expanded) {
-					return { w: node.width, h: node.height };
-				}
-				var headerWidth = HEADER_CHAR_WIDTH * node.header.length + CODE_PADDING * 2;
-				return { w: Math.max(headerWidth, 60), h: HEADER_HEIGHT };
+				return { w: node.width, h: node.height };
 			}
 
 			function drawNode(ctx, id, x, y, size) {
@@ -105,7 +100,7 @@
 				ctx.textAlign = 'left';
 				ctx.fillText(node.header, left + CODE_PADDING, top + HEADER_HEIGHT / 2);
 
-				if (node.expanded && node.code) {
+				if (node.code) {
 					var codeTop = top + HEADER_HEIGHT;
 
 					// Code background
@@ -281,7 +276,7 @@
 				return null;
 			}
 
-			// Click to toggle code expansion, Ctrl/Cmd+Click to open mark
+			// Ctrl/Cmd+Click to open mark file
 			network.on('click', function(params) {
 				var canvasPos = params.pointer.canvas;
 				var id = findNodeAt(canvasPos.x, canvasPos.y);
@@ -289,11 +284,7 @@
 				var e = params.event.srcEvent;
 				if (e.ctrlKey || e.metaKey) {
 					vscodeApi.postMessage({ type: 'openMark', markId: id });
-					return;
 				}
-				if (!nodeMap[id] || !nodeMap[id].code) return;
-				nodeMap[id].expanded = !nodeMap[id].expanded;
-				visNodes.update({ id: id, ctxRenderer: ctxRenderer });
 			});
 
 			// Event listener for wheel events
@@ -320,8 +311,7 @@
 							color: n.color,
 							file: n.file,
 							isTitle: n.isTitle,
-							width: n.width, height: n.height,
-							expanded: true
+							width: n.width, height: n.height
 						};
 					});
 					visNodes.clear();
