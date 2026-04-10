@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.14]
+
+### Fixed
+
+- Remove parentheses from title mark `file` and `link` fields to avoid breaking `code-trail:` link detection
+
 ## [0.1.13]
 
 ### Added

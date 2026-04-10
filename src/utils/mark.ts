@@ -154,10 +154,10 @@ export class Mark {
 
 	static fromTitle(title: string, exportedAt: Date = new Date()): Mark {
 		return new Mark({
-			file: '(title)',
+			file: 'title',
 			startLine: 0,
 			endLine: 0,
-			link: 'code-trail:(title)',
+			link: 'code-trail:title',
 			symbol: title,
 			symbolKind: 'title',
 			exportedAt,

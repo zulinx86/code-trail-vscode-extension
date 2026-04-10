@@ -51,7 +51,7 @@ suite('addTitle command', () => {
 			).toString('utf-8');
 			assert.ok(text.includes('symbol: Test Title'));
 			assert.ok(text.includes('symbolKind: title'));
-			assert.ok(text.includes('file: (title)'));
+			assert.ok(text.includes('file: title'));
 		} finally {
 			(vscode.window as any).showInputBox = orig;
 		}
