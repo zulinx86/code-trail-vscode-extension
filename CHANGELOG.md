@@ -9,6 +9,7 @@
 ### Changed
 
 - Open graph panel in the active editor column instead of always in the first column
+- Allow opening multiple graph panels side by side instead of reusing a single panel
 
 ## [0.1.15]
 

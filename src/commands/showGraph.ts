@@ -6,19 +6,12 @@ import { OUTPUT_DIR, workspaceFolder } from '../config';
 import { log } from '../utils/logger';
 import { Mark } from '../utils/mark';
 
-let existingPanel: vscode.WebviewPanel | undefined;
+const panels: Set<vscode.WebviewPanel> = new Set();
 
 export async function showGraph(
 	context: vscode.ExtensionContext,
 ): Promise<vscode.WebviewPanel> {
 	log('showGraph: started');
-
-	// If an existing panel is still alive, reveal it and refresh its content.
-	if (existingPanel) {
-		existingPanel.reveal();
-		await refreshGraph(existingPanel);
-		return existingPanel;
-	}
 
 	const panel = vscode.window.createWebviewPanel(
 		'codeTrailGraph',
@@ -35,7 +28,7 @@ export async function initPanel(
 	context: vscode.ExtensionContext,
 	panel: vscode.WebviewPanel,
 ): Promise<void> {
-	existingPanel = panel;
+	panels.add(panel);
 
 	const visNetworkUri = panel.webview.asWebviewUri(
 		vscode.Uri.joinPath(
@@ -63,7 +56,7 @@ export async function initPanel(
 	// Clean up watcher and panel reference when panel is closed.
 	panel.onDidDispose(() => {
 		watcher.dispose();
-		existingPanel = undefined;
+		panels.delete(panel);
 	});
 
 	// Hook function to handle a message from webview.
