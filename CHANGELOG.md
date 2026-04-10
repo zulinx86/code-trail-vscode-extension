@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.13]
+
+### Added
+
+- Restore graph panel automatically after window reload
+
 ## [0.1.12]
 
 ### Changed

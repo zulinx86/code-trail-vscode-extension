@@ -4,7 +4,7 @@ import { addTitle } from './commands/addTitle';
 import { navigate } from './commands/navigate';
 import { connectMark } from './commands/connectMark';
 import { CodeTrailLinkProvider } from './providers/linkProvider';
-import { showGraph } from './commands/showGraph';
+import { showGraph, initPanel } from './commands/showGraph';
 import { initLogger, log } from './utils/logger';
 import { workspaceFolder } from './config';
 
@@ -18,6 +18,9 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	log('Code Trail activated');
+	vscode.window.registerWebviewPanelSerializer('codeTrailGraph', {
+		deserializeWebviewPanel: (panel) => initPanel(context, panel),
+	});
 	context.subscriptions.push(
 		vscode.commands.registerCommand('codeTrail.markCode', markCode),
 		vscode.commands.registerCommand('codeTrail.addTitle', addTitle),

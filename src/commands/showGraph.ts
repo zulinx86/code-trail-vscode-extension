@@ -26,6 +26,15 @@ export async function showGraph(
 		vscode.ViewColumn.One,
 		{ enableScripts: true, retainContextWhenHidden: true },
 	);
+
+	await initPanel(context, panel);
+	return panel;
+}
+
+export async function initPanel(
+	context: vscode.ExtensionContext,
+	panel: vscode.WebviewPanel,
+): Promise<void> {
 	existingPanel = panel;
 
 	const visNetworkUri = panel.webview.asWebviewUri(
@@ -59,14 +68,6 @@ export async function showGraph(
 
 	// Hook function to handle a message from webview.
 	panel.webview.onDidReceiveMessage((msg) => handleWebviewMessage(msg));
-
-	return panel;
-}
-
-// Escape '<' and '>' to Unicode so that strings like "</script>" in code
-// snippets don't break the HTML <script> tag.
-function escapeForScriptTag(s: string): string {
-	return s.replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
 }
 
 // Build webview content
