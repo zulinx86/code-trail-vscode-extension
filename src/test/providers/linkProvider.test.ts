@@ -32,6 +32,20 @@ suite('CodeTrailLinkProvider', () => {
 		assert.strictEqual(links.length, 2);
 	});
 
+	test('should detect link with parentheses in file path', async () => {
+		const content = 'link: code-trail:notes/20250101_(hello)_world.md#L1-L5';
+		const doc = await vscode.workspace.openTextDocument({
+			content,
+			language: 'markdown',
+		});
+
+		const links = provider.provideDocumentLinks(doc);
+		assert.strictEqual(links.length, 1);
+		assert.ok(
+			links[0].target?.toString().includes('20250101_%28hello%29_world.md'),
+		);
+	});
+
 	test('should return no links for plain text', async () => {
 		const content = 'no links here';
 		const doc = await vscode.workspace.openTextDocument({

@@ -5,6 +5,7 @@
 ### Fixed
 
 - Remove parentheses from title mark `file` and `link` fields to avoid breaking `code-trail:` link detection
+- Fix `code-trail:` link pattern to support file paths containing parentheses (e.g. `20250101_(hello)_world.md`)
 
 ## [0.1.13]
 
