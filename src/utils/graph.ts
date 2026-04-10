@@ -258,6 +258,66 @@ export class Graph {
 		nodes: Omit<GraphNode, 'x' | 'y'>[],
 		edges: GraphEdge[],
 	): GraphNode[] {
+		const nodeIds = new Set(nodes.map((n) => n.id));
+		const validEdges = edges.filter(
+			(e) => nodeIds.has(e.from) && nodeIds.has(e.to),
+		);
+
+		const components = Graph.findConnectedComponents(nodes, validEdges);
+
+		const positioned: GraphNode[][] = [];
+		for (const comp of components) {
+			const compNodes = nodes.filter((n) => comp.has(n.id));
+			const compEdges = validEdges.filter(
+				(e) => comp.has(e.from) && comp.has(e.to),
+			);
+			positioned.push(Graph.layoutComponent(compNodes, compEdges));
+		}
+
+		return Graph.stackComponentsVertically(positioned);
+	}
+
+	/** Find connected components via BFS. */
+	private static findConnectedComponents(
+		nodes: Omit<GraphNode, 'x' | 'y'>[],
+		edges: GraphEdge[],
+	): Set<string>[] {
+		// Build undirected adjacency list from edges.
+		const adj = new Map<string, Set<string>>();
+		for (const node of nodes) {
+			adj.set(node.id, new Set());
+		}
+		for (const edge of edges) {
+			adj.get(edge.from)!.add(edge.to);
+			adj.get(edge.to)!.add(edge.from);
+		}
+
+		// BFS from each unvisited node to collect its component.
+		const visited = new Set<string>();
+		const components: Set<string>[] = [];
+		for (const id of adj.keys()) {
+			if (visited.has(id)) continue;
+			const comp = new Set<string>();
+			const queue = [id];
+			while (queue.length > 0) {
+				const cur = queue.pop()!;
+				if (visited.has(cur)) continue;
+				visited.add(cur);
+				comp.add(cur);
+				for (const nb of adj.get(cur)!) {
+					if (!visited.has(nb)) queue.push(nb);
+				}
+			}
+			components.push(comp);
+		}
+		return components;
+	}
+
+	/** Layout a single group of connected components. */
+	private static layoutComponent(
+		nodes: Omit<GraphNode, 'x' | 'y'>[],
+		edges: GraphEdge[],
+	): GraphNode[] {
 		const g = new dagre.graphlib.Graph();
 		g.setDefaultEdgeLabel(() => ({}));
 
@@ -270,8 +330,6 @@ export class Graph {
 
 		const outgoing = new Map<string, string[]>();
 		for (const edge of edges) {
-			if (!g.hasNode(edge.from) || !g.hasNode(edge.to)) continue;
-
 			let targets = outgoing.get(edge.from);
 			if (!targets) {
 				targets = [];
@@ -310,6 +368,38 @@ export class Graph {
 			const pos = g.node(node.id);
 			return { ...node, x: pos.x, y: pos.y };
 		});
+	}
+
+	/** Stack independently-laid-out components vertically with a gap. */
+	private static stackComponentsVertically(
+		components: GraphNode[][],
+	): GraphNode[] {
+		const gap = 80;
+		let yOffset = 0;
+		const result: GraphNode[] = [];
+
+		for (const comp of components) {
+			// Compute the vertical bounding box of this component.
+			let minY = Infinity;
+			let maxY = -Infinity;
+			for (const n of comp) {
+				const half = n.height / 2;
+				if (n.y - half < minY) minY = n.y - half;
+				if (n.y + half > maxY) maxY = n.y + half;
+			}
+
+			// Shift the component so its top edge aligns with yOffset.
+			const shift = yOffset - minY;
+			for (const n of comp) {
+				n.y += shift;
+				result.push(n);
+			}
+
+			// Advance yOffset past this component plus the gap.
+			yOffset = maxY + shift + gap;
+		}
+
+		return result;
 	}
 
 	stringify(): string {

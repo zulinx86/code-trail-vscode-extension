@@ -5,6 +5,7 @@
 ### Fixed
 
 - Scale graph edge `minlen` by source node out-degree so that edges leave from the right side of nodes instead of bending over the top or bottom in large fan-out graphs
+- Layout disconnected subgraphs independently and stack them vertically so they no longer overlap or crowd into the same rows
 
 ## [0.1.14]
 
