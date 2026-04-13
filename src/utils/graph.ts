@@ -343,6 +343,8 @@ export class Graph {
 
 		const outgoing = new Map<string, string[]>();
 		for (const edge of edges) {
+			g.setEdge(edge.from, edge.to);
+
 			let targets = outgoing.get(edge.from);
 			if (!targets) {
 				targets = [];
@@ -351,20 +353,31 @@ export class Graph {
 			targets.push(edge.to);
 		}
 
-		// When a node fans out to many targets, dagre needs enough
-		// horizontal room for edges to leave from the right side of
-		// the source node.
-		for (const [from, targets] of outgoing) {
-			const minlen = Math.max(1, Math.ceil(targets.length / 2));
-			for (const to of targets) {
-				g.setEdge(from, to, { minlen });
-			}
+		// Estimate the maximum vertical span of edges: when a node
+		// fans out to many targets they stack vertically, so the
+		// source-to-farthest-target distance is roughly half the
+		// total height of all targets.  Set ranksep large enough for
+		// the cubicBezier curve (roundness 0.8) to stay horizontal.
+		const nodeHeight = new Map<string, number>();
+		for (const node of nodes) {
+			nodeHeight.set(node.id, node.height);
 		}
+		let maxVerticalSpan = 0;
+		for (const targets of outgoing.values()) {
+			let totalHeight = 0;
+			for (const t of targets) {
+				totalHeight += nodeHeight.get(t) ?? 0;
+			}
+			totalHeight += (targets.length - 1) * 50; // nodesep
+			const span = totalHeight / 2;
+			if (span > maxVerticalSpan) maxVerticalSpan = span;
+		}
+		const ranksep = Math.max(200, Math.round(maxVerticalSpan * 0.3));
 
 		g.setGraph({
 			rankdir: 'LR',
 			nodesep: 50,
-			ranksep: 100,
+			ranksep,
 		});
 
 		// Hint dagre with the uses declaration order. The heuristic may

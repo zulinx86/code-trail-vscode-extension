@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0]
+
+### Fixed
+
+- Force graph edges to leave and arrive horizontally using `cubicBezier` with `forceDirection: 'horizontal'`
+- Scale `ranksep` adaptively based on the maximum vertical span of fan-out targets so edges have enough room to curve smoothly
+
 ## [0.1.17]
 
 ### Fixed
