@@ -1,9 +1,7 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { Mark } from './mark';
 import { Symbol } from './symbol';
 import { log } from './logger';
-import { workspaceFolder } from '../config';
 
 export class Connect {
 	constructor(readonly mark: Mark) {}
@@ -126,7 +124,7 @@ export class Connect {
 		);
 
 		// Verify each match with Definition Provider in parallel
-		const uri = vscode.Uri.joinPath(workspaceFolder!.uri, this.mark.file);
+		const uri = this.mark.fileUri;
 		const verifications = [...matches.entries()].map(
 			async ([symbolName, charOffset]) => {
 				try {
@@ -152,10 +150,7 @@ export class Connect {
 
 					// Check each candidate mark with the same symbol name
 					for (const candidateMark of symbolToMarks.get(symbolName)!) {
-						const candidateFile = path.resolve(
-							workspaceFolder!.uri.fsPath,
-							candidateMark.file,
-						);
+						const candidateFile = candidateMark.absolutePath;
 						const match = definitions.some((def) => {
 							const defUri = 'targetUri' in def ? def.targetUri : def.uri;
 							return defUri.fsPath === candidateFile;
@@ -189,7 +184,7 @@ export class Connect {
 	private async getIncoming(candidateMarks: Mark[]): Promise<Set<string>> {
 		const incoming = new Set<string>();
 
-		const uri = vscode.Uri.joinPath(workspaceFolder!.uri, this.mark.file);
+		const uri = this.mark.fileUri;
 
 		try {
 			// Resolve position for Reference Provider
@@ -217,7 +212,7 @@ export class Connect {
 			// Group candidate marks by file path for efficient lookup
 			const fileToMarks = new Map<string, Mark[]>();
 			for (const m of candidateMarks) {
-				const absPath = path.resolve(workspaceFolder!.uri.fsPath, m.file);
+				const absPath = m.absolutePath;
 				const existing = fileToMarks.get(absPath) ?? [];
 				existing.push(m);
 				fileToMarks.set(absPath, existing);

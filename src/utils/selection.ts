@@ -35,15 +35,17 @@ export class Selection {
 		const workspaceFolder = vscode.workspace.getWorkspaceFolder(
 			editor.document.uri,
 		);
-		if (!workspaceFolder) {
-			log('Selection.fromEditor: no workspace folder');
-			return undefined;
-		}
 
-		const file = path.relative(
-			workspaceFolder.uri.fsPath,
-			editor.document.uri.fsPath,
-		);
+		let file: string;
+		if (workspaceFolder) {
+			file = path.relative(
+				workspaceFolder.uri.fsPath,
+				editor.document.uri.fsPath,
+			);
+		} else {
+			// External file (e.g. dependency source) — use absolute path
+			file = editor.document.uri.fsPath;
+		}
 		log(`Selection.fromEditor: path=${file}`);
 
 		const symbol = await Symbol.findSymbolAtPosition(

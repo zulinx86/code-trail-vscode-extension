@@ -212,6 +212,28 @@ ${this.code}
 `;
 	}
 
+	/**
+	 * Resolves the mark's file path to an absolute path.
+	 * For external (absolute) paths, returns as-is.
+	 * For workspace-relative paths, resolves against the workspace folder.
+	 */
+	get absolutePath(): string {
+		if (path.isAbsolute(this.file)) {
+			return this.file;
+		}
+		return path.resolve(workspaceFolder!.uri.fsPath, this.file);
+	}
+
+	/**
+	 * Resolves the mark's file path to a vscode.Uri.
+	 */
+	get fileUri(): vscode.Uri {
+		if (path.isAbsolute(this.file)) {
+			return vscode.Uri.file(this.file);
+		}
+		return vscode.Uri.joinPath(workspaceFolder!.uri, this.file);
+	}
+
 	get id(): string {
 		const exportedAt = this.exportedAt.replace(
 			/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}).*$/,

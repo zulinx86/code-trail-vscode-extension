@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { log } from '../utils/logger';
 import { workspaceFolder } from '../config';
@@ -10,7 +11,9 @@ interface LinkArgs {
 
 export async function navigate(args: LinkArgs): Promise<void> {
 	log(`navigate: ${JSON.stringify(args)}`);
-	const fileUri = vscode.Uri.joinPath(workspaceFolder!.uri, args.file);
+	const fileUri = path.isAbsolute(args.file)
+		? vscode.Uri.file(args.file)
+		: vscode.Uri.joinPath(workspaceFolder!.uri, args.file);
 	const doc = await vscode.workspace.openTextDocument(fileUri);
 	const editor = await vscode.window.showTextDocument(doc);
 

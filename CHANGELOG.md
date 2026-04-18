@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.2.1]
+
+### Fixed
+
+- Support marking code in files outside the workspace (e.g. external Rust crate sources in `~/.cargo/registry/`).
+
 ## [0.2.0]
 
 ### Fixed
