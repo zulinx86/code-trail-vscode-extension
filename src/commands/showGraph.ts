@@ -2,11 +2,17 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Graph } from '../utils/graph';
-import { OUTPUT_DIR, workspaceFolder } from '../config';
+import { OUTPUT_DIR, TRAILS_DIR, workspaceFolder } from '../config';
 import { log } from '../utils/logger';
 import { Mark } from '../utils/mark';
+import { Trail } from '../utils/trail';
 
 const panels: Set<vscode.WebviewPanel> = new Set();
+
+function panelTitle(): string {
+	const trail = Trail.active();
+	return trail ? `Code Trail: Graph (${trail})` : 'Code Trail: Graph';
+}
 
 export async function showGraph(
 	context: vscode.ExtensionContext,
@@ -15,7 +21,7 @@ export async function showGraph(
 
 	const panel = vscode.window.createWebviewPanel(
 		'codeTrailGraph',
-		'Code Trail: Graph',
+		panelTitle(),
 		vscode.ViewColumn.Active,
 		{ enableScripts: true, retainContextWhenHidden: true },
 	);
@@ -46,16 +52,25 @@ export async function initPanel(
 	panel.webview.html = getWebviewContent(context, visNetworkUri, graph);
 
 	// Watch for mark file changes to auto-refresh the graph.
+	// Watch both the symlink path and the real trails directory,
+	// since VS Code's file watcher may not follow symlinks.
 	const watcher = vscode.workspace.createFileSystemWatcher(
 		new vscode.RelativePattern(workspaceFolder!, `${OUTPUT_DIR}/*.md`),
+	);
+	const trailsWatcher = vscode.workspace.createFileSystemWatcher(
+		new vscode.RelativePattern(workspaceFolder!, `${TRAILS_DIR}/**/*.md`),
 	);
 	watcher.onDidCreate(() => refreshGraph(panel));
 	watcher.onDidChange(() => refreshGraph(panel));
 	watcher.onDidDelete(() => refreshGraph(panel));
+	trailsWatcher.onDidCreate(() => refreshGraph(panel));
+	trailsWatcher.onDidChange(() => refreshGraph(panel));
+	trailsWatcher.onDidDelete(() => refreshGraph(panel));
 
 	// Clean up watcher and panel reference when panel is closed.
 	panel.onDidDispose(() => {
 		watcher.dispose();
+		trailsWatcher.dispose();
 		panels.delete(panel);
 	});
 
@@ -99,6 +114,7 @@ export async function refreshGraph(panel: vscode.WebviewPanel): Promise<void> {
 		`refreshGraph: ${graph.data.nodes.length} nodes, ${graph.data.edges.length} edges`,
 	);
 	try {
+		panel.title = panelTitle();
 		panel.webview.postMessage({
 			type: 'updateGraph',
 			nodes: graph.data.nodes,

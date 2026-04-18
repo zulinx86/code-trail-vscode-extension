@@ -5,6 +5,10 @@
 ### Added
 
 - Support marking code in files outside the workspace (e.g. external Rust crate sources in `~/.cargo/registry/`).
+- `Code Trail: New Trail` command (`Ctrl+Alt+N`) to create a new trail and switch to it.
+- `Code Trail: Switch Trail` command (`Ctrl+Alt+S`) to switch between existing trails.
+- Trails allow organizing marks into separate directories per topic (stored in `.code-trail/trails/<name>/`).
+- Automatic migration of existing `code-trail/` directory to a "default" trail on first activation.
 
 ### Changed
 

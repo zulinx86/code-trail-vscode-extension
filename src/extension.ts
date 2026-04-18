@@ -3,10 +3,13 @@ import { markCode } from './commands/markCode';
 import { addTitle } from './commands/addTitle';
 import { navigate } from './commands/navigate';
 import { connectMark } from './commands/connectMark';
+import { createTrail } from './commands/createTrail';
+import { switchTrail } from './commands/switchTrail';
 import { CodeTrailLinkProvider } from './providers/linkProvider';
 import { showGraph, initPanel } from './commands/showGraph';
 import { initLogger, log } from './utils/logger';
 import { workspaceFolder } from './config';
+import { Trail } from './utils/trail';
 
 export function activate(context: vscode.ExtensionContext) {
 	const channel = initLogger();
@@ -17,6 +20,8 @@ export function activate(context: vscode.ExtensionContext) {
 		return;
 	}
 
+	Trail.ensureSetup();
+
 	log('Code Trail activated');
 	vscode.window.registerWebviewPanelSerializer('codeTrailGraph', {
 		deserializeWebviewPanel: (panel) => initPanel(context, panel),
@@ -26,6 +31,8 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand('codeTrail.addTitle', addTitle),
 		vscode.commands.registerCommand('codeTrail.navigate', navigate),
 		vscode.commands.registerCommand('codeTrail.connectMark', connectMark),
+		vscode.commands.registerCommand('codeTrail.createTrail', createTrail),
+		vscode.commands.registerCommand('codeTrail.switchTrail', switchTrail),
 		vscode.commands.registerCommand('codeTrail.showGraph', () =>
 			showGraph(context),
 		),

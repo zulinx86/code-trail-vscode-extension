@@ -36,6 +36,14 @@
 			{
 				"command": "codeTrail.addTitle",
 				"title": "Code Trail: Add Title"
+			},
+			{
+				"command": "codeTrail.createTrail",
+				"title": "Code Trail: New Trail"
+			},
+			{
+				"command": "codeTrail.switchTrail",
+				"title": "Code Trail: Switch Trail"
 			}
 		],
 		"configuration": {
@@ -112,6 +120,14 @@
 			{
 				"command": "codeTrail.addTitle",
 				"key": "ctrl+alt+t"
+			},
+			{
+				"command": "codeTrail.createTrail",
+				"key": "ctrl+alt+n"
+			},
+			{
+				"command": "codeTrail.switchTrail",
+				"key": "ctrl+alt+s"
 			}
 		]
 	},

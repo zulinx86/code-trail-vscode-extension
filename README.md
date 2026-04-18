@@ -16,6 +16,10 @@ A VS Code extension for recording code reading notes.
   - Nodes show code snippets with file path and line range
   - Title nodes display with a larger bold font
   - Ctrl/Cmd+Click a node to open mark file
+- Organize marks into separate trails (e.g. per topic or investigation)
+  - Marks are stored in `.code-trail/trails/<trail-name>/`
+  - `code-trail/` symlink points to the active trail
+  - Existing `code-trail/` directories are automatically migrated to a "default" trail
 
 ## Commands
 
@@ -25,6 +29,8 @@ A VS Code extension for recording code reading notes.
 | `Code Trail: Connect Mark` | `Ctrl+Alt+C` | Connect the current mark to another mark   |
 | `Code Trail: Show Graph`   | `Ctrl+Alt+G` | Show the mark graph in a Webview panel     |
 | `Code Trail: Add Title`    | `Ctrl+Alt+T` | Add a title node to the graph              |
+| `Code Trail: New Trail`    | `Ctrl+Alt+N` | Create a new trail and switch to it        |
+| `Code Trail: Switch Trail` | `Ctrl+Alt+S` | Switch between existing trails             |
 
 > **Note:** On macOS, `Alt` is the `Option (⌥)` key.
 
@@ -34,3 +40,5 @@ A VS Code extension for recording code reading notes.
 2. Run `Code Trail: Mark Code` to save code snipets as Markdown notes ("marks")
 3. Open a mark file and run `Code Trail: Connect Mark` to create relationships between marks
 4. Run `Code Trail: Show Graph` to visualize the relationships
+5. Run `Code Trail: New Trail` to start a new trail for a different topic
+6. Run `Code Trail: Switch Trail` to switch between trails

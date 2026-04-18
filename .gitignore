@@ -3,7 +3,8 @@ dist
 node_modules
 .vscode-test/
 *.vsix
-code-trail/
+code-trail
+.code-trail/
 coverage/
 Cargo.lock
 target/
