@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { Mark } from '../utils/mark';
 import { log } from '../utils/logger';
+import { refreshAllPanels } from './showGraph';
 
 export async function addTitle(): Promise<void> {
 	log('addTitle: started');
@@ -20,4 +21,5 @@ export async function addTitle(): Promise<void> {
 	const doc = await vscode.workspace.openTextDocument(uri);
 	await vscode.window.showTextDocument(doc);
 	vscode.window.showInformationMessage(`Saved: ${mark.id}`);
+	await refreshAllPanels();
 }

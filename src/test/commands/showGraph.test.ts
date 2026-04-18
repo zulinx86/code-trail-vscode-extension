@@ -5,7 +5,7 @@ import { Mark, MarkArgs } from '../../utils/mark';
 import {
 	showGraph,
 	handleWebviewMessage,
-	refreshGraph,
+	refreshAllPanels,
 } from '../../commands/showGraph';
 
 suite('showGraph command', () => {
@@ -77,8 +77,8 @@ suite('showGraph command', () => {
 			// Add a mark after graph is open
 			await new Mark(markArgs).save();
 
-			// Manually call refreshGraph and verify no errors
-			await refreshGraph(panel);
+			// Manually call refreshAllPanels and verify no errors
+			await refreshAllPanels();
 			assert.ok(panel.visible, 'panel should still be visible after refresh');
 		} finally {
 			panel.dispose();

@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { log } from '../utils/logger';
 import { Connect } from '../utils/connect';
 import { Mark } from '../utils/mark';
+import { refreshAllPanels } from './showGraph';
 
 export async function connectMark(): Promise<void> {
 	log('connectMark: started');
@@ -21,4 +22,5 @@ export async function connectMark(): Promise<void> {
 	log(`connectMark: current mark ${mark.id}`);
 
 	await new Connect(mark).prompt();
+	await refreshAllPanels();
 }

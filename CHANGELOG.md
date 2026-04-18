@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1]
+
+### Changed
+
+- Graph panel title now shows the trail name it was opened with (e.g. `Code Trail: Graph (default)`).
+- Each graph panel stays bound to the trail it was opened with, even after switching trails.
+
+### Fixed
+
+- Fix graph not auto-refreshing after creating marks or connections when `code-trail/` is a symlink.
+- Fix all graph panels showing the active trail's data after window reload instead of their original trail.
+
 ## [0.3.0]
 
 ### Added

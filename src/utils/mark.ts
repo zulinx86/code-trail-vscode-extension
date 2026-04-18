@@ -276,11 +276,12 @@ ${this.code}
 		await this.save();
 	}
 
-	static async getAll(): Promise<Mark[]> {
-		const uris = await vscode.workspace.findFiles(`${OUTPUT_DIR}/*.md`);
+	static async getAll(trailDir?: string): Promise<Mark[]> {
+		const pattern = trailDir ? `${trailDir}/*.md` : `${OUTPUT_DIR}/*.md`;
+		const uris = await vscode.workspace.findFiles(pattern);
 		// Sort by file path so that the order is deterministic across reloads.
 		uris.sort((a, b) => a.fsPath.localeCompare(b.fsPath));
-		log(`Mark.getAll: found ${uris.length} files in ${OUTPUT_DIR}/`);
+		log(`Mark.getAll: found ${uris.length} files in ${pattern}`);
 		const marks = await Promise.all(
 			uris.map(async (uri) => {
 				return await Mark.fromUri(uri);

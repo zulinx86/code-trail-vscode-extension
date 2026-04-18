@@ -7,34 +7,49 @@ import { log } from '../utils/logger';
 import { Mark } from '../utils/mark';
 import { Trail } from '../utils/trail';
 
-const panels: Set<vscode.WebviewPanel> = new Set();
-
-function panelTitle(): string {
-	const trail = Trail.active();
-	return trail ? `Code Trail: Graph (${trail})` : 'Code Trail: Graph';
+/** State persisted by the webview via vscodeApi.setState(). */
+export interface WebviewState {
+	trailName?: string;
 }
+
+interface PanelState {
+	panel: vscode.WebviewPanel;
+	trailDir: string | undefined;
+}
+
+const panelStates: Set<PanelState> = new Set();
 
 export async function showGraph(
 	context: vscode.ExtensionContext,
 ): Promise<vscode.WebviewPanel> {
 	log('showGraph: started');
 
+	const trailName = Trail.active();
 	const panel = vscode.window.createWebviewPanel(
 		'codeTrailGraph',
-		panelTitle(),
+		trailName ? `Code Trail: Graph (${trailName})` : 'Code Trail: Graph',
 		vscode.ViewColumn.Active,
 		{ enableScripts: true, retainContextWhenHidden: true },
 	);
 
-	await initPanel(context, panel);
+	await initPanel(context, panel, trailName);
 	return panel;
 }
 
+/**
+ * Initialize (or restore) a graph panel.
+ * @param trailName - the trail this panel is bound to. On fresh open,
+ *   this is the currently active trail. On deserialization, it comes
+ *   from the webview state saved before reload.
+ */
 export async function initPanel(
 	context: vscode.ExtensionContext,
 	panel: vscode.WebviewPanel,
+	trailName?: string,
 ): Promise<void> {
-	panels.add(panel);
+	const trailDir = trailName ? `${TRAILS_DIR}/${trailName}` : undefined;
+	const state: PanelState = { panel, trailDir };
+	panelStates.add(state);
 
 	const visNetworkUri = panel.webview.asWebviewUri(
 		vscode.Uri.joinPath(
@@ -47,31 +62,43 @@ export async function initPanel(
 		),
 	);
 
-	const marks = await Mark.getAll();
+	const marks = await Mark.getAll(trailDir);
 	const graph = Graph.fromMarks(marks);
-	panel.webview.html = getWebviewContent(context, visNetworkUri, graph);
+	panel.webview.html = getWebviewContent(
+		context,
+		visNetworkUri,
+		graph,
+		trailName,
+	);
 
 	// Watch for mark file changes to auto-refresh the graph.
-	// Watch both the symlink path and the real trails directory,
-	// since VS Code's file watcher may not follow symlinks.
-	const watcher = vscode.workspace.createFileSystemWatcher(
+	const outputPath = path.join(workspaceFolder!.uri.fsPath, OUTPUT_DIR);
+	const symlinkWatcher = vscode.workspace.createFileSystemWatcher(
 		new vscode.RelativePattern(workspaceFolder!, `${OUTPUT_DIR}/*.md`),
 	);
-	const trailsWatcher = vscode.workspace.createFileSystemWatcher(
-		new vscode.RelativePattern(workspaceFolder!, `${TRAILS_DIR}/**/*.md`),
-	);
-	watcher.onDidCreate(() => refreshGraph(panel));
-	watcher.onDidChange(() => refreshGraph(panel));
-	watcher.onDidDelete(() => refreshGraph(panel));
-	trailsWatcher.onDidCreate(() => refreshGraph(panel));
-	trailsWatcher.onDidChange(() => refreshGraph(panel));
-	trailsWatcher.onDidDelete(() => refreshGraph(panel));
+	symlinkWatcher.onDidCreate(() => refreshPanel(state));
+	symlinkWatcher.onDidChange(() => refreshPanel(state));
+	symlinkWatcher.onDidDelete(() => refreshPanel(state));
 
-	// Clean up watcher and panel reference when panel is closed.
+	let realWatcher: vscode.FileSystemWatcher | undefined;
+	try {
+		const realPath = fs.realpathSync(outputPath);
+		if (realPath !== outputPath) {
+			realWatcher = vscode.workspace.createFileSystemWatcher(
+				new vscode.RelativePattern(vscode.Uri.file(realPath), '*.md'),
+			);
+			realWatcher.onDidCreate(() => refreshPanel(state));
+			realWatcher.onDidChange(() => refreshPanel(state));
+			realWatcher.onDidDelete(() => refreshPanel(state));
+		}
+	} catch {
+		// Symlink target doesn't exist yet
+	}
+
 	panel.onDidDispose(() => {
-		watcher.dispose();
-		trailsWatcher.dispose();
-		panels.delete(panel);
+		symlinkWatcher.dispose();
+		realWatcher?.dispose();
+		panelStates.delete(state);
 	});
 
 	// Hook function to handle a message from webview.
@@ -83,6 +110,7 @@ function getWebviewContent(
 	context: vscode.ExtensionContext,
 	visNetworkUri: vscode.Uri,
 	graph: Graph,
+	trailName?: string,
 ): string {
 	const jsonData = graph.stringify();
 
@@ -103,19 +131,30 @@ function getWebviewContent(
 		result = result.replace(`{{${key}}}`, String(value));
 	}
 
+	// Inject trail name into webview state so it survives window reload.
+	if (trailName) {
+		const webviewState: WebviewState = { trailName };
+		result = result.replace(
+			'</body>',
+			`<script>
+				if (typeof vscodeApi !== 'undefined' && vscodeApi) {
+					vscodeApi.setState(${JSON.stringify(webviewState)});
+				}
+			</script></body>`,
+		);
+	}
+
 	return result;
 }
 
-// Hook function to refresh the graph
-export async function refreshGraph(panel: vscode.WebviewPanel): Promise<void> {
-	const marks = await Mark.getAll();
+async function refreshPanel(state: PanelState): Promise<void> {
+	const marks = await Mark.getAll(state.trailDir);
 	const graph = Graph.fromMarks(marks);
 	log(
 		`refreshGraph: ${graph.data.nodes.length} nodes, ${graph.data.edges.length} edges`,
 	);
 	try {
-		panel.title = panelTitle();
-		panel.webview.postMessage({
+		state.panel.webview.postMessage({
 			type: 'updateGraph',
 			nodes: graph.data.nodes,
 			edges: graph.data.edges,
@@ -125,8 +164,13 @@ export async function refreshGraph(panel: vscode.WebviewPanel): Promise<void> {
 	}
 }
 
-// Hook function to handle a message sent from graph.html via
-// vscodeApi.postMessage()
+/** Refresh all open graph panels. */
+export async function refreshAllPanels(): Promise<void> {
+	for (const state of panelStates) {
+		await refreshPanel(state);
+	}
+}
+
 export async function handleWebviewMessage(msg: any): Promise<void> {
 	if (msg.type === 'openMark') {
 		const files = await vscode.workspace.findFiles(`code-trail/${msg.markId}`);
