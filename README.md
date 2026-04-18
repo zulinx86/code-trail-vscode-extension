@@ -19,12 +19,14 @@ A VS Code extension for recording code reading notes.
 
 ## Commands
 
-| Command                    | Keybinding     | Description                                |
-| -------------------------- | -------------- | ------------------------------------------ |
-| `Code Trail: Mark Code`    | `Ctrl+Shift+M` | Mark the selected code or symbol at cursor |
-| `Code Trail: Connect Mark` | `Ctrl+Shift+C` | Connect the current mark to another mark   |
-| `Code Trail: Show Graph`   | `Ctrl+Shift+G` | Show the mark graph in a Webview panel     |
-| `Code Trail: Add Title`    | `Ctrl+Shift+T` | Add a title node to the graph              |
+| Command                    | Keybinding   | Description                                |
+| -------------------------- | ------------ | ------------------------------------------ |
+| `Code Trail: Mark Code`    | `Ctrl+Alt+M` | Mark the selected code or symbol at cursor |
+| `Code Trail: Connect Mark` | `Ctrl+Alt+C` | Connect the current mark to another mark   |
+| `Code Trail: Show Graph`   | `Ctrl+Alt+G` | Show the mark graph in a Webview panel     |
+| `Code Trail: Add Title`    | `Ctrl+Alt+T` | Add a title node to the graph              |
+
+> **Note:** On macOS, `Alt` is the `Option (⌥)` key.
 
 ## Usage
 

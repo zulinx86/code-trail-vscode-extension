@@ -1,10 +1,18 @@
 # Changelog
 
-## [0.2.1]
+## [0.3.0]
 
-### Fixed
+### Added
 
 - Support marking code in files outside the workspace (e.g. external Rust crate sources in `~/.cargo/registry/`).
+
+### Changed
+
+- **BREAKING:** Change all keybindings from `Ctrl+Shift+` to `Ctrl+Alt+` to avoid conflicts with VS Code defaults.
+  - Mark Code: `Ctrl+Alt+M`
+  - Connect Mark: `Ctrl+Alt+C`
+  - Show Graph: `Ctrl+Alt+G`
+  - Add Title: `Ctrl+Alt+T`
 
 ## [0.2.0]
 

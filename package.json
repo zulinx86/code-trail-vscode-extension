@@ -97,26 +97,21 @@
 		"keybindings": [
 			{
 				"command": "codeTrail.markCode",
-				"key": "ctrl+shift+m",
+				"key": "ctrl+alt+m",
 				"when": "editorTextFocus"
 			},
 			{
 				"command": "codeTrail.connectMark",
-				"key": "ctrl+shift+c",
-				"when": "editorTextFocus"
-			},
-			{
-				"command": "codeTrail.connectMark",
-				"key": "ctrl+shift+l",
+				"key": "ctrl+alt+c",
 				"when": "editorTextFocus"
 			},
 			{
 				"command": "codeTrail.showGraph",
-				"key": "ctrl+shift+g"
+				"key": "ctrl+alt+g"
 			},
 			{
 				"command": "codeTrail.addTitle",
-				"key": "ctrl+shift+t"
+				"key": "ctrl+alt+t"
 			}
 		]
 	},
