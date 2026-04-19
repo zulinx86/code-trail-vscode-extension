@@ -6,6 +6,7 @@
 
 - Graph panel title now shows the trail name it was opened with (e.g. `Code Trail: Graph (default)`).
 - Each graph panel stays bound to the trail it was opened with, even after switching trails.
+- Replace `@dagrejs/dagre` with `d3-dag` for graph layout, improving edge crossing minimization.
 
 ### Fixed
 

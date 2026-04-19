@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { OUTPUT_DIR } from '../config';
 import { Mark } from './mark';
 import { log } from './logger';
-import dagre from '@dagrejs/dagre';
+import { dagre } from 'd3-dag';
 
 export interface GraphNode {
 	id: string;
@@ -374,19 +374,14 @@ export class Graph {
 		}
 		const ranksep = Math.max(200, Math.round(maxVerticalSpan * 0.3));
 
+		// d3-dag's dagre compat layer swaps nodesep/ranksep semantics
+		// in LR mode: nodesep controls between-rank (horizontal) gap,
+		// ranksep controls within-rank (vertical) gap.
 		g.setGraph({
 			rankdir: 'LR',
-			nodesep: 50,
-			ranksep,
+			nodesep: ranksep,
+			ranksep: 100,
 		});
-
-		// Hint dagre with the uses declaration order. The heuristic may
-		// override this if it reduces edge crossings.
-		for (const targets of outgoing.values()) {
-			for (let i = 0; i < targets.length; i++) {
-				g.node(targets[i]).order = i;
-			}
-		}
 
 		dagre.layout(g);
 
